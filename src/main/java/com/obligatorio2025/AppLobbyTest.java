@@ -1,5 +1,6 @@
 package com.obligatorio2025;
 
+import com.obligatorio2025.aplicacion.ServicioFlujoPartida;
 import com.obligatorio2025.aplicacion.ServicioLobby;
 import com.obligatorio2025.aplicacion.ServicioResultados;
 import com.obligatorio2025.aplicacion.ServicioValidacion;
@@ -22,19 +23,24 @@ public class AppLobbyTest {
         RespuestaRepositorioEnMemoria respRepo = new RespuestaRepositorioEnMemoria();
         CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();
 
+        // planificador dummy (guarda las tareas y solo imprime)
+        PlanificadorTicksDummy planificador = new PlanificadorTicksDummy();
+
         // 2. servicios
         ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
         ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo, catRepo);
         ServicioResultados servRes = new ServicioResultados();
+        // este es el orquestador de gracia
+        ServicioFlujoPartida servFlujo = new ServicioFlujoPartida(partidaRepo, planificador, servVal);
 
-        // 3. config de partida
+        // 3. config de partida (con gracia habilitada)
         ConfiguracionPartida conf = new ConfiguracionPartida(
-                60,
-                10,
-                3,
-                5,
+                60,     // duración ronda
+                10,     // duración gracia en segundos
+                3,      // total de rondas
+                5,      // pausa entre rondas
                 ModoJuego.SINGLE,
-                true
+                true    // graciaHabilitar
         );
 
         // 4. crear sala y guardarla
@@ -42,84 +48,63 @@ public class AppLobbyTest {
         salaRepo.guardar(sala);
 
         // 5. unirse jugadores
-        JugadorEnPartida jugador1 = new JugadorEnPartida(1);
-        JugadorEnPartida jugador2 = new JugadorEnPartida(2);
-        JugadorEnPartida jugador3 = new JugadorEnPartida(3);
-        JugadorEnPartida jugador4 = new JugadorEnPartida(4); // para categoría inexistente
+        JugadorEnPartida j1 = new JugadorEnPartida(1);
+        JugadorEnPartida j2 = new JugadorEnPartida(2);
+        JugadorEnPartida j3 = new JugadorEnPartida(3);
+        JugadorEnPartida j4 = new JugadorEnPartida(4);
 
-        lobby.unirseSala("ABCD", jugador1);
-        lobby.unirseSala("ABCD", jugador2);
-        lobby.unirseSala("ABCD", jugador3);
-        lobby.unirseSala("ABCD", jugador4);
+        lobby.unirseSala("ABCD", j1);
+        lobby.unirseSala("ABCD", j2);
+        lobby.unirseSala("ABCD", j3);
+        lobby.unirseSala("ABCD", j4);
 
         lobby.marcarListo("ABCD", 1);
         lobby.marcarListo("ABCD", 2);
         lobby.marcarListo("ABCD", 3);
         lobby.marcarListo("ABCD", 4);
 
-        // 6. iniciar partida (id = 100)
-        lobby.iniciarPartida("ABCD", conf, 100);
+        // 6. iniciar partida
+        int partidaId = 100;
+        lobby.iniciarPartida("ABCD", conf, partidaId);
 
-        // 7. agregar una ronda a la partida (para que la validación tenga letra)
-        Partida partida = partidaRepo.buscarPorId(100);
-        Ronda ronda = new Ronda(1, 'A');   // letra A
+        // 7. agregar ronda con letra A
+        Partida partida = partidaRepo.buscarPorId(partidaId);
+        Ronda ronda = new Ronda(1, 'A');
         ronda.iniciar();
         partida.agregarRonda(ronda);
         partidaRepo.guardar(partida);
 
         // 8. simular respuestas
-        // en catRepo (1) tenemos: Argentina, Alemania, Armenia, Arabia Saudita, Austria
-
-        // válida y única
         Respuesta r1 = new Respuesta(
-                1,
-                1,
-                "Argentina",
-                100,
-                1,
-                new Date()
+                1, 1, "Argentina", partidaId, 1, new Date()
         );
-
-        // duplicada con tilde
         Respuesta r2 = new Respuesta(
-                2,
-                1,
-                "Álemania",    // mismo que "Alemania" pero con tilde → debe agruparse
-                100,
-                1,
-                new Date()
+                2, 1, "Argentina", partidaId, 1, new Date()    // duplicada
         );
-
-        // duplicada sin tilde
         Respuesta r3 = new Respuesta(
-                3,
-                1,
-                "Alemania",
-                100,
-                1,
-                new Date()
+                3, 1, "Alemania", partidaId, 1, new Date()     // válida
         );
-
-        // categoría inexistente
         Respuesta r4 = new Respuesta(
-                4,
-                999,           // no existe en el repo de categorías
-                "Atlantida",   // aunque empiece con A, no hay lista para 999
-                100,
-                1,
-                new Date()
+                4, 999, "Atlantida", partidaId, 1, new Date()  // categoría desconocida
         );
 
         respRepo.guardarTodas(List.of(r1, r2, r3, r4));
 
-        // 9. validar
-        List<Resultado> resultados = servVal.validarRespuestas(100);
-        System.out.println("Resultados:");
+        // 9. simular que alguien dijo "tutti frutti" y la partida pasa a gracia
+        System.out.println("\n--- Pasando a GRACIA ---");
+        servFlujo.pasarAPeriodoDeGracia(partidaId);
+
+        // 10. simular que el planificador venció y ahora hay que cerrar la gracia y validar
+        System.out.println("\n--- Ejecutando fin de GRACIA ---");
+        List<Resultado> resultados = servFlujo.ejecutarFinDeGracia(partidaId);
+
+        // 11. mostrar resultados
+        System.out.println("\nResultados:");
         for (Resultado res : resultados) {
             System.out.println(res);
         }
 
-        // 10. ranking
+        // 12. ranking
         Map<Integer, Integer> puntos = servRes.calcularPuntosPorJugador(resultados);
         var ranking = servRes.ranking(puntos);
 
