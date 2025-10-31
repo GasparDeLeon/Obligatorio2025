@@ -5,6 +5,7 @@ import com.obligatorio2025.dominio.Respuesta;
 import com.obligatorio2025.dominio.Ronda;
 import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 
+import java.text.Normalizer;
 import java.util.List;
 
 public class ValidadorRespuesta {
@@ -32,9 +33,13 @@ public class ValidadorRespuesta {
         // 2. letra de la ronda
         Ronda rondaActual = obtenerRondaActual(partida);
         if (rondaActual != null) {
-            char letra = Character.toUpperCase(rondaActual.getLetra());
-            char primera = Character.toUpperCase(respuesta.getTexto().charAt(0));
-            if (primera != letra) {
+            char letraRonda = Character.toUpperCase(rondaActual.getLetra());
+
+            // normalizar el primer carácter de la respuesta
+            String texto = respuesta.getTexto();
+            char primeraNormalizada = normalizarPrimerCaracter(texto);
+
+            if (primeraNormalizada != letraRonda) {
                 return new Resultado(
                         respuesta.getTexto(),
                         respuesta.getJugadorId(),
@@ -46,11 +51,27 @@ public class ValidadorRespuesta {
             }
         }
 
-        // 3. categoría: la palabra debe existir en la lista de esa categoría
+
+        // 3. categoría
         List<String> permitidas = categoriaRepositorio.obtenerPalabrasDe(respuesta.getCategoriaId());
+        if (permitidas == null || permitidas.isEmpty()) {
+            return new Resultado(
+                    respuesta.getTexto(),
+                    respuesta.getJugadorId(),
+                    respuesta.getCategoriaId(),
+                    Veredicto.INVALIDA,
+                    "Categoría desconocida",
+                    0
+            );
+        }
+
+        String respNorm = normalizar(respuesta.getTexto());
+
         boolean existe = permitidas
                 .stream()
-                .anyMatch(p -> p.equalsIgnoreCase(respuesta.getTexto()));
+                .map(this::normalizar)
+                .anyMatch(p -> p.equals(respNorm));
+
         if (!existe) {
             return new Resultado(
                     respuesta.getTexto(),
@@ -80,4 +101,29 @@ public class ValidadorRespuesta {
         }
         return rondas.get(rondas.size() - 1);
     }
+
+    private String normalizar(String texto) {
+        if (texto == null) return "";
+        String nfd = Normalizer.normalize(texto, Normalizer.Form.NFD);
+        // quita tildes
+        String sinTildes = nfd.replaceAll("\\p{M}", "");
+        return sinTildes.toLowerCase().trim();
+    }
+    private char normalizarPrimerCaracter(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return 0;
+        }
+        // tomamos el primer char tal cual
+        char c = texto.charAt(0);
+
+        // lo pasamos a string para normalizar
+        String s = String.valueOf(c);
+
+        String nfd = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        // quitamos marcas diacríticas (tildes)
+        String sinTilde = nfd.replaceAll("\\p{M}", "");
+
+        return Character.toUpperCase(sinTilde.charAt(0));
+    }
+
 }
