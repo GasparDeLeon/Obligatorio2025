@@ -20,7 +20,7 @@ public class AppLobbyTest {
         SalaRepositorioEnMemoria salaRepo = new SalaRepositorioEnMemoria();
         PartidaRepositorioEnMemoria partidaRepo = new PartidaRepositorioEnMemoria();
         RespuestaRepositorioEnMemoria respRepo = new RespuestaRepositorioEnMemoria();
-        CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();   // repo de categorías
+        CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();
 
         // 2. servicios
         ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
@@ -29,12 +29,12 @@ public class AppLobbyTest {
 
         // 3. config de partida
         ConfiguracionPartida conf = new ConfiguracionPartida(
-                60,     // duracionSeg
-                10,     // duracionGraciaSeg
-                3,      // rondasTotales
-                5,      // pausaEntreRondasSeg
+                60,
+                10,
+                3,
+                5,
                 ModoJuego.SINGLE,
-                true    // graciaHabilitar
+                true
         );
 
         // 4. crear sala y guardarla
@@ -45,14 +45,17 @@ public class AppLobbyTest {
         JugadorEnPartida jugador1 = new JugadorEnPartida(1);
         JugadorEnPartida jugador2 = new JugadorEnPartida(2);
         JugadorEnPartida jugador3 = new JugadorEnPartida(3);
+        JugadorEnPartida jugador4 = new JugadorEnPartida(4); // para categoría inexistente
 
         lobby.unirseSala("ABCD", jugador1);
         lobby.unirseSala("ABCD", jugador2);
         lobby.unirseSala("ABCD", jugador3);
+        lobby.unirseSala("ABCD", jugador4);
 
         lobby.marcarListo("ABCD", 1);
         lobby.marcarListo("ABCD", 2);
         lobby.marcarListo("ABCD", 3);
+        lobby.marcarListo("ABCD", 4);
 
         // 6. iniciar partida (id = 100)
         lobby.iniciarPartida("ABCD", conf, 100);
@@ -64,36 +67,50 @@ public class AppLobbyTest {
         partida.agregarRonda(ronda);
         partidaRepo.guardar(partida);
 
-        // 8. simular respuestas de jugadores
-        // cat 1 en memoria: "Argentina", "Alemania", "Armenia", "Arabia Saudita", "Austria"
+        // 8. simular respuestas
+        // en catRepo (1) tenemos: Argentina, Alemania, Armenia, Arabia Saudita, Austria
+
+        // válida y única
         Respuesta r1 = new Respuesta(
-                1,          // jugadorId
-                1,          // categoriaId
+                1,
+                1,
                 "Argentina",
                 100,
                 1,
                 new Date()
         );
 
+        // duplicada con tilde
         Respuesta r2 = new Respuesta(
                 2,
                 1,
-                "Argentina",     // misma categoría y mismo texto → debe quedar DUPLICADA
+                "Álemania",    // mismo que "Alemania" pero con tilde → debe agruparse
                 100,
                 1,
                 new Date()
         );
 
+        // duplicada sin tilde
         Respuesta r3 = new Respuesta(
                 3,
                 1,
-                "Alemania",      // válida y distinta → debe quedar VALIDA con 10
+                "Alemania",
                 100,
                 1,
                 new Date()
         );
 
-        respRepo.guardarTodas(List.of(r1, r2, r3));
+        // categoría inexistente
+        Respuesta r4 = new Respuesta(
+                4,
+                999,           // no existe en el repo de categorías
+                "Atlantida",   // aunque empiece con A, no hay lista para 999
+                100,
+                1,
+                new Date()
+        );
+
+        respRepo.guardarTodas(List.of(r1, r2, r3, r4));
 
         // 9. validar
         List<Resultado> resultados = servVal.validarRespuestas(100);
@@ -102,7 +119,7 @@ public class AppLobbyTest {
             System.out.println(res);
         }
 
-        // 10. armar ranking
+        // 10. ranking
         Map<Integer, Integer> puntos = servRes.calcularPuntosPorJugador(resultados);
         var ranking = servRes.ranking(puntos);
 
