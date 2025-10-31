@@ -20,30 +20,39 @@ public class AppLobbyTest {
         SalaRepositorioEnMemoria salaRepo = new SalaRepositorioEnMemoria();
         PartidaRepositorioEnMemoria partidaRepo = new PartidaRepositorioEnMemoria();
         RespuestaRepositorioEnMemoria respRepo = new RespuestaRepositorioEnMemoria();
+        CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();   // repo de categorías
 
         // 2. servicios
         ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
-        ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo);
+        ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo, catRepo);
         ServicioResultados servRes = new ServicioResultados();
 
         // 3. config de partida
         ConfiguracionPartida conf = new ConfiguracionPartida(
-                60,
-                10,
-                3,
-                5,
+                60,     // duracionSeg
+                10,     // duracionGraciaSeg
+                3,      // rondasTotales
+                5,      // pausaEntreRondasSeg
                 ModoJuego.SINGLE,
-                true
+                true    // graciaHabilitar
         );
 
         // 4. crear sala y guardarla
         Sala sala = new Sala(1, "ABCD", "gaspar");
         salaRepo.guardar(sala);
 
-        // 5. unirse un jugador
+        // 5. unirse jugadores
         JugadorEnPartida jugador1 = new JugadorEnPartida(1);
+        JugadorEnPartida jugador2 = new JugadorEnPartida(2);
+        JugadorEnPartida jugador3 = new JugadorEnPartida(3);
+
         lobby.unirseSala("ABCD", jugador1);
+        lobby.unirseSala("ABCD", jugador2);
+        lobby.unirseSala("ABCD", jugador3);
+
         lobby.marcarListo("ABCD", 1);
+        lobby.marcarListo("ABCD", 2);
+        lobby.marcarListo("ABCD", 3);
 
         // 6. iniciar partida (id = 100)
         lobby.iniciarPartida("ABCD", conf, 100);
@@ -56,25 +65,35 @@ public class AppLobbyTest {
         partidaRepo.guardar(partida);
 
         // 8. simular respuestas de jugadores
+        // cat 1 en memoria: "Argentina", "Alemania", "Armenia", "Arabia Saudita", "Austria"
         Respuesta r1 = new Respuesta(
                 1,          // jugadorId
                 1,          // categoriaId
-                "Argentina",// texto → válida, empieza con A
-                100,        // partidaId
-                1,          // rondaNumero (si lo tenés)
-                new Date()
-        );
-
-        Respuesta r2 = new Respuesta(
-                2,          // jugadorId
-                1,          // categoriaId
-                "Brasil",   // inválida, no empieza con A
+                "Argentina",
                 100,
                 1,
                 new Date()
         );
 
-        respRepo.guardarTodas(List.of(r1, r2));
+        Respuesta r2 = new Respuesta(
+                2,
+                1,
+                "Argentina",     // misma categoría y mismo texto → debe quedar DUPLICADA
+                100,
+                1,
+                new Date()
+        );
+
+        Respuesta r3 = new Respuesta(
+                3,
+                1,
+                "Alemania",      // válida y distinta → debe quedar VALIDA con 10
+                100,
+                1,
+                new Date()
+        );
+
+        respRepo.guardarTodas(List.of(r1, r2, r3));
 
         // 9. validar
         List<Resultado> resultados = servVal.validarRespuestas(100);

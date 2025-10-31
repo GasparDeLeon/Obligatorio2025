@@ -2,6 +2,7 @@ package com.obligatorio2025.aplicacion;
 
 import com.obligatorio2025.dominio.Partida;
 import com.obligatorio2025.dominio.Respuesta;
+import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.RespuestaRepositorio;
 import com.obligatorio2025.validacion.Juez;
@@ -18,10 +19,11 @@ public class ServicioValidacion {
     private final Juez juez;
 
     public ServicioValidacion(PartidaRepositorio partidaRepo,
-                              RespuestaRepositorio respuestaRepo) {
+                              RespuestaRepositorio respuestaRepo,
+                              CategoriaRepositorio categoriaRepo) {
         this.partidaRepo = partidaRepo;
         this.respuestaRepo = respuestaRepo;
-        this.juez = new JuezBasico(new ValidadorRespuesta());
+        this.juez = new JuezBasico(new ValidadorRespuesta(categoriaRepo));
     }
 
     public List<Resultado> validarRespuestas(int partidaId) {
@@ -30,4 +32,3 @@ public class ServicioValidacion {
         return juez.validar(partida, respuestas);
     }
 }
-

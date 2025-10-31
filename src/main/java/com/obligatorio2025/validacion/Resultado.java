@@ -48,6 +48,18 @@ public class Resultado {
     public int getPuntos() {
         return puntos;
     }
+    public void setVeredicto(Veredicto veredicto) {
+        this.veredicto = veredicto;
+    }
+
+    public void setMotivo(String motivo) {
+        this.motivo = motivo;
+    }
+
+    public void setPuntos(int puntos) {
+        this.puntos = puntos;
+    }
+
 
     // opcional, por si querés debugear
     @Override
