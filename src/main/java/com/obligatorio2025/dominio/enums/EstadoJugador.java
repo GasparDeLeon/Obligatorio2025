@@ -1,9 +1,9 @@
 package com.obligatorio2025.dominio.enums;
 
 public enum EstadoJugador {
-    INVITADO,
+    INACTIVO,
     LISTO,
     JUGANDO,
-    RETIRADO,
+    RENDIDO,
     DESCONECTADO
 }

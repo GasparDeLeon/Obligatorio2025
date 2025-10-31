@@ -7,32 +7,59 @@ import java.util.List;
 
 public class Sala {
 
-    private String id;
-    private String origen;
-    private String host;
+    private int id;
+    private String codigo;
     private EstadoSala estado;
-    private List<Partida> partidas;
-    private List<JugadorEnPartida> jugadores;
+    private String hostId;
 
-    public Sala(String id, String origen, String host) {
+    private List<JugadorEnPartida> jugadores;
+    private Partida partidaActual;
+
+    public Sala(int id, String codigo, String hostId) {
         this.id = id;
-        this.origen = origen;
-        this.host = host;
-        this.estado = EstadoSala.CREADA;
-        this.partidas = new ArrayList<>();
+        this.codigo = codigo;
+        this.hostId = hostId;
+        this.estado = EstadoSala.ABIERTA;
         this.jugadores = new ArrayList<>();
     }
 
-    public boolean puedeIniciar() {
-        return this.jugadores.size() >= 2;
+    public int getId() {
+        return id;
+    }
+
+    public String getCodigo() {
+        return codigo;
+    }
+
+    public EstadoSala getEstado() {
+        return estado;
+    }
+
+    public String getHostId() {
+        return hostId;
+    }
+
+    public List<JugadorEnPartida> getJugadores() {
+        return jugadores;
+    }
+
+    public Partida getPartidaActual() {
+        return partidaActual;
     }
 
     public void agregarJugador(JugadorEnPartida jugador) {
         this.jugadores.add(jugador);
     }
 
+    public boolean puedeIniciar() {
+        return !jugadores.isEmpty();
+    }
+
     public void iniciarPartida(Partida partida) {
-        this.partidas.add(partida);
-        this.estado = EstadoSala.EN_CURSO;
+        if (!puedeIniciar()) {
+            throw new IllegalStateException("No se puede iniciar la sala sin jugadores");
+        }
+        this.partidaActual = partida;
+        this.estado = EstadoSala.JUGANDO;
     }
 }
