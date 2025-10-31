@@ -1,17 +1,23 @@
 package com.obligatorio2025.aplicacion;
 
-import com.obligatorio2025.dominio.ConfiguracionPartida;
-import com.obligatorio2025.dominio.Marcador;
+import com.obligatorio2025.validacion.Resultado;
 
-import java.util.List;
+import java.util.*;
 
 public class ServicioResultados {
 
-    public Marcador construirMarcador(List<?> resultados, ConfiguracionPartida config) {
-        return null;
+    public Map<Integer, Integer> calcularPuntosPorJugador(List<Resultado> resultados) {
+        Map<Integer, Integer> puntos = new HashMap<>();
+        for (Resultado r : resultados) {
+            int actual = puntos.getOrDefault(r.getJugadorId(), 0);
+            puntos.put(r.getJugadorId(), actual + r.getPuntos());
+        }
+        return puntos;
     }
 
-    public List<?> ranking(String partidaId) {
-        return null;
+    public List<Map.Entry<Integer, Integer>> ranking(Map<Integer, Integer> puntos) {
+        List<Map.Entry<Integer, Integer>> lista = new ArrayList<>(puntos.entrySet());
+        lista.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+        return lista;
     }
 }

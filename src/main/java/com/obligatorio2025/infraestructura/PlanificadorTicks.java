@@ -2,7 +2,7 @@ package com.obligatorio2025.infraestructura;
 
 public interface PlanificadorTicks {
 
-    void programar(String partidaId, int periodoMs);
+    void programar(int partidaId, int periodoMs);
 
-    void cancelar(String partidaId);
+    void cancelar(int partidaId);
 }

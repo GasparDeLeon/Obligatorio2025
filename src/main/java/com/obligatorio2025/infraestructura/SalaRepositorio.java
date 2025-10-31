@@ -6,7 +6,7 @@ public interface SalaRepositorio {
 
     void guardar(Sala sala);
 
-    Sala buscarPorId(String id);
+    Sala buscarPorId(int id);
 
     Sala buscarPorCodigo(String codigo);
 }

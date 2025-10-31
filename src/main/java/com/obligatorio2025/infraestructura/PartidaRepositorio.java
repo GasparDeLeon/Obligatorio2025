@@ -6,7 +6,7 @@ public interface PartidaRepositorio {
 
     void guardar(Partida partida);
 
-    Partida buscarPorId(String id);
+    Partida buscarPorId(int id);
 
-    Partida buscarActivaPorSala(String salaId);
+    Partida buscarActivaPorSala(int salaId);
 }

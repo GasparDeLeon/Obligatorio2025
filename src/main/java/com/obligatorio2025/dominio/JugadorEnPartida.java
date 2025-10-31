@@ -7,17 +7,17 @@ import java.util.List;
 
 public class JugadorEnPartida {
 
-    private String usuarioId;
+    private int usuarioId;
     private List<Respuesta> respuestas;
     private EstadoJugador estado;
 
-    public JugadorEnPartida(String usuarioId) {
+    public JugadorEnPartida(int usuarioId) {
         this.usuarioId = usuarioId;
         this.respuestas = new ArrayList<>();
         this.estado = EstadoJugador.INACTIVO;
     }
 
-    public String getUsuarioId() {
+    public int getUsuarioId() {
         return usuarioId;
     }
 

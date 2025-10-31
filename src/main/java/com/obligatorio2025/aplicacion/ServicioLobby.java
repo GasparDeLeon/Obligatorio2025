@@ -37,8 +37,8 @@ public class ServicioLobby {
         return sala;
     }
 
-    // 3. marcar listo (si querés tenerlo ya)
-    public void marcarListo(String codigoSala, String jugadorId) {
+
+    public void marcarListo(String codigoSala, int jugadorId) {
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
             throw new IllegalArgumentException("No existe sala con código: " + codigoSala);
@@ -46,7 +46,7 @@ public class ServicioLobby {
 
         // buscar jugador en la sala
         for (JugadorEnPartida j : sala.getJugadores()) {
-            if (j.getUsuarioId().equals(jugadorId)) {
+            if (j.getUsuarioId() == jugadorId) {
                 j.marcarListo();
                 break;
             }
@@ -55,25 +55,39 @@ public class ServicioLobby {
         salaRepositorio.guardar(sala);
     }
 
+
     // 4. iniciar partida
-    public Partida iniciarPartida(String codigoSala, ConfiguracionPartida config, int partidaId) {
+    public Partida iniciarPartida(String codigoSala,
+                                  ConfiguracionPartida config,
+                                  int partidaId) {
+
+        // 1. buscar sala
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
             throw new IllegalArgumentException("No existe sala con código: " + codigoSala);
         }
+
+        // 2. crear la partida
+        Partida partida = new Partida(partidaId, config);
+        partida.iniciar();
+
+        // 3. asociar la partida a la sala
+        sala.setPartidaActual(partida);
+
+        // 4. recién ahora validar si la sala puede iniciar
         if (!sala.puedeIniciar()) {
             throw new IllegalStateException("La sala no tiene jugadores suficientes");
         }
 
-        Partida partida = new Partida(partidaId, config);
-        partida.iniciar();
+        // 5. iniciar la sala
+        sala.iniciarPartida();
 
-        // asociar con la sala
-        sala.iniciarPartida(partida);
+        // 6. persistir
         salaRepositorio.guardar(sala);
-
         partidaRepositorio.guardar(partida);
 
         return partida;
     }
+
+
 }

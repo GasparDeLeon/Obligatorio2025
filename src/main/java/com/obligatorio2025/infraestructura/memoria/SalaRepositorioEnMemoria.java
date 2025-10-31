@@ -8,19 +8,17 @@ import java.util.Map;
 
 public class SalaRepositorioEnMemoria implements SalaRepositorio {
 
-    private final Map<String, Sala> salasPorId = new HashMap<>();
+    private final Map<Integer, Sala> salasPorId = new HashMap<>();
     private final Map<String, Sala> salasPorCodigo = new HashMap<>();
 
     @Override
     public void guardar(Sala sala) {
-        // acá asumimos que el id de la sala es el int que tenés en dominio, lo pasamos a String
-        String idComoString = String.valueOf(sala.getId());
-        salasPorId.put(idComoString, sala);
+        salasPorId.put(sala.getId(), sala);
         salasPorCodigo.put(sala.getCodigo(), sala);
     }
 
     @Override
-    public Sala buscarPorId(String id) {
+    public Sala buscarPorId(int id) {
         return salasPorId.get(id);
     }
 
