@@ -3,31 +3,29 @@ package com.obligatorio2025.dominio;
 import com.obligatorio2025.dominio.enums.EstadoPartida;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Partida {
 
-    private String id;
+    private int id;
     private EstadoPartida estado;
-    private Sala sala;
+    private Date inicio;
+    private Date fin;
+
+    private ConfiguracionPartida configuracion;
+    private Marcador marcador;
     private List<Ronda> rondas;
 
-    public Partida(String id, Sala sala) {
+    public Partida(int id, ConfiguracionPartida configuracion) {
         this.id = id;
-        this.sala = sala;
+        this.configuracion = configuracion;
         this.estado = EstadoPartida.CREADA;
         this.rondas = new ArrayList<>();
+        this.marcador = new Marcador();
     }
 
-    public void iniciar() {
-        this.estado = EstadoPartida.EN_CURSO;
-    }
-
-    public void agregarRonda(Ronda ronda) {
-        this.rondas.add(ronda);
-    }
-
-    public String getId() {
+    public int getId() {
         return id;
     }
 
@@ -35,7 +33,42 @@ public class Partida {
         return estado;
     }
 
-    public Sala getSala() {
-        return sala;
+    public Date getInicio() {
+        return inicio;
+    }
+
+    public Date getFin() {
+        return fin;
+    }
+
+    public ConfiguracionPartida getConfiguracion() {
+        return configuracion;
+    }
+
+    public Marcador getMarcador() {
+        return marcador;
+    }
+
+    public List<Ronda> getRondas() {
+        return rondas;
+    }
+
+    public void iniciar() {
+        this.estado = EstadoPartida.EN_CURSO;
+        this.inicio = new Date();
+    }
+
+    public void finalizarPorTiempo() {
+        this.estado = EstadoPartida.FINALIZADA;
+        this.fin = new Date();
+    }
+
+    public void finalizarPorTuttiFrutti(String jugadorDisparador) {
+        // por ahora solo cambiamos de estado
+        this.estado = EstadoPartida.GRACIA;
+    }
+
+    public void agregarRonda(Ronda ronda) {
+        this.rondas.add(ronda);
     }
 }

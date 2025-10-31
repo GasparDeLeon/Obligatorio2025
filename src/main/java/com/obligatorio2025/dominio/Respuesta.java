@@ -1,36 +1,51 @@
 package com.obligatorio2025.dominio;
 
+import java.util.Date;
+
 public class Respuesta {
 
-    private String categoria;
+    private int jugadorId;
+    private int categoriaId;
     private String texto;
-    private String jugadorId;
-    private boolean valida;
+    private int partidaId;
+    private int rondaId;
+    private Date timestamp;
 
-    public Respuesta(String categoria, String texto, String jugadorId) {
-        this.categoria = categoria;
-        this.texto = texto;
+    public Respuesta(int jugadorId,
+                     int categoriaId,
+                     String texto,
+                     int partidaId,
+                     int rondaId,
+                     Date timestamp) {
         this.jugadorId = jugadorId;
-        this.valida = true; // después la capa de validación lo actualiza
+        this.categoriaId = categoriaId;
+        this.texto = texto;
+        this.partidaId = partidaId;
+        this.rondaId = rondaId;
+        this.timestamp = timestamp;
     }
 
-    public String getCategoria() {
-        return categoria;
+    public int getJugadorId() {
+        return jugadorId;
+    }
+
+    public int getCategoriaId() {
+        return categoriaId;
     }
 
     public String getTexto() {
         return texto;
     }
 
-    public String getJugadorId() {
-        return jugadorId;
+    public int getPartidaId() {
+        return partidaId;
     }
 
-    public boolean isValida() {
-        return valida;
+    public int getRondaId() {
+        return rondaId;
     }
 
-    public void setValida(boolean valida) {
-        this.valida = valida;
+    public Date getTimestamp() {
+        return timestamp;
     }
 }

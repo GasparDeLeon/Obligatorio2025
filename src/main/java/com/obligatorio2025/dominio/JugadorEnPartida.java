@@ -2,41 +2,46 @@ package com.obligatorio2025.dominio;
 
 import com.obligatorio2025.dominio.enums.EstadoJugador;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class JugadorEnPartida {
 
-    private String idUsuario;      // o CI, o lo que uses
-    private String nombre;
+    private String usuarioId;
+    private List<Respuesta> respuestas;
     private EstadoJugador estado;
-    private int puntaje;
 
-    public JugadorEnPartida(String idUsuario, String nombre) {
-        this.idUsuario = idUsuario;
-        this.nombre = nombre;
-        this.estado = EstadoJugador.INVITADO;
-        this.puntaje = 0;
+    public JugadorEnPartida(String usuarioId) {
+        this.usuarioId = usuarioId;
+        this.respuestas = new ArrayList<>();
+        this.estado = EstadoJugador.INACTIVO;
     }
 
-    public void marcarListo() {
-        this.estado = EstadoJugador.LISTO;
+    public String getUsuarioId() {
+        return usuarioId;
     }
 
-    public void sumarPuntos(int puntos) {
-        this.puntaje += puntos;
-    }
-
-    public String getIdUsuario() {
-        return idUsuario;
-    }
-
-    public String getNombre() {
-        return nombre;
+    public List<Respuesta> getRespuestas() {
+        return respuestas;
     }
 
     public EstadoJugador getEstado() {
         return estado;
     }
 
-    public int getPuntaje() {
-        return puntaje;
+    public void agregarRespuesta(Respuesta respuesta) {
+        this.respuestas.add(respuesta);
+    }
+
+    public void marcarListo() {
+        this.estado = EstadoJugador.LISTO;
+    }
+
+    public void rendirse() {
+        this.estado = EstadoJugador.RENDIDO;
+    }
+
+    public void desconectar() {
+        this.estado = EstadoJugador.DESCONECTADO;
     }
 }
