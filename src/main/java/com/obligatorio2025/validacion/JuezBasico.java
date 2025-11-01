@@ -1,62 +1,44 @@
 package com.obligatorio2025.validacion;
 
-import com.obligatorio2025.dominio.Partida;
-import com.obligatorio2025.dominio.Respuesta;
-
-import java.text.Normalizer;
 import java.util.*;
+import com.obligatorio2025.validacion.Veredicto;
 
-public class JuezBasico implements Juez {
+public class JuezBasico {
 
-    private final ValidadorRespuesta validador;
+    private final int puntajeValida;
+    private final int puntajeDuplicada;
 
-    public JuezBasico(ValidadorRespuesta validador) {
-        this.validador = validador;
+    public JuezBasico(int puntajeValida, int puntajeDuplicada) {
+        this.puntajeValida = puntajeValida;
+        this.puntajeDuplicada = puntajeDuplicada;
     }
 
-    @Override
-    public List<Resultado> validar(Partida partida, List<Respuesta> respuestas) {
-
-        // 1. validación individual
-        List<Resultado> resultados = new ArrayList<>();
-        for (Respuesta r : respuestas) {
-            Resultado res = validador.validar(partida, r);
-            resultados.add(res);
-        }
-
-        // 2. detección de duplicadas
-        marcarDuplicadas(resultados);
-
-        return resultados;
+    public void marcarValida(Resultado r) {
+        r.setVeredicto(Veredicto.VALIDA);
+        r.setPuntos(puntajeValida);
+        r.setMotivo("OK");
     }
 
-    private void marcarDuplicadas(List<Resultado> resultados) {
-        Map<String, List<Resultado>> index = new HashMap<>();
+    // este es el que marcaba duplicadas al final
+    public void aplicarDuplicadas(List<Resultado> resultados) {
+        Map<String, List<Resultado>> grupos = new HashMap<>();
 
         for (Resultado r : resultados) {
             if (r.getVeredicto() != Veredicto.VALIDA) {
                 continue;
             }
-
-            String key = r.getCategoriaId() + "|" + normalizar(r.getRespuesta());
-            index.computeIfAbsent(key, k -> new ArrayList<>()).add(r);
+            String clave = r.getCategoriaId() + "|" + r.getRespuestaNormalizada();
+            grupos.computeIfAbsent(clave, k -> new ArrayList<>()).add(r);
         }
 
-        for (List<Resultado> grupo : index.values()) {
+        for (List<Resultado> grupo : grupos.values()) {
             if (grupo.size() > 1) {
                 for (Resultado r : grupo) {
                     r.setVeredicto(Veredicto.DUPLICADA);
+                    r.setPuntos(puntajeDuplicada);
                     r.setMotivo("Respuesta duplicada");
-                    r.setPuntos(5); // puntaje reducido, no 0
                 }
             }
         }
-    }
-
-    private String normalizar(String texto) {
-        if (texto == null) return "";
-        String nfd = Normalizer.normalize(texto, Normalizer.Form.NFD);
-        String sinTildes = nfd.replaceAll("\\p{M}", "");
-        return sinTildes.toLowerCase().trim();
     }
 }

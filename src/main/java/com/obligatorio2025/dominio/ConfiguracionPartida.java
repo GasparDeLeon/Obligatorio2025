@@ -11,18 +11,26 @@ public class ConfiguracionPartida {
     private ModoJuego modo;
     private boolean graciaHabilitar;
 
+    // nuevos
+    private int puntajeValida;
+    private int puntajeDuplicada;
+
     public ConfiguracionPartida(int duracionSeg,
                                 int duracionGraciaSeg,
                                 int rondasTotales,
                                 int pausaEntreRondasSeg,
                                 ModoJuego modo,
-                                boolean graciaHabilitar) {
+                                boolean graciaHabilitar,
+                                int puntajeValida,
+                                int puntajeDuplicada) {
         this.duracionSeg = duracionSeg;
         this.duracionGraciaSeg = duracionGraciaSeg;
         this.rondasTotales = rondasTotales;
         this.pausaEntreRondasSeg = pausaEntreRondasSeg;
         this.modo = modo;
         this.graciaHabilitar = graciaHabilitar;
+        this.puntajeValida = puntajeValida;         // ← esto faltaba
+        this.puntajeDuplicada = puntajeDuplicada;   // ← y esto también
     }
 
     public int getDuracionSeg() {
@@ -47,5 +55,21 @@ public class ConfiguracionPartida {
 
     public boolean isGraciaHabilitar() {
         return graciaHabilitar;
+    }
+
+    public int getPuntajeValida() {
+        return puntajeValida;
+    }
+
+    public void setPuntajeValida(int puntajeValida) {
+        this.puntajeValida = puntajeValida;
+    }
+
+    public int getPuntajeDuplicada() {
+        return puntajeDuplicada;
+    }
+
+    public void setPuntajeDuplicada(int puntajeDuplicada) {
+        this.puntajeDuplicada = puntajeDuplicada;
     }
 }

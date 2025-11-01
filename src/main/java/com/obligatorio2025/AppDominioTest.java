@@ -8,14 +8,16 @@ import java.util.Date;
 public class AppDominioTest {
     public static void main(String[] args) {
 
-        // 1. Configuro la partida
+        // 1. Configuración de la partida (ahora con puntajes)
         ConfiguracionPartida config = new ConfiguracionPartida(
-                60,     // duracionSeg
-                10,     // duracionGraciaSeg
-                3,      // rondasTotales
-                5,      // pausaEntreRondasSeg
-                ModoJuego.SINGLE,
-                true    // graciaHabilitar
+                60,                 // duracionSeg
+                10,                 // duracionGraciaSeg
+                3,                  // rondasTotales
+                5,                  // pausaEntreRondasSeg
+                ModoJuego.SINGLE,   // modo
+                true,               // graciaHabilitar
+                10,                 // puntajeValida
+                5                   // puntajeDuplicada
         );
 
         // 2. Creo la sala
@@ -27,9 +29,10 @@ public class AppDominioTest {
         partida.iniciar();
         System.out.println("Partida en estado: " + partida.getEstado());
 
-        // 4. Creo una ronda
+        // 4. Creo una ronda y la asocio a la partida
         Ronda ronda = new Ronda(1, 'A');
         ronda.iniciar();
+        partida.agregarRonda(ronda);
         System.out.println("Ronda " + ronda.getNumero() + " con letra " + ronda.getLetra());
 
         // 5. Creo un jugador
@@ -41,7 +44,7 @@ public class AppDominioTest {
                 1,                  // jugadorId
                 1,                  // categoriaId
                 "Argentina",        // texto
-                partida.getId(),    // partidaId (String)
+                partida.getId(),    // partidaId (int)
                 ronda.getNumero(),  // ronda
                 new Date()
         );

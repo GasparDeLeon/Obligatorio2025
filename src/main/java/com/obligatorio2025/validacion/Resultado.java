@@ -60,8 +60,19 @@ public class Resultado {
         this.puntos = puntos;
     }
 
+    public String getRespuestaNormalizada() {
+        if (respuesta == null) return "";
+        return respuesta.trim()
+                .toLowerCase()
+                .replace("á", "a")
+                .replace("é", "e")
+                .replace("í", "i")
+                .replace("ó", "o")
+                .replace("ú", "u");
+    }
 
-    // opcional, por si querés debugear
+
+
     @Override
     public String toString() {
         return "Resultado{" +

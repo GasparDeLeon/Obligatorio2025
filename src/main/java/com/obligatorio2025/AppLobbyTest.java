@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 public class AppLobbyTest {
-
     public static void main(String[] args) {
 
         // 1. repos
@@ -22,25 +21,24 @@ public class AppLobbyTest {
         PartidaRepositorioEnMemoria partidaRepo = new PartidaRepositorioEnMemoria();
         RespuestaRepositorioEnMemoria respRepo = new RespuestaRepositorioEnMemoria();
         CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();
-
-        // planificador dummy (guarda las tareas y solo imprime)
         PlanificadorTicksDummy planificador = new PlanificadorTicksDummy();
 
         // 2. servicios
         ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
         ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo, catRepo);
         ServicioResultados servRes = new ServicioResultados();
-        // este es el orquestador de gracia
         ServicioFlujoPartida servFlujo = new ServicioFlujoPartida(partidaRepo, planificador, servVal);
 
-        // 3. config de partida (con gracia habilitada)
+        // 3. config de partida (ahora con puntajes)
         ConfiguracionPartida conf = new ConfiguracionPartida(
-                60,     // duración ronda
-                10,     // duración gracia en segundos
-                3,      // total de rondas
-                5,      // pausa entre rondas
+                60,     // duracionSeg
+                10,     // duracionGraciaSeg
+                3,      // rondasTotales
+                5,      // pausaEntreRondasSeg
                 ModoJuego.SINGLE,
-                true    // graciaHabilitar
+                true,   // graciaHabilitar
+                10,     // puntajeValida
+                5     // puntajeDuplicada
         );
 
         // 4. crear sala y guardarla
@@ -51,7 +49,7 @@ public class AppLobbyTest {
         JugadorEnPartida j1 = new JugadorEnPartida(1);
         JugadorEnPartida j2 = new JugadorEnPartida(2);
         JugadorEnPartida j3 = new JugadorEnPartida(3);
-        JugadorEnPartida j4 = new JugadorEnPartida(4);
+        JugadorEnPartida j4 = new JugadorEnPartida(4); // categoría inexistente
 
         lobby.unirseSala("ABCD", j1);
         lobby.unirseSala("ABCD", j2);
@@ -64,39 +62,42 @@ public class AppLobbyTest {
         lobby.marcarListo("ABCD", 4);
 
         // 6. iniciar partida
-        int partidaId = 100;
-        lobby.iniciarPartida("ABCD", conf, partidaId);
+        lobby.iniciarPartida("ABCD", conf, 100);
 
-        // 7. agregar ronda con letra A
-        Partida partida = partidaRepo.buscarPorId(partidaId);
+        // 7. agregar una ronda
+        Partida partida = partidaRepo.buscarPorId(100);
         Ronda ronda = new Ronda(1, 'A');
         ronda.iniciar();
         partida.agregarRonda(ronda);
         partidaRepo.guardar(partida);
 
-        // 8. simular respuestas
+        // 8. respuestas
         Respuesta r1 = new Respuesta(
-                1, 1, "Argentina", partidaId, 1, new Date()
+                1, 1, "Argentina",
+                100, 1, new Date()
         );
         Respuesta r2 = new Respuesta(
-                2, 1, "Argentina", partidaId, 1, new Date()    // duplicada
+                2, 1, "Argentina",
+                100, 1, new Date()
         );
         Respuesta r3 = new Respuesta(
-                3, 1, "Alemania", partidaId, 1, new Date()     // válida
+                3, 1, "Alemania",
+                100, 1, new Date()
         );
         Respuesta r4 = new Respuesta(
-                4, 999, "Atlantida", partidaId, 1, new Date()  // categoría desconocida
+                4, 999, "Atlantida",
+                100, 1, new Date()
         );
 
         respRepo.guardarTodas(List.of(r1, r2, r3, r4));
 
-        // 9. simular que alguien dijo "tutti frutti" y la partida pasa a gracia
+        // 9. simular que alguien disparó tutti frutti → pasamos a gracia
         System.out.println("\n--- Pasando a GRACIA ---");
-        servFlujo.pasarAPeriodoDeGracia(partidaId);
+        servFlujo.pasarAPeriodoDeGracia(100);
 
-        // 10. simular que el planificador venció y ahora hay que cerrar la gracia y validar
+        // 10. simular que terminó la gracia → el planificador llama acá
         System.out.println("\n--- Ejecutando fin de GRACIA ---");
-        List<Resultado> resultados = servFlujo.ejecutarFinDeGracia(partidaId);
+        List<Resultado> resultados = servFlujo.ejecutarFinDeGracia(100);
 
         // 11. mostrar resultados
         System.out.println("\nResultados:");

@@ -22,13 +22,17 @@ public class ServicioPartida {
 
         if (partida.getEstado().esGracia()) {
             int ms = partida.getConfiguracion().getDuracionGraciaSeg() * 1000;
-            planificador.programar(partidaId, ms);
+            planificador.programar(partidaId, ms, () -> cerrarPorGracia(partidaId));
         }
     }
 
     public void cerrarPorGracia(int partidaId) {
         Partida partida = partidaRepo.buscarPorId(partidaId);
-        partida.finalizarDesdeGracia();
-        partidaRepo.guardar(partida);
+        if (partida != null) {
+            partida.finalizarDesdeGracia();
+            partidaRepo.guardar(partida);
+            System.out.println("[ServicioPartida] Cierre automático por gracia de partida " + partidaId);
+        }
     }
+
 }

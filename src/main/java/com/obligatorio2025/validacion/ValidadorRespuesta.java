@@ -35,7 +35,6 @@ public class ValidadorRespuesta {
         if (rondaActual != null) {
             char letraRonda = Character.toUpperCase(rondaActual.getLetra());
 
-            // normalizar el primer carácter de la respuesta
             String texto = respuesta.getTexto();
             char primeraNormalizada = normalizarPrimerCaracter(texto);
 
@@ -50,7 +49,6 @@ public class ValidadorRespuesta {
                 );
             }
         }
-
 
         // 3. categoría
         List<String> permitidas = categoriaRepositorio.obtenerPalabrasDe(respuesta.getCategoriaId());
@@ -105,25 +103,18 @@ public class ValidadorRespuesta {
     private String normalizar(String texto) {
         if (texto == null) return "";
         String nfd = Normalizer.normalize(texto, Normalizer.Form.NFD);
-        // quita tildes
         String sinTildes = nfd.replaceAll("\\p{M}", "");
         return sinTildes.toLowerCase().trim();
     }
+
     private char normalizarPrimerCaracter(String texto) {
         if (texto == null || texto.isBlank()) {
             return 0;
         }
-        // tomamos el primer char tal cual
         char c = texto.charAt(0);
-
-        // lo pasamos a string para normalizar
         String s = String.valueOf(c);
-
-        String nfd = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
-        // quitamos marcas diacríticas (tildes)
+        String nfd = Normalizer.normalize(s, Normalizer.Form.NFD);
         String sinTilde = nfd.replaceAll("\\p{M}", "");
-
         return Character.toUpperCase(sinTilde.charAt(0));
     }
-
 }
