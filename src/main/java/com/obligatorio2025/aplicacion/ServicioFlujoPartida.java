@@ -1,6 +1,7 @@
 package com.obligatorio2025.aplicacion;
 
 import com.obligatorio2025.dominio.Partida;
+import com.obligatorio2025.dominio.enums.EstadoPartida;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.PlanificadorTicks;
 import com.obligatorio2025.validacion.Resultado;
@@ -22,45 +23,36 @@ public class ServicioFlujoPartida {
         this.servicioValidacion = servicioValidacion;
     }
 
-    // lo llamás cuando alguien dispara "tutti frutti"
+    // lo llama el servicio de partida cuando alguien dice "tutti frutti"
     public void pasarAPeriodoDeGracia(int partidaId) {
-        Partida partida = partidaRepo.buscarPorId(partidaId);
-        if (partida == null) {
-            return;
-        }
+        Partida p = partidaRepo.buscarPorId(partidaId);
+        if (p == null) return;
 
-        // esto pone la partida en GRACIA solo si la config lo permite
-        partida.finalizarPorTuttiFrutti("sistema");
-        partidaRepo.guardar(partida);
+        p.setEstado(EstadoPartida.GRACIA);
+        partidaRepo.guardar(p);
 
-        // si quedó realmente en gracia, programamos el cierre
-        if (partida.getConfiguracion() != null
-                && partida.getConfiguracion().isGraciaHabilitar()
-                && partida.getEstado().esGracia()) {
+        int ms = (p.getConfiguracion() != null)
+                ? p.getConfiguracion().getDuracionGraciaSeg() * 1000
+                : 10_000;
 
-            int ms = partida.getConfiguracion().getDuracionGraciaSeg() * 1000;
-            planificador.programar(partidaId, ms, () -> ejecutarFinDeGracia(partidaId));
-        } else {
-            // si por config no había gracia, validamos de una
-            ejecutarFinDeGracia(partidaId);
-        }
+        planificador.programar(partidaId, ms, () -> ejecutarFinDeGracia(partidaId));
     }
 
-    // esto lo termina (lo llamaría el planificador)
+    // lo llama el planificador (o la consola en tu test)
     public List<Resultado> ejecutarFinDeGracia(int partidaId) {
-        // por las dudas
+        // por si había una tarea pendiente
         planificador.cancelar(partidaId);
 
-        Partida partida = partidaRepo.buscarPorId(partidaId);
-        if (partida == null) {
-            return Collections.emptyList();
+        // validar y (ahora) también guardar
+        List<Resultado> resultados = servicioValidacion.validarRespuestas(partidaId);
+
+        // pasar a FINALIZADA
+        Partida p = partidaRepo.buscarPorId(partidaId);
+        if (p != null) {
+            p.setEstado(EstadoPartida.FINALIZADA);
+            partidaRepo.guardar(p);
         }
 
-        // pasamos a FINALIZADA
-        partida.finalizarDesdeGracia();
-        partidaRepo.guardar(partida);
-
-        // y validamos
-        return servicioValidacion.validarRespuestas(partidaId);
+        return resultados != null ? resultados : Collections.emptyList();
     }
 }

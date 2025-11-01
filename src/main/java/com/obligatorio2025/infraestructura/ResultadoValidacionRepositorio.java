@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface ResultadoValidacionRepositorio {
 
-    void guardar(List<Resultado> resultados);
+    void guardarTodos(int partidaId, List<Resultado> resultados);
 
-    List<Resultado> buscarPorPartida(String partidaId);
+    List<Resultado> buscarPorPartida(int partidaId);
 }

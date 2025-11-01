@@ -5,6 +5,7 @@ import com.obligatorio2025.dominio.Partida;
 import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.RespuestaRepositorio;
+import com.obligatorio2025.infraestructura.ResultadoValidacionRepositorio;
 import com.obligatorio2025.validacion.JuezBasico;
 import com.obligatorio2025.validacion.Resultado;
 import com.obligatorio2025.validacion.ValidadorRespuesta;
@@ -18,13 +19,16 @@ public class ServicioValidacion {
     private final PartidaRepositorio partidaRepo;
     private final RespuestaRepositorio respuestaRepo;
     private final CategoriaRepositorio categoriaRepo;
+    private final ResultadoValidacionRepositorio resultadoRepo;
 
     public ServicioValidacion(PartidaRepositorio partidaRepo,
                               RespuestaRepositorio respuestaRepo,
-                              CategoriaRepositorio categoriaRepo) {
+                              CategoriaRepositorio categoriaRepo,
+                              ResultadoValidacionRepositorio resultadoRepo) {
         this.partidaRepo = partidaRepo;
         this.respuestaRepo = respuestaRepo;
         this.categoriaRepo = categoriaRepo;
+        this.resultadoRepo = resultadoRepo;
     }
 
     public List<Resultado> validarRespuestas(int partidaId) {
@@ -33,10 +37,10 @@ public class ServicioValidacion {
             return new ArrayList<>();
         }
 
-        // 1. traemos respuestas
+        // 1. respuestas de la partida
         var respuestas = respuestaRepo.buscarPorPartida(partidaId);
 
-        // 2. validador letra + categoría
+        // 2. validador básico (letra + categoría)
         var validador = new ValidadorRespuesta(categoriaRepo);
 
         List<Resultado> resultados = new ArrayList<>();
@@ -44,7 +48,7 @@ public class ServicioValidacion {
             resultados.add(validador.validar(partida, r));
         }
 
-        // 3. sacar puntajes de la config
+        // 3. puntajes según config de la partida
         ConfiguracionPartida conf = partida.getConfiguracion();
         int puntajeValida = 10;
         int puntajeDuplicada = 5;
@@ -57,16 +61,19 @@ public class ServicioValidacion {
             }
         }
 
-        // 4. aplicar puntaje a todas las VALIDAS
+        // primero ponemos el puntaje de las válidas
         for (Resultado res : resultados) {
             if (res.getVeredicto() == Veredicto.VALIDA) {
                 res.setPuntos(puntajeValida);
             }
         }
 
-        // 5. ahora sí, duplicadas (esto puede bajar algunas a puntajeDuplicada)
+        // 4. marcar duplicadas y bajarles puntaje
         JuezBasico juez = new JuezBasico(puntajeValida, puntajeDuplicada);
         juez.aplicarDuplicadas(resultados);
+
+        // 5. guardar para consultarlo después (lo que quería tu test)
+        resultadoRepo.guardarTodos(partidaId, resultados);
 
         return resultados;
     }

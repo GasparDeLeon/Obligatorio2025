@@ -1,9 +1,6 @@
 package com.obligatorio2025;
 
-import com.obligatorio2025.aplicacion.ServicioFlujoPartida;
-import com.obligatorio2025.aplicacion.ServicioLobby;
-import com.obligatorio2025.aplicacion.ServicioResultados;
-import com.obligatorio2025.aplicacion.ServicioValidacion;
+import com.obligatorio2025.aplicacion.*;
 import com.obligatorio2025.dominio.*;
 import com.obligatorio2025.dominio.enums.ModoJuego;
 import com.obligatorio2025.infraestructura.memoria.*;
@@ -14,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AppLobbyTest {
+
     public static void main(String[] args) {
 
         // 1. repos
@@ -21,35 +19,37 @@ public class AppLobbyTest {
         PartidaRepositorioEnMemoria partidaRepo = new PartidaRepositorioEnMemoria();
         RespuestaRepositorioEnMemoria respRepo = new RespuestaRepositorioEnMemoria();
         CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();
+        ResultadoValidacionRepositorioEnMemoria resValRepo = new ResultadoValidacionRepositorioEnMemoria();
+
+        // 2. servicios base
         PlanificadorTicksDummy planificador = new PlanificadorTicksDummy();
-
-        // 2. servicios
-        ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
-        ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo, catRepo);
-        ServicioResultados servRes = new ServicioResultados();
+        ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo, catRepo, resValRepo);
         ServicioFlujoPartida servFlujo = new ServicioFlujoPartida(partidaRepo, planificador, servVal);
+        ServicioPartida servPartida = new ServicioPartida(partidaRepo, servFlujo);
+        ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
+        ServicioResultados servRes = new ServicioResultados();
 
-        // 3. config de partida (ahora con puntajes)
+        // 3. config de partida
         ConfiguracionPartida conf = new ConfiguracionPartida(
-                60,     // duracionSeg
-                10,     // duracionGraciaSeg
-                3,      // rondasTotales
-                5,      // pausaEntreRondasSeg
+                60,
+                10,
+                3,
+                5,
                 ModoJuego.SINGLE,
-                true,   // graciaHabilitar
-                10,     // puntajeValida
-                5     // puntajeDuplicada
+                true,
+                20,
+                10
         );
 
-        // 4. crear sala y guardarla
+        // 4. sala
         Sala sala = new Sala(1, "ABCD", "gaspar");
         salaRepo.guardar(sala);
 
-        // 5. unirse jugadores
+        // 5. jugadores
         JugadorEnPartida j1 = new JugadorEnPartida(1);
         JugadorEnPartida j2 = new JugadorEnPartida(2);
         JugadorEnPartida j3 = new JugadorEnPartida(3);
-        JugadorEnPartida j4 = new JugadorEnPartida(4); // categoría inexistente
+        JugadorEnPartida j4 = new JugadorEnPartida(4);
 
         lobby.unirseSala("ABCD", j1);
         lobby.unirseSala("ABCD", j2);
@@ -61,10 +61,10 @@ public class AppLobbyTest {
         lobby.marcarListo("ABCD", 3);
         lobby.marcarListo("ABCD", 4);
 
-        // 6. iniciar partida
+        // 6. iniciar
         lobby.iniciarPartida("ABCD", conf, 100);
 
-        // 7. agregar una ronda
+        // 7. ronda A
         Partida partida = partidaRepo.buscarPorId(100);
         Ronda ronda = new Ronda(1, 'A');
         ronda.iniciar();
@@ -72,40 +72,31 @@ public class AppLobbyTest {
         partidaRepo.guardar(partida);
 
         // 8. respuestas
-        Respuesta r1 = new Respuesta(
-                1, 1, "Argentina",
-                100, 1, new Date()
-        );
-        Respuesta r2 = new Respuesta(
-                2, 1, "Argentina",
-                100, 1, new Date()
-        );
-        Respuesta r3 = new Respuesta(
-                3, 1, "Alemania",
-                100, 1, new Date()
-        );
-        Respuesta r4 = new Respuesta(
-                4, 999, "Atlantida",
-                100, 1, new Date()
-        );
-
+        Respuesta r1 = new Respuesta(1, 1, "Argentina", 100, 1, new Date());
+        Respuesta r2 = new Respuesta(2, 1, "Argentina", 100, 1, new Date());
+        Respuesta r3 = new Respuesta(3, 1, "Alemania", 100, 1, new Date());
+        Respuesta r4 = new Respuesta(4, 999, "Atlantida", 100, 1, new Date());
         respRepo.guardarTodas(List.of(r1, r2, r3, r4));
 
-        // 9. simular que alguien disparó tutti frutti → pasamos a gracia
-        System.out.println("\n--- Pasando a GRACIA ---");
-        servFlujo.pasarAPeriodoDeGracia(100);
+        // 9. alguno dice tutti frutti
+        System.out.println("\n--- Jugador 1 dice TUTTI FRUTTI ---");
+        servPartida.declararTuttiFrutti(100, 1);
 
-        // 10. simular que terminó la gracia → el planificador llama acá
+        // simulamos que terminó la gracia
         System.out.println("\n--- Ejecutando fin de GRACIA ---");
         List<Resultado> resultados = servFlujo.ejecutarFinDeGracia(100);
 
-        // 11. mostrar resultados
-        System.out.println("\nResultados:");
-        for (Resultado res : resultados) {
-            System.out.println(res);
+        System.out.println("\nResultados devueltos:");
+        for (Resultado r : resultados) {
+            System.out.println(r);
         }
 
-        // 12. ranking
+        System.out.println("\nResultados guardados en repo:");
+        for (Resultado r : resValRepo.buscarPorPartida(100)) {
+            System.out.println(r);
+        }
+
+        // 10. ranking
         Map<Integer, Integer> puntos = servRes.calcularPuntosPorJugador(resultados);
         var ranking = servRes.ranking(puntos);
 
