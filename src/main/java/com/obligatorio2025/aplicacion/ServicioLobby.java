@@ -7,6 +7,7 @@ import com.obligatorio2025.dominio.Sala;
 import com.obligatorio2025.dominio.enums.EstadoSala;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
+import com.obligatorio2025.infraestructura.memoria.PartidaRepositorioEnMemoria;
 
 public class ServicioLobby {
 
@@ -57,36 +58,32 @@ public class ServicioLobby {
 
 
     // 4. iniciar partida
-    public Partida iniciarPartida(String codigoSala,
-                                  ConfiguracionPartida config,
-                                  int partidaId) {
-
-        // 1. buscar sala
+    public void iniciarPartida(String codigoSala,
+                               ConfiguracionPartida configuracion,
+                               int partidaId) {
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
-            throw new IllegalArgumentException("No existe sala con código: " + codigoSala);
+            throw new IllegalArgumentException("No existe la sala con código " + codigoSala);
         }
 
-        // 2. crear la partida
-        Partida partida = new Partida(partidaId, config);
+        Partida partida = new Partida(partidaId, configuracion);
         partida.iniciar();
-
-        // 3. asociar la partida a la sala
         sala.setPartidaActual(partida);
 
-        // 4. recién ahora validar si la sala puede iniciar
+        // verificamos que la sala pueda iniciar según su lógica
         if (!sala.puedeIniciar()) {
-            throw new IllegalStateException("La sala no tiene jugadores suficientes");
+            throw new IllegalStateException("La sala no está lista para iniciar");
         }
 
-        // 5. iniciar la sala
-        sala.iniciarPartida();
-
-        // 6. persistir
+        // guardamos ambos
         salaRepositorio.guardar(sala);
         partidaRepositorio.guardar(partida);
 
-        return partida;
+        // este pedacito es SOLO para la implementación en memoria
+        if (partidaRepositorio instanceof PartidaRepositorioEnMemoria) {
+            ((PartidaRepositorioEnMemoria) partidaRepositorio)
+                    .registrarPartidaActivaParaSala(sala.getId(), partidaId);
+        }
     }
 
 
