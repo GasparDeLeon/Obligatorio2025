@@ -19,24 +19,28 @@ public class AppLobbyTest {
         CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();
         ResultadoValidacionRepositorioEnMemoria resValRepo = new ResultadoValidacionRepositorioEnMemoria();
 
-        // 2. servicios base (los de siempre)
+        // 2. servicios base
         PlanificadorTicksDummy planificador = new PlanificadorTicksDummy();
         ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo, catRepo, resValRepo);
-        ServicioFlujoPartida servFlujo = new ServicioFlujoPartida(partidaRepo, planificador, servVal);
-        ServicioPartida servPartida = new ServicioPartida(partidaRepo, servFlujo);
-        ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
-        ServicioResultados servRes = new ServicioResultados();
-        ServicioRespuestas servRespuestas = new ServicioRespuestas(respRepo, partidaRepo);
-
-        // servicio nuevo (validar una ronda concreta)
         ServicioValidacionPorRonda servValPorRonda = new ServicioValidacionPorRonda(
                 partidaRepo,
                 respRepo,
                 catRepo,
                 resValRepo
         );
+        ServicioFlujoPartida servFlujo = new ServicioFlujoPartida(
+                partidaRepo,
+                planificador,
+                servVal,
+                servValPorRonda
+        );
+        ServicioPartida servPartida = new ServicioPartida(partidaRepo, servFlujo);
+        ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
+        ServicioResultados servRes = new ServicioResultados();
+        ServicioRespuestas servRespuestas = new ServicioRespuestas(respRepo, partidaRepo);
+        ServicioRondas servRondas = new ServicioRondas(partidaRepo);
 
-        // 3. config de partida
+        // 3. config de partida (3 rondas)
         ConfiguracionPartida conf = new ConfiguracionPartida(
                 60,
                 10,
@@ -53,81 +57,111 @@ public class AppLobbyTest {
         salaRepo.guardar(sala);
 
         // 5. jugadores
-        JugadorEnPartida j1 = new JugadorEnPartida(1);
-        JugadorEnPartida j2 = new JugadorEnPartida(2);
-        JugadorEnPartida j3 = new JugadorEnPartida(3);
-        JugadorEnPartida j4 = new JugadorEnPartida(4);
-
-        lobby.unirseSala("ABCD", j1);
-        lobby.unirseSala("ABCD", j2);
-        lobby.unirseSala("ABCD", j3);
-        lobby.unirseSala("ABCD", j4);
+        lobby.unirseSala("ABCD", new JugadorEnPartida(1));
+        lobby.unirseSala("ABCD", new JugadorEnPartida(2));
+        lobby.unirseSala("ABCD", new JugadorEnPartida(3));
+        lobby.unirseSala("ABCD", new JugadorEnPartida(4));
 
         lobby.marcarListo("ABCD", 1);
         lobby.marcarListo("ABCD", 2);
         lobby.marcarListo("ABCD", 3);
         lobby.marcarListo("ABCD", 4);
 
-        // 6. iniciar partida
+        // 6. iniciar
         lobby.iniciarPartida("ABCD", conf, 100);
 
-        // 7. ronda 1 (A)
-        Partida partida = partidaRepo.buscarPorId(100);
-        Ronda ronda1 = new Ronda(1, 'A');
-        ronda1.iniciar();
-        partida.agregarRonda(ronda1);
-        partidaRepo.guardar(partida);
+        // =========================
+        // RONDA 1 - letra A
+        // =========================
+        servRondas.crearEIniciarRonda(100, 1, 'A');
 
-        // respuestas ronda 1
         servRespuestas.registrarRespuesta(100, 1, 1, 1, "Argentina");
         servRespuestas.registrarRespuesta(100, 1, 2, 1, "Argentina");
         servRespuestas.registrarRespuesta(100, 1, 3, 1, "Alemania");
         servRespuestas.registrarRespuesta(100, 1, 4, 999, "Atlantida");
 
-        System.out.println("\n--- Validando RONDA 1 ---");
-        List<Resultado> resRonda1 = servValPorRonda.validarRonda(100, 1);
-        for (Resultado r : resRonda1) {
+        System.out.println("\n--- Jugador 1 dice TUTTI FRUTTI (ronda 1) ---");
+        servPartida.declararTuttiFrutti(100, 1);
+
+        System.out.println("\n--- Ejecutando fin de GRACIA (ronda 1) ---");
+        List<Resultado> resultadosR1 = servFlujo.ejecutarFinDeGracia(100);
+
+        System.out.println("\nResultados ronda 1:");
+        for (Resultado r : resultadosR1) {
             System.out.println(r);
         }
 
-        // ranking parcial después de ronda 1
-        var rankingParcial = servRes.armarRanking(resValRepo.buscarPorPartida(100));
-        System.out.println("\nRanking parcial (después de ronda 1):");
-        for (var entrada : rankingParcial) {
+        // mostramos ranking acumulado hasta acá
+        System.out.println("\nRanking acumulado tras ronda 1:");
+        var rankingR1 = servRes.armarRankingConPosiciones(resValRepo.buscarPorPartida(100));
+        for (var entrada : rankingR1) {
             System.out.println(entrada);
         }
 
-        // 8. ronda 2 (M)
-        partida = partidaRepo.buscarPorId(100);
-        Ronda ronda2 = new Ronda(2, 'M');
-        ronda2.iniciar();
-        partida.agregarRonda(ronda2);
-        partidaRepo.guardar(partida);
+        // =========================
+        // RONDA 2 - letra M
+        // =========================
+        servRondas.crearEIniciarRonda(100, 2, 'M');
 
-        // respuestas ronda 2 (usa categoria 2: ciudades con M, según el repo en memoria)
-        servRespuestas.registrarRespuesta(100, 2, 1, 2, "Montevideo");
-        servRespuestas.registrarRespuesta(100, 2, 2, 2, "Madrid");
-        servRespuestas.registrarRespuesta(100, 2, 3, 2, "Montevideo");
+        servRespuestas.registrarRespuesta(100, 2, 1, 2, "Madrid");
+        servRespuestas.registrarRespuesta(100, 2, 2, 2, "Montevideo");
+        servRespuestas.registrarRespuesta(100, 2, 3, 2, "Madrid");
         servRespuestas.registrarRespuesta(100, 2, 4, 999, "Mar del Plata");
 
-        System.out.println("\n--- Validando RONDA 2 ---");
-        List<Resultado> resRonda2 = servValPorRonda.validarRonda(100, 2);
-        for (Resultado r : resRonda2) {
+        System.out.println("\n--- Jugador 2 dice TUTTI FRUTTI (ronda 2) ---");
+        servPartida.declararTuttiFrutti(100, 2);
+
+        System.out.println("\n--- Ejecutando fin de GRACIA (ronda 2) ---");
+        List<Resultado> resultadosR2 = servFlujo.ejecutarFinDeGracia(100);
+
+        System.out.println("\nResultados ronda 2:");
+        for (Resultado r : resultadosR2) {
             System.out.println(r);
         }
 
-        // ranking acumulado (ronda 1 + ronda 2)
-        var rankingAcumulado = servRes.armarRanking(resValRepo.buscarPorPartida(100));
-        System.out.println("\nRanking acumulado (después de ronda 2):");
-        for (var entrada : rankingAcumulado) {
+        System.out.println("\nRanking acumulado tras ronda 2:");
+        var rankingR2 = servRes.armarRankingConPosiciones(resValRepo.buscarPorPartida(100));
+        for (var entrada : rankingR2) {
             System.out.println(entrada);
         }
 
-        // 9. limpiar partida activa de la sala en el repo de memoria
-        partidaRepo.desactivarPartidaParaSala(1, 100);
+        // =========================
+        // RONDA 3 - letra A otra vez (para cerrar)
+        // =========================
+        servRondas.crearEIniciarRonda(100, 3, 'A');
 
-        // 10. comprobar
+        servRespuestas.registrarRespuesta(100, 3, 1, 1, "Alemania");
+        servRespuestas.registrarRespuesta(100, 3, 2, 1, "Arabia Saudita");
+        servRespuestas.registrarRespuesta(100, 3, 3, 1, "Argentina");
+        servRespuestas.registrarRespuesta(100, 3, 4, 999, "Atlantida");
+
+        System.out.println("\n--- Jugador 3 dice TUTTI FRUTTI (ronda 3) ---");
+        servPartida.declararTuttiFrutti(100, 3);
+
+        System.out.println("\n--- Ejecutando fin de GRACIA (ronda 3) ---");
+        List<Resultado> resultadosR3 = servFlujo.ejecutarFinDeGracia(100);
+
+        System.out.println("\nResultados ronda 3:");
+        for (Resultado r : resultadosR3) {
+            System.out.println(r);
+        }
+
+        System.out.println("\nRanking final:");
+        var rankingFinal = servRes.armarRankingConPosiciones(resValRepo.buscarPorPartida(100));
+        for (var entrada : rankingFinal) {
+            System.out.println(entrada);
+        }
+
+        // limpiar partida activa en el repo en memoria (esto es solo para tu prueba)
+        if (partidaRepo instanceof PartidaRepositorioEnMemoria) {
+            ((PartidaRepositorioEnMemoria) partidaRepo)
+                    .desactivarPartidaParaSala(1, 100);
+        }
+
         var partidaActiva = partidaRepo.buscarActivaPorSala(1);
         System.out.println("\nPartida activa para sala 1 (debería ser null): " + partidaActiva);
+
+        Partida pFinal = partidaRepo.buscarPorId(100);
+        System.out.println("Estado final de la partida 100: " + (pFinal != null ? pFinal.getEstado() : "no existe"));
     }
 }

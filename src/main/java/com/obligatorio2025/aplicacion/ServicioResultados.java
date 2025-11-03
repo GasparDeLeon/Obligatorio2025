@@ -7,49 +7,55 @@ import java.util.stream.Collectors;
 
 public class ServicioResultados {
 
-    // 1. suma puntos por jugador a partir de la lista de Resultados
+    // calcula puntos por jugador a partir de una lista de resultados
     public Map<Integer, Integer> calcularPuntosPorJugador(List<Resultado> resultados) {
         Map<Integer, Integer> puntos = new HashMap<>();
         for (Resultado r : resultados) {
-            int jugadorId = r.getJugadorId();
-            int actual = puntos.getOrDefault(jugadorId, 0);
-            puntos.put(jugadorId, actual + r.getPuntos());
+            puntos.merge(r.getJugadorId(), r.getPuntos(), Integer::sum);
         }
         return puntos;
     }
 
-    // 2. arma el ranking ordenado
+    // el que ya veníamos usando: devuelve lista ordenada de mayor a menor
     public List<EntradaRanking> armarRanking(List<Resultado> resultados) {
-        Map<Integer, Integer> puntosPorJugador = calcularPuntosPorJugador(resultados);
-
-        return puntosPorJugador.entrySet()
+        Map<Integer, Integer> puntos = calcularPuntosPorJugador(resultados);
+        return puntos.entrySet()
                 .stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
                 .map(e -> new EntradaRanking(e.getKey(), e.getValue()))
-                .sorted((a, b) -> {
-                    // primero por puntos descendente
-                    int cmp = Integer.compare(b.puntos, a.puntos);
-                    if (cmp != 0) return cmp;
-                    // empate: por jugadorId ascendente
-                    return Integer.compare(a.jugadorId, b.jugadorId);
-                })
                 .collect(Collectors.toList());
     }
 
-    // 3. versión compatible con tu main actual
-    // si querés seguir usando Map y var ranking = servRes.ranking(puntos);
-    // podés dejar este método también
-    public List<Map.Entry<Integer, Integer>> ranking(Map<Integer, Integer> puntosPorJugador) {
-        return puntosPorJugador.entrySet()
-                .stream()
-                .sorted((a, b) -> {
-                    int cmp = Integer.compare(b.getValue(), a.getValue());
-                    if (cmp != 0) return cmp;
-                    return Integer.compare(a.getKey(), b.getKey());
-                })
-                .collect(Collectors.toList());
+    // NUEVO: ranking con posición, manejando empates
+    public List<EntradaRankingConPosicion> armarRankingConPosiciones(List<Resultado> resultados) {
+        // primero usamos el ranking normal
+        List<EntradaRanking> base = armarRanking(resultados);
+
+        List<EntradaRankingConPosicion> salida = new ArrayList<>();
+        int posicionActual = 0;
+        int ultimoPuntaje = -1;
+        int indice = 0;
+
+        for (EntradaRanking entrada : base) {
+            indice++;
+
+            if (entrada.getPuntos() != ultimoPuntaje) {
+                // nuevo puntaje → nueva posición
+                posicionActual = indice;
+                ultimoPuntaje = entrada.getPuntos();
+            }
+
+            salida.add(new EntradaRankingConPosicion(
+                    posicionActual,
+                    entrada.getJugadorId(),
+                    entrada.getPuntos()
+            ));
+        }
+
+        return salida;
     }
 
-    // DTO simple para la vista / API
+    // clase de siempre
     public static class EntradaRanking {
         private final int jugadorId;
         private final int puntos;
@@ -70,6 +76,36 @@ public class ServicioResultados {
         @Override
         public String toString() {
             return "Jugador " + jugadorId + " -> " + puntos + " pts";
+        }
+    }
+
+    // nueva clase para mostrar posición
+    public static class EntradaRankingConPosicion {
+        private final int posicion;
+        private final int jugadorId;
+        private final int puntos;
+
+        public EntradaRankingConPosicion(int posicion, int jugadorId, int puntos) {
+            this.posicion = posicion;
+            this.jugadorId = jugadorId;
+            this.puntos = puntos;
+        }
+
+        public int getPosicion() {
+            return posicion;
+        }
+
+        public int getJugadorId() {
+            return jugadorId;
+        }
+
+        public int getPuntos() {
+            return puntos;
+        }
+
+        @Override
+        public String toString() {
+            return posicion + "° - Jugador " + jugadorId + " -> " + puntos + " pts";
         }
     }
 }
