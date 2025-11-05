@@ -3,26 +3,27 @@ package com.obligatorio2025.infraestructura.memoria;
 import com.obligatorio2025.dominio.Respuesta;
 import com.obligatorio2025.infraestructura.RespuestaRepositorio;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RespuestaRepositorioEnMemoria implements RespuestaRepositorio {
 
-    // Mapa con clave = id de partida, valor = lista de respuestas de esa partida
-    private final Map<Integer, List<Respuesta>> respuestasPorPartida = new HashMap<>();
+    private final List<Respuesta> respuestas = new ArrayList<>();
 
     @Override
-    public void guardarTodas(List<Respuesta> respuestas) {
-        if (respuestas == null || respuestas.isEmpty()) return;
-
-        // Se asume que todas las respuestas pertenecen a la misma partida
-        int partidaId = respuestas.get(0).getPartidaId();
-        respuestasPorPartida.put(partidaId, respuestas);
+    public synchronized void guardarTodas(List<Respuesta> nuevas) {
+        // ✅ ACUMULAMOS, no reemplazamos
+        if (nuevas == null || nuevas.isEmpty()) {
+            return;
+        }
+        respuestas.addAll(nuevas);
     }
 
     @Override
-    public List<Respuesta> buscarPorPartida(int partidaId) {
-        return respuestasPorPartida.getOrDefault(partidaId, List.of());
+    public synchronized List<Respuesta> buscarPorPartida(int partidaId) {
+        return respuestas.stream()
+                .filter(r -> r.getPartidaId() == partidaId)
+                .collect(Collectors.toList());
     }
 }

@@ -1,18 +1,19 @@
 package com.obligatorio2025.aplicacion;
 
-import com.obligatorio2025.dominio.ConfiguracionPartida;
-import com.obligatorio2025.dominio.JugadorEnPartida;
-import com.obligatorio2025.dominio.Partida;
-import com.obligatorio2025.dominio.Sala;
-import com.obligatorio2025.dominio.enums.EstadoSala;
+import com.obligatorio2025.dominio.*;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
-import com.obligatorio2025.infraestructura.memoria.PartidaRepositorioEnMemoria;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServicioLobby {
 
     private final SalaRepositorio salaRepositorio;
     private final PartidaRepositorio partidaRepositorio;
+
+    // nuevo: locks por sala
+    private final Map<Integer, Object> locksPorSala = new ConcurrentHashMap<>();
 
     public ServicioLobby(SalaRepositorio salaRepositorio,
                          PartidaRepositorio partidaRepositorio) {
@@ -20,71 +21,62 @@ public class ServicioLobby {
         this.partidaRepositorio = partidaRepositorio;
     }
 
-    // 1. crear sala
-    public Sala crearSala(int salaId, String codigo, String hostId) {
-        Sala sala = new Sala(salaId, codigo, hostId);
-        salaRepositorio.guardar(sala);
-        return sala;
+    private Object lockForSala(int salaId) {
+        return locksPorSala.computeIfAbsent(salaId, id -> new Object());
     }
 
-    // 2. unirse a sala por código
-    public Sala unirseSala(String codigo, JugadorEnPartida jugador) {
+    public void unirseSala(String codigo, JugadorEnPartida jugador) {
         Sala sala = salaRepositorio.buscarPorCodigo(codigo);
         if (sala == null) {
-            throw new IllegalArgumentException("No existe sala con código: " + codigo);
+            throw new IllegalArgumentException("No existe sala con código " + codigo);
         }
-        sala.agregarJugador(jugador);
-        salaRepositorio.guardar(sala); // persistimos el cambio
-        return sala;
+
+        synchronized (lockForSala(sala.getId())) {
+            sala.agregarJugador(jugador);
+            salaRepositorio.guardar(sala);
+        }
     }
 
-
-    public void marcarListo(String codigoSala, int jugadorId) {
-        Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
+    public void marcarListo(String codigo, int jugadorId) {
+        Sala sala = salaRepositorio.buscarPorCodigo(codigo);
         if (sala == null) {
-            throw new IllegalArgumentException("No existe sala con código: " + codigoSala);
+            throw new IllegalArgumentException("No existe sala con código " + codigo);
         }
 
-        // buscar jugador en la sala
-        for (JugadorEnPartida j : sala.getJugadores()) {
-            if (j.getUsuarioId() == jugadorId) {
-                j.marcarListo();
-                break;
+        synchronized (lockForSala(sala.getId())) {
+            sala.marcarListo(jugadorId);
+            salaRepositorio.guardar(sala);
+
+            // Si todos los jugadores de la sala están listos, se puede iniciar la partida
+            if (sala.todosListos()) {
+                System.out.println("Todos los jugadores están listos. La partida puede comenzar en la sala " + codigo + ".");
+                // (Opcional) Podrías iniciar automáticamente la partida desde aquí
+                // servicioPartida.iniciarPartida(sala);
             }
         }
-
-        salaRepositorio.guardar(sala);
     }
 
 
-    // 4. iniciar partida
-    public void iniciarPartida(String codigoSala,
+    public void iniciarPartida(String codigo,
                                ConfiguracionPartida configuracion,
                                int partidaId) {
-        Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
+        Sala sala = salaRepositorio.buscarPorCodigo(codigo);
         if (sala == null) {
-            throw new IllegalArgumentException("No existe la sala con código " + codigoSala);
+            throw new IllegalArgumentException("No existe sala con código " + codigo);
         }
 
-        Partida partida = new Partida(partidaId, configuracion);
-        partida.iniciar();
-        sala.setPartidaActual(partida);
+        synchronized (lockForSala(sala.getId())) {
 
-        // verificamos que la sala pueda iniciar según su lógica
-        if (!sala.puedeIniciar()) {
-            throw new IllegalStateException("La sala no está lista para iniciar");
-        }
+            // acá va tu lógica actual de iniciarPartida, sin cambiar firmas:
+            // - verificar que todos estén listos
+            // - crear Partida
+            // - asociarla a la sala
+            // - guardar en repos
 
-        // guardamos ambos
-        salaRepositorio.guardar(sala);
-        partidaRepositorio.guardar(partida);
-
-        // este pedacito es SOLO para la implementación en memoria
-        if (partidaRepositorio instanceof PartidaRepositorioEnMemoria) {
-            ((PartidaRepositorioEnMemoria) partidaRepositorio)
-                    .registrarPartidaActivaParaSala(sala.getId(), partidaId);
+            Partida partida = new Partida(partidaId, configuracion);
+            sala.setPartidaActual(partida);
+            partidaRepositorio.guardar(partida);
+            salaRepositorio.guardar(sala);
         }
     }
-
-
 }

@@ -1,41 +1,59 @@
 package com.obligatorio2025.aplicacion;
 
 import com.obligatorio2025.dominio.Partida;
+import com.obligatorio2025.dominio.enums.EstadoPartida;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServicioPartida {
 
-    private final PartidaRepositorio partidaRepo;
-    private final ServicioFlujoPartida flujoPartida;
+    private final PartidaRepositorio partidaRepositorio;
+    private final ServicioFlujoPartida servicioFlujoPartida;
 
-    public ServicioPartida(PartidaRepositorio partidaRepo,
-                           ServicioFlujoPartida flujoPartida) {
-        this.partidaRepo = partidaRepo;
-        this.flujoPartida = flujoPartida;
+    // nuevo: locks por partida, para manejar concurrencia en declararTuttiFrutti
+    private final Map<Integer, Object> locksPorPartida = new ConcurrentHashMap<>();
+
+    public ServicioPartida(PartidaRepositorio partidaRepositorio,
+                           ServicioFlujoPartida servicioFlujoPartida) {
+        this.partidaRepositorio = partidaRepositorio;
+        this.servicioFlujoPartida = servicioFlujoPartida;
     }
 
-    // esto es lo que en el juego pasa cuando un jugador dice “tutti frutti”
+    private Object lockForPartida(int partidaId) {
+        return locksPorPartida.computeIfAbsent(partidaId, id -> new Object());
+    }
+
+    /**
+     * Lo llama alguien cuando declara "Tutti Frutti".
+     * Ahora es thread-safe:
+     * - solo dejamos pasar si la partida está EN_CURSO
+     * - si ya está en GRACIA o FINALIZADA, la segunda llamada no hace nada
+     */
     public void declararTuttiFrutti(int partidaId, int jugadorId) {
-        Partida partida = partidaRepo.buscarPorId(partidaId);
+        Partida partida = partidaRepositorio.buscarPorId(partidaId);
         if (partida == null) {
-            return;
+            throw new IllegalArgumentException("No existe la partida " + partidaId);
         }
 
-        // el dominio decide: quedó en gracia o terminó directo
-        partida.finalizarPorTuttiFrutti(String.valueOf(jugadorId));
-        partidaRepo.guardar(partida);
+        synchronized (lockForPartida(partidaId)) {
+            // refrescamos la partida por si otro hilo la cambió antes
+            Partida p = partidaRepositorio.buscarPorId(partidaId);
+            if (p == null) {
+                throw new IllegalStateException("La partida " + partidaId + " desapareció");
+            }
 
-        // si el dominio dejó la partida en GRACIA → delegamos al orquestador
-        if (partida.getEstado().esGracia()) {
-            flujoPartida.pasarAPeriodoDeGracia(partidaId);
-        } else {
-            // si la config no tenía gracia, cerramos acá mismo
-            flujoPartida.ejecutarFinDeGracia(partidaId);
+            // solo disparamos el período de gracia si la partida sigue en curso
+            if (p.getEstado() == EstadoPartida.EN_CURSO) {
+                servicioFlujoPartida.pasarAPeriodoDeGracia(partidaId);
+            } else {
+                // si ya está en GRACIA o FINALIZADA, ignoramos el segundo "tutti frutti"
+                System.out.println(
+                        "Ignorando 'Tutti Frutti' de jugador " + jugadorId +
+                                " porque la partida " + partidaId + " está en estado " + p.getEstado()
+                );
+            }
         }
-    }
-
-    // por si el planificador o alguien más quiere forzar el cierre
-    public void cerrarPorGracia(int partidaId) {
-        flujoPartida.ejecutarFinDeGracia(partidaId);
     }
 }

@@ -1,7 +1,6 @@
 package com.obligatorio2025.dominio;
 
 import com.obligatorio2025.dominio.enums.EstadoJugador;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,11 +9,18 @@ public class JugadorEnPartida {
     private int usuarioId;
     private List<Respuesta> respuestas;
     private EstadoJugador estado;
+    private boolean listo;
 
     public JugadorEnPartida(int usuarioId) {
         this.usuarioId = usuarioId;
         this.respuestas = new ArrayList<>();
         this.estado = EstadoJugador.INACTIVO;
+        this.listo = false;
+    }
+
+    // alias compatible con Sala
+    public int getJugadorId() {
+        return usuarioId;
     }
 
     public int getUsuarioId() {
@@ -35,6 +41,7 @@ public class JugadorEnPartida {
 
     public void marcarListo() {
         this.estado = EstadoJugador.LISTO;
+        this.listo = true;
     }
 
     public void rendirse() {
@@ -43,5 +50,13 @@ public class JugadorEnPartida {
 
     public void desconectar() {
         this.estado = EstadoJugador.DESCONECTADO;
+    }
+
+    public boolean isListo() {
+        return listo;
+    }
+
+    public void setListo(boolean listo) {
+        this.listo = listo;
     }
 }

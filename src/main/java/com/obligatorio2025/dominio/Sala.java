@@ -86,5 +86,21 @@ public class Sala {
     public void setId(int id) {
         this.id = id;
     }
+    public void marcarListo(int jugadorId) {
+        for (JugadorEnPartida j : jugadores) {
+            if (j.getJugadorId() == jugadorId) {
+                j.setListo(true);
+                return;
+            }
+        }
+        throw new IllegalArgumentException("No existe jugador con ID " + jugadorId + " en la sala");
+    }
+    public boolean todosListos() {
+        if (jugadores == null || jugadores.isEmpty()) return false;
+        for (JugadorEnPartida j : jugadores) {
+            if (!j.isListo()) return false;
+        }
+        return true;
+    }
 
 }
