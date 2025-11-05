@@ -37,18 +37,20 @@ public class ServicioPartida {
             throw new IllegalArgumentException("No existe la partida " + partidaId);
         }
 
+        // 👇 defensa extra: sin rondas activas, no tiene sentido declarar tutti frutti
+        if (partida.getRondas() == null || partida.getRondas().isEmpty()) {
+            throw new IllegalStateException("La partida " + partidaId + " no tiene ninguna ronda creada");
+        }
+
         synchronized (lockForPartida(partidaId)) {
-            // refrescamos la partida por si otro hilo la cambió antes
             Partida p = partidaRepositorio.buscarPorId(partidaId);
             if (p == null) {
                 throw new IllegalStateException("La partida " + partidaId + " desapareció");
             }
 
-            // solo disparamos el período de gracia si la partida sigue en curso
             if (p.getEstado() == EstadoPartida.EN_CURSO) {
                 servicioFlujoPartida.pasarAPeriodoDeGracia(partidaId);
             } else {
-                // si ya está en GRACIA o FINALIZADA, ignoramos el segundo "tutti frutti"
                 System.out.println(
                         "Ignorando 'Tutti Frutti' de jugador " + jugadorId +
                                 " porque la partida " + partidaId + " está en estado " + p.getEstado()
@@ -56,4 +58,5 @@ public class ServicioPartida {
             }
         }
     }
+
 }
