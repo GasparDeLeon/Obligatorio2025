@@ -37,7 +37,7 @@ public class ServicioPartida {
             throw new IllegalArgumentException("No existe la partida " + partidaId);
         }
 
-        // 👇 defensa extra: sin rondas activas, no tiene sentido declarar tutti frutti
+        // defensa extra: sin rondas activas, no tiene sentido declarar tutti frutti
         if (partida.getRondas() == null || partida.getRondas().isEmpty()) {
             throw new IllegalStateException("La partida " + partidaId + " no tiene ninguna ronda creada");
         }

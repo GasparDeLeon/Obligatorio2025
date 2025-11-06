@@ -3,41 +3,69 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Datos del proyecto -->
     <groupId>com.equipo</groupId>
     <artifactId>Obligatorio2025</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>Obligatorio2025</name>
     <description>Proyecto Tutti Frutti - Obligatorio 2025</description>
 
-    <!-- Usamos 21 porque tenés JDK nuevo. Después lo bajamos a 17 si hace falta. -->
+    <!-- 👇 Esto hace que heredemos versions de Spring Boot -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
     <properties>
+        <!-- podés bajarlo a 17 si tu compu/profe lo pide -->
         <java.version>21</java.version>
     </properties>
 
     <dependencies>
-        <!-- Por ahora NINGÚN framework. Dominio puro.
-             Después agregamos Spring si lo querés. -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.10.2</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+        </dependency>
+
+
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Plugin para compilar con la versión de Java que tengas -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
-            <!-- Tests con JUnit 5 -->
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -45,4 +73,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
