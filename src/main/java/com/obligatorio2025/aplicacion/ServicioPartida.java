@@ -22,7 +22,7 @@ public class ServicioPartida {
 
         if (partida.getEstado().esGracia()) {
             int ms = partida.getConfiguracion().getDuracionGraciaSeg() * 1000;
-//            planificador.programar(partidaId, ms);
+          //  planificador.programar(partidaId, ms);
         }
     }
 

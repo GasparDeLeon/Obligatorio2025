@@ -1,0 +1,4 @@
+spring.thymeleaf.cache=false
+spring.application.name=obligatorio2025
+spring.mvc.view.prefix=/WEB-INF/views/
+spring.mvc.view.suffix=.jsp
