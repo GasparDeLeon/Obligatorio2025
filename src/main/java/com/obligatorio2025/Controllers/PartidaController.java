@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.*;
 public class PartidaController {
 
     @GetMapping("/configurar")
-    public String configurarPartida(@RequestParam(defaultValue = "solo") String modo,
-                                    Model model) {
+    public String configurarPartida(@RequestParam(defaultValue = "solo") String modo, Model model) {
 
+        // normalizamos un poco
         if (!modo.equals("solo") && !modo.equals("crear-sala") && !modo.equals("unirse-sala")) {
             modo = "solo";
         }
@@ -22,28 +22,11 @@ public class PartidaController {
             default -> titulo = "Configurar Partida (Modo Solitario)";
         }
 
-        ConfigurarPartidaForm config = new ConfigurarPartidaForm();
-
-        // defaults por modo
-        switch (modo) {
-            case "solo" -> {
-                config.setCantidadRondas(1);
-                config.setDuracionTurnoSeg(60);
-                config.setTiempoGraciaSeg(0);
-            }
-            case "crear-sala" -> {
-                config.setCantidadRondas(3);
-                config.setDuracionTurnoSeg(60);
-                config.setTiempoGraciaSeg(10);
-            }
-            case "unirse-sala" -> {
-                // nada por ahora
-            }
-        }
-
         model.addAttribute("modo", modo);
         model.addAttribute("titulo", titulo);
-        model.addAttribute("config", config);
+
+        // objeto “formulario” vacío (lo usamos en el HTML con th:field)
+        model.addAttribute("config", new ConfigurarPartidaForm());
 
         return "configurarPartida";
     }
@@ -53,33 +36,30 @@ public class PartidaController {
                                         @ModelAttribute("config") ConfigurarPartidaForm config,
                                         Model model) {
 
-        // TODO: después enchufamos tus servicios de dominio
-
         switch (modo) {
             case "solo" -> {
                 System.out.println("== INICIAR PARTIDA SOLO ==");
                 System.out.println("Duración: " + config.getDuracionTurnoSeg());
-                // crear partida single + redirect a pantalla de juego
+                // TODO: crear partida single + redirect a pantalla de juego
             }
-            case "cr
+            case "crear-sala" -> {
                 System.out.println("== CREAR SALA MULTI ==");
                 System.out.println("Rondas: " + config.getCantidadRondas());
                 System.out.println("Turno: " + config.getDuracionTurnoSeg());
                 System.out.println("Gracia: " + config.getTiempoGraciaSeg());
-                // crear sala, generar código (ej: ABCD) y mostrarlo en otra vista
+                // TODO: crear sala, generar código y mostrarlo en otra vista
             }
             case "unirse-sala" -> {
                 System.out.println("== UNIRSE A SALA ==");
                 System.out.println("Código: " + config.getCodigoSala());
-                // validar código; si no existe, mostrar error:
-                // model.addAttribute("error", "No existe una sala con ese código");
-                // model.addAttribute("modo", modo);
-                // model.addAttribute("titulo", "Unirse a Sala Multijugador");
-                // return "configurarPartida";
+                // TODO: validar código / manejar errores
+            }
+            default -> {
+                System.out.println("Modo desconocido, volviendo al inicio");
             }
         }
 
-        // por ahora: volver al home
+        // por ahora, volvemos a la home
         return "redirect:/";
     }
 }
