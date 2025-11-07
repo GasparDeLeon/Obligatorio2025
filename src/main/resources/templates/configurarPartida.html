@@ -1,10 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title th:text="${titulo}">Configurar Partida</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #4b53ffab 0%, #6b73ffdd 50%, #5a5fff 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 30px;
+            padding: 30px 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            width: 95%;
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .modo {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .field-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            gap: 10px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .btn-primary {
+            background: #FFD43B;
+            color: #333;
+        }
+
+        .btn-secondary {
+            background: #eee;
+            color: #333;
+        }
+
+        a.btn-secondary {
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .error {
+            color: #c0392b;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
+
+<div class="card" th:object="${config}">
+    <h1 th:text="${titulo}">Configurar Partida</h1>
+    <p class="modo" th:text="'Modo: ' + ${modo}">Modo: ???</p>
+
+    <p class="error" th:if="${error}" th:text="${error}"></p>
+
+    <!-- importante: mandamos el modo de vuelta en el POST -->
+    <form method="post" th:action="@{/configurar}">
+        <input type="hidden" name="modo" th:value="${modo}"/>
+
+        <!-- MODO SOLO: solo duración de turno -->
+        <div th:if="${modo == 'solo'}">
+            <div class="field-group">
+                <label for="duracionTurnoSolo">Duración de la ronda (segundos)</label>
+                <input type="number" id="duracionTurnoSolo"
+                       th:field="*{duracionTurnoSeg}"
+                       min="10" max="300">
+            </div>
+            <!-- valores fijos ocultos -->
+            <input type="hidden" th:field="*{cantidadRondas}" value="1"/>
+            <input type="hidden" th:field="*{tiempoGraciaSeg}" value="0"/>
+        </div>
+
+        <!-- MODO CREAR-SALA: rondas + turno + gracia -->
+        <div th:if="${modo == 'crear-sala'}">
+            <div class="field-group">
+                <label for="cantRondas">Cantidad de rondas</label>
+                <select id="cantRondas" th:field="*{cantidadRondas}">
+                    <option value="1">1 ronda</option>
+                    <option value="3" selected>3 rondas</option>
+                    <option value="5">5 rondas</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label for="duracionTurnoMulti">Duración de cada turno (segundos)</label>
+                <input type="number" id="duracionTurnoMulti"
+                       th:field="*{duracionTurnoSeg}"
+                       min="10" max="300">
+            </div>
+
+            <div class="field-group">
+                <label for="duracionGracia">Tiempo de gracia (segundos)</label>
+                <input type="number" id="duracionGracia"
+                       th:field="*{tiempoGraciaSeg}"
+                       min="5" max="60">
+            </div>
+        </div>
+
+        <!-- MODO UNIRSE-SALA: solo código de sala -->
+        <div th:if="${modo == 'unirse-sala'}">
+            <div class="field-group">
+                <label for="codigoSala">Código de la sala</label>
+                <input type="text" id="codigoSala"
+                       th:field="*{codigoSala}"
+                       placeholder="Ej: ABCD"
+                       maxlength="10">
+            </div>
+        </div>
+
+        <div class="actions">
+            <a href="/" class="btn btn-secondary">Volver al inicio</a>
+            <button type="submit" class="btn btn-primary">Comenzar</button>
+        </div>
+    </form>
+</div>
 
 </body>
 </html>
