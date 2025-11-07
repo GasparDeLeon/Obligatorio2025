@@ -3,6 +3,8 @@ package com.obligatorio2025.aplicacion;
 import com.obligatorio2025.dominio.*;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
+import com.obligatorio2025.dominio.enums.EstadoPartida;
+
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,9 +59,7 @@ public class ServicioLobby {
     }
 
 
-    public void iniciarPartida(String codigo,
-                               ConfiguracionPartida configuracion,
-                               int partidaId) {
+    public void iniciarPartida(String codigo, ConfiguracionPartida configuracion, int partidaId) {
         Sala sala = salaRepositorio.buscarPorCodigo(codigo);
         if (sala == null) {
             throw new IllegalArgumentException("No existe sala con código " + codigo);
@@ -67,16 +67,26 @@ public class ServicioLobby {
 
         synchronized (lockForSala(sala.getId())) {
 
-            // acá va tu lógica actual de iniciarPartida, sin cambiar firmas:
-            // - verificar que todos estén listos
-            // - crear Partida
-            // - asociarla a la sala
-            // - guardar en repos
+            // opcional pero consistente con la idea del lobby:
+            // si no están todos listos, no tendría sentido iniciar
+            if (!sala.todosListos()) {
+                throw new IllegalStateException(
+                        "No se puede iniciar la partida en la sala " + codigo +
+                                " porque hay jugadores que no están listos"
+                );
+            }
 
             Partida partida = new Partida(partidaId, configuracion);
+
+            // 🔴 IMPORTANTE: marcar la partida como EN_CURSO
+            partida.setEstado(EstadoPartida.EN_CURSO);
+
             sala.setPartidaActual(partida);
+
+            // guardar en repos
             partidaRepositorio.guardar(partida);
             salaRepositorio.guardar(sala);
         }
     }
+
 }
