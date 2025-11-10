@@ -11,15 +11,20 @@ import java.util.List;
 public class ValidadorRespuesta {
 
     private final CategoriaRepositorio categoriaRepositorio;
+    private final ServicioIA servicioIA;
 
-    public ValidadorRespuesta(CategoriaRepositorio categoriaRepositorio) {
+    public ValidadorRespuesta(CategoriaRepositorio categoriaRepositorio,
+                              ServicioIA servicioIA) {
         this.categoriaRepositorio = categoriaRepositorio;
+        this.servicioIA = servicioIA;
     }
 
     public Resultado validar(Partida partida, Respuesta respuesta) {
 
+        String textoOriginal = respuesta.getTexto();
+
         // 1. vacío
-        if (respuesta.getTexto() == null || respuesta.getTexto().isBlank()) {
+        if (textoOriginal == null || textoOriginal.isBlank()) {
             return new Resultado(
                     respuesta.getTexto(),
                     respuesta.getJugadorId(),
@@ -32,11 +37,11 @@ public class ValidadorRespuesta {
 
         // 2. letra de la ronda
         Ronda rondaActual = obtenerRondaActual(partida);
+        char letraRonda = 0;
         if (rondaActual != null) {
-            char letraRonda = Character.toUpperCase(rondaActual.getLetra());
+            letraRonda = Character.toUpperCase(rondaActual.getLetra());
 
-            String texto = respuesta.getTexto();
-            char primeraNormalizada = normalizarPrimerCaracter(texto);
+            char primeraNormalizada = normalizarPrimerCaracter(textoOriginal);
 
             if (primeraNormalizada != letraRonda) {
                 return new Resultado(
@@ -50,44 +55,31 @@ public class ValidadorRespuesta {
             }
         }
 
-        // 3. categoría
-        List<String> permitidas = categoriaRepositorio.obtenerPalabrasDe(respuesta.getCategoriaId());
-        if (permitidas == null || permitidas.isEmpty()) {
+        // 3. llamar a la IA para saber si la palabra pertenece a la categoría
+        ServicioIA.VeredictoIA verIA = servicioIA.validar(
+                respuesta.getCategoriaId(),
+                letraRonda,
+                textoOriginal
+        );
+
+        if (!verIA.isValida()) {
             return new Resultado(
                     respuesta.getTexto(),
                     respuesta.getJugadorId(),
                     respuesta.getCategoriaId(),
                     Veredicto.INVALIDA,
-                    "Categoría desconocida",
+                    verIA.getMotivo(),
                     0
             );
         }
 
-        String respNorm = normalizar(respuesta.getTexto());
-
-        boolean existe = permitidas
-                .stream()
-                .map(this::normalizar)
-                .anyMatch(p -> p.equals(respNorm));
-
-        if (!existe) {
-            return new Resultado(
-                    respuesta.getTexto(),
-                    respuesta.getJugadorId(),
-                    respuesta.getCategoriaId(),
-                    Veredicto.INVALIDA,
-                    "No pertenece a la categoría",
-                    0
-            );
-        }
-
-        // 4. si pasó todo
+        // 4. si pasó todo → VALIDA (puntos luego puede ajustarlos JuezBasico)
         return new Resultado(
                 respuesta.getTexto(),
                 respuesta.getJugadorId(),
                 respuesta.getCategoriaId(),
                 Veredicto.VALIDA,
-                "OK",
+                verIA.getMotivo(),
                 10
         );
     }

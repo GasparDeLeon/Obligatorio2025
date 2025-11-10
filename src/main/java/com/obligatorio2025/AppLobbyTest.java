@@ -5,6 +5,8 @@ import com.obligatorio2025.dominio.*;
 import com.obligatorio2025.dominio.enums.ModoJuego;
 import com.obligatorio2025.infraestructura.memoria.*;
 import com.obligatorio2025.validacion.Resultado;
+import com.obligatorio2025.validacion.ServicioIA;
+import com.obligatorio2025.validacion.ServicioIAMock;
 
 import java.util.List;
 
@@ -19,14 +21,18 @@ public class AppLobbyTest {
         CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();
         ResultadoValidacionRepositorioEnMemoria resValRepo = new ResultadoValidacionRepositorioEnMemoria();
 
+        // 2. servicio de IA (mock)
+        ServicioIA servicioIA = new ServicioIAMock();
+
         // 2. servicios base
         PlanificadorTicksDummy planificador = new PlanificadorTicksDummy();
-        ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo, catRepo, resValRepo);
+        ServicioValidacion servVal = new ServicioValidacion(partidaRepo, respRepo, catRepo, resValRepo, servicioIA);
         ServicioValidacionPorRonda servValPorRonda = new ServicioValidacionPorRonda(
                 partidaRepo,
                 respRepo,
                 catRepo,
-                resValRepo
+                resValRepo,
+                servicioIA
         );
         ServicioFlujoPartida servFlujo = new ServicioFlujoPartida(
                 partidaRepo,
