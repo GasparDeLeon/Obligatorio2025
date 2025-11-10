@@ -6,6 +6,8 @@ import com.obligatorio2025.dominio.enums.EstadoPartida;
 import com.obligatorio2025.dominio.enums.ModoJuego;
 import com.obligatorio2025.infraestructura.memoria.*;
 import com.obligatorio2025.validacion.Resultado;
+import com.obligatorio2025.validacion.ServicioIA;
+import com.obligatorio2025.validacion.ServicioIAMock;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,6 +24,7 @@ public class FlujoPartidaTest {
         ResultadoValidacionRepositorioEnMemoria resValRepo;
 
         PlanificadorTicksDummy planificador;
+        ServicioIA servicioIA;
         ServicioValidacion servVal;
         ServicioValidacionPorRonda servValPorRonda;
         ServicioFlujoPartida servFlujo;
@@ -42,8 +45,27 @@ public class FlujoPartidaTest {
         e.resValRepo = new ResultadoValidacionRepositorioEnMemoria();
 
         e.planificador = new PlanificadorTicksDummy();
-        e.servVal = new ServicioValidacion(e.partidaRepo, e.respRepo, e.catRepo, e.resValRepo);
-        e.servValPorRonda = new ServicioValidacionPorRonda(e.partidaRepo, e.respRepo, e.catRepo, e.resValRepo);
+
+        // IA mock para los tests
+        e.servicioIA = new ServicioIAMock();
+
+        // ahora ambos servicios reciben también ServicioIA
+        e.servVal = new ServicioValidacion(
+                e.partidaRepo,
+                e.respRepo,
+                e.catRepo,
+                e.resValRepo,
+                e.servicioIA
+        );
+
+        e.servValPorRonda = new ServicioValidacionPorRonda(
+                e.partidaRepo,
+                e.respRepo,
+                e.catRepo,
+                e.resValRepo,
+                e.servicioIA
+        );
+
         e.servFlujo = new ServicioFlujoPartida(e.partidaRepo, e.planificador, e.servVal, e.servValPorRonda);
         e.servPartida = new ServicioPartida(e.partidaRepo, e.servFlujo);
         e.lobby = new ServicioLobby(e.salaRepo, e.partidaRepo);
@@ -94,7 +116,6 @@ public class FlujoPartidaTest {
         List<Resultado> r1 = e.servFlujo.ejecutarFinDeGracia(100);
         assertEquals(4, r1.size());
 
-        // después de la ronda 1 no debería estar finalizada
         Partida p1 = e.partidaRepo.buscarPorId(100);
         assertNotNull(p1);
         assertEquals(EstadoPartida.EN_CURSO, p1.getEstado());
@@ -123,16 +144,13 @@ public class FlujoPartidaTest {
         List<Resultado> r3 = e.servFlujo.ejecutarFinDeGracia(100);
         assertEquals(4, r3.size());
 
-        // ahora sí debería estar finalizada
         Partida pFinal = e.partidaRepo.buscarPorId(100);
         assertNotNull(pFinal);
         assertEquals(EstadoPartida.FINALIZADA, pFinal.getEstado());
 
-        // en total deberían haberse guardado 12 resultados (4 jugadores x 3 rondas)
         List<Resultado> todos = e.resValRepo.buscarPorPartida(100);
         assertEquals(12, todos.size());
 
-        // el ranking debería tener los 4 jugadores
         var ranking = e.servRes.armarRankingConPosiciones(todos);
         assertEquals(4, ranking.size());
     }
@@ -144,7 +162,7 @@ public class FlujoPartidaTest {
         ConfiguracionPartida conf = new ConfiguracionPartida(
                 60,
                 10,
-                3,      // 3 rondas
+                3,
                 5,
                 ModoJuego.SINGLE,
                 true,
@@ -163,7 +181,6 @@ public class FlujoPartidaTest {
 
         e.lobby.iniciarPartida("XYZ", conf, 200);
 
-        // solo una ronda
         e.servRondas.crearEIniciarRonda(200, 1, 'A');
         e.servRespuestas.registrarRespuesta(200, 1, 1, 1, "Argentina");
         e.servRespuestas.registrarRespuesta(200, 1, 2, 1, "Alemania");
@@ -175,57 +192,29 @@ public class FlujoPartidaTest {
         assertNotNull(p);
         assertEquals(EstadoPartida.EN_CURSO, p.getEstado());
 
-        // y debería haber 2 resultados
         List<Resultado> resultados = e.resValRepo.buscarPorPartida(200);
         assertEquals(2, resultados.size());
     }
+
     @Test
     void rankingConPosicionesDebeManejarEmpates() {
         Escenario e = crearEscenarioBasico();
 
-        // armamos resultados "a mano" para una partida ficticia 999
-        Resultado r1 = new Resultado(
-                "Argentina",
-                1,
-                1,
-                com.obligatorio2025.validacion.Veredicto.VALIDA,
-                "OK",
-                30
-        );
-        Resultado r2 = new Resultado(
-                "Brasil",
-                2,
-                1,
-                com.obligatorio2025.validacion.Veredicto.VALIDA,
-                "OK",
-                30
-        );
-        Resultado r3 = new Resultado(
-                "Chile",
-                3,
-                1,
-                com.obligatorio2025.validacion.Veredicto.VALIDA,
-                "OK",
-                10
-        );
-        Resultado r4 = new Resultado(
-                "Perú",
-                4,
-                1,
-                com.obligatorio2025.validacion.Veredicto.VALIDA,
-                "OK",
-                0
-        );
+        Resultado r1 = new Resultado("Argentina", 1, 1,
+                com.obligatorio2025.validacion.Veredicto.VALIDA, "OK", 30);
+        Resultado r2 = new Resultado("Brasil", 2, 1,
+                com.obligatorio2025.validacion.Veredicto.VALIDA, "OK", 30);
+        Resultado r3 = new Resultado("Chile", 3, 1,
+                com.obligatorio2025.validacion.Veredicto.VALIDA, "OK", 10);
+        Resultado r4 = new Resultado("Perú", 4, 1,
+                com.obligatorio2025.validacion.Veredicto.VALIDA, "OK", 0);
 
-        // guardamos todos los resultados para la partida 999
         e.resValRepo.guardarTodos(999, List.of(r1, r2, r3, r4));
 
-        // armamos el ranking con posiciones usando tu servicio
         var ranking = e.servRes.armarRankingConPosiciones(
                 e.resValRepo.buscarPorPartida(999)
         );
 
-        // deben estar los 4 jugadores
         assertEquals(4, ranking.size());
 
         var primero = ranking.get(0);
@@ -233,21 +222,17 @@ public class FlujoPartidaTest {
         var tercero = ranking.get(2);
         var cuarto  = ranking.get(3);
 
-        // los dos primeros tienen el mismo puntaje
         assertEquals(30, primero.getPuntos());
         assertEquals(30, segundo.getPuntos());
-
-        // y DEBEN compartir la misma posición (empate)
         assertEquals(primero.getPosicion(), segundo.getPosicion());
 
-        // el tercero debe tener menos puntos y una posición mayor
         assertEquals(10, tercero.getPuntos());
         assertTrue(tercero.getPosicion() > primero.getPosicion());
 
-        // el cuarto tiene 0 puntos y la peor posición
         assertEquals(0, cuarto.getPuntos());
         assertTrue(cuarto.getPosicion() >= tercero.getPosicion());
     }
+
     @Test
     void validarRondaSinRespuestasNoDebeRomperNiFinalizar() {
         Escenario e = crearEscenarioBasico();
@@ -255,7 +240,7 @@ public class FlujoPartidaTest {
         ConfiguracionPartida conf = new ConfiguracionPartida(
                 60,
                 10,
-                3,      // 3 rondas configuradas
+                3,
                 5,
                 ModoJuego.SINGLE,
                 true,
@@ -271,24 +256,20 @@ public class FlujoPartidaTest {
 
         e.lobby.iniciarPartida("SINRES", conf, 700);
 
-        // creamos la ronda 1 con letra A, pero NADIE responde
         e.servRondas.crearEIniciarRonda(700, 1, 'A');
 
-        // alguien declara tutti frutti
         e.servPartida.declararTuttiFrutti(700, 1);
 
-        // se ejecuta el fin de gracia
         List<Resultado> res = e.servFlujo.ejecutarFinDeGracia(700);
 
-        // no debería romper y la lista debería estar vacía
         assertNotNull(res);
         assertTrue(res.isEmpty(), "Si no hubo respuestas, la lista debería estar vacía");
 
-        // la partida sigue en curso porque solo jugamos 1 de 3 rondas
         Partida p = e.partidaRepo.buscarPorId(700);
         assertNotNull(p);
         assertEquals(EstadoPartida.EN_CURSO, p.getEstado());
     }
+
     @Test
     void respuestaConCategoriaDesconocidaDebeQuedarInvalida() {
         Escenario e = crearEscenarioBasico();
@@ -296,7 +277,7 @@ public class FlujoPartidaTest {
         ConfiguracionPartida conf = new ConfiguracionPartida(
                 60,
                 10,
-                1,      // una sola ronda alcanza
+                1,
                 5,
                 ModoJuego.SINGLE,
                 true,
@@ -312,10 +293,8 @@ public class FlujoPartidaTest {
 
         e.lobby.iniciarPartida("CAT", conf, 800);
 
-        // ronda 1 con letra A
         e.servRondas.crearEIniciarRonda(800, 1, 'A');
 
-        // categoría 999 NO existe en CategoriaRepositorioEnMemoria
         e.servRespuestas.registrarRespuesta(800, 1, 1, 999, "Atlantida");
 
         e.servPartida.declararTuttiFrutti(800, 1);
@@ -327,13 +306,7 @@ public class FlujoPartidaTest {
         assertEquals(1, unico.getJugadorId());
         assertEquals(999, unico.getCategoriaId());
         assertEquals(0, unico.getPuntos());
-
-        // veredicto INVALIDA
         assertEquals(com.obligatorio2025.validacion.Veredicto.INVALIDA, unico.getVeredicto());
-
-        // y el motivo debería ser el mismo que usás en ValidadorRespuesta
         assertEquals("Categoría desconocida", unico.getMotivo());
     }
-
-
 }

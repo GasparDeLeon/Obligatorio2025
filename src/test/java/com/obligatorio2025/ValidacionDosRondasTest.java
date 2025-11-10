@@ -5,6 +5,7 @@ import com.obligatorio2025.dominio.*;
 import com.obligatorio2025.dominio.enums.ModoJuego;
 import com.obligatorio2025.infraestructura.memoria.*;
 import com.obligatorio2025.validacion.Resultado;
+import com.obligatorio2025.validacion.ServicioIAMock;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -23,8 +24,14 @@ public class ValidacionDosRondasTest {
         ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
         ServicioRespuestas servRespuestas = new ServicioRespuestas(respRepo, partidaRepo);
         ServicioResultados servResultados = new ServicioResultados();
+
+        // ⬇️ acá estaba el problema: faltaba el ServicioIA
         ServicioValidacionPorRonda servValRonda = new ServicioValidacionPorRonda(
-                partidaRepo, respRepo, catRepo, resValRepo
+                partidaRepo,
+                respRepo,
+                catRepo,
+                resValRepo,
+                new ServicioIAMock()   // IA mock para el test
         );
 
         ConfiguracionPartida conf = new ConfiguracionPartida(

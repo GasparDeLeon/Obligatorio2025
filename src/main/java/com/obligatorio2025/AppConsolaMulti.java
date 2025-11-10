@@ -5,6 +5,8 @@ import com.obligatorio2025.dominio.*;
 import com.obligatorio2025.dominio.enums.ModoJuego;
 import com.obligatorio2025.infraestructura.memoria.*;
 import com.obligatorio2025.validacion.Resultado;
+import com.obligatorio2025.validacion.ServicioIA;
+import com.obligatorio2025.validacion.ServicioIAMock;
 
 import java.util.List;
 import java.util.Scanner;
@@ -19,11 +21,14 @@ public class AppConsolaMulti {
         CategoriaRepositorioEnMemoria catRepo = new CategoriaRepositorioEnMemoria();
         ResultadoValidacionRepositorioEnMemoria resValRepo = new ResultadoValidacionRepositorioEnMemoria();
 
+        // Servicio de IA (mock) para validar respuestas
+        ServicioIA servicioIA = new ServicioIAMock();
+
         ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
         ServicioRespuestas servRespuestas = new ServicioRespuestas(respRepo, partidaRepo);
         ServicioResultados servResultados = new ServicioResultados();
         ServicioValidacionPorRonda servValRonda = new ServicioValidacionPorRonda(
-                partidaRepo, respRepo, catRepo, resValRepo
+                partidaRepo, respRepo, catRepo, resValRepo, servicioIA
         );
 
         Scanner sc = new Scanner(System.in);
