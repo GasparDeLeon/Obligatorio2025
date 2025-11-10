@@ -23,7 +23,6 @@
             position: relative;
         }
 
-        /* Decorative geometric shapes */
         body::before {
             content: '';
             position: absolute;
@@ -137,8 +136,6 @@
             margin-bottom: 40px;
             filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
         }
-
-
 
         .buttons {
             display: flex;
@@ -263,10 +260,6 @@
                 padding: 40px 30px;
             }
 
-            .logo-text {
-                font-size: 56px;
-            }
-
             .btn {
                 padding: 16px 30px;
                 font-size: 18px;
@@ -275,7 +268,6 @@
     </style>
 </head>
 <body>
-<!-- Decorative background shapes -->
 <div class="bg-shape bg-shape-1"></div>
 <div class="bg-shape bg-shape-2"></div>
 <div class="bg-shape bg-shape-3"></div>
@@ -284,23 +276,31 @@
     <img th:src="@{/img/logoMinimalista.png}" alt="Tutti Frutti" class="logo">
 
     <div class="buttons">
-        <button class="btn btn-primary"  th:onclick="|window.location.href='@{/configurar(modo=solo)}'|">
-                <span>
-                    <img th:src="@{/img/user.png}" alt="" class="btn-icon">
-                    Jugar Solo
-                </span>
+        <!-- Jugar solo -->
+        <button class="btn btn-primary"
+                th:onclick="|window.location.href='@{/configurar(modo=solo)}'|">
+            <span>
+                <img th:src="@{/img/user.png}" alt="" class="btn-icon">
+                Jugar Solo
+            </span>
         </button>
-        <button class="btn btn-primary">
-                <span>
-                    <img th:src="@{/img/team.png}" alt="" class="btn-icon">
-                    Crear Sala
-                </span>
+
+        <!-- Crear sala -->
+        <button class="btn btn-primary"
+                th:onclick="|window.location.href='@{/configurar(modo=crear-sala)}'|">
+            <span>
+                <img th:src="@{/img/team.png}" alt="" class="btn-icon">
+                Crear Sala
+            </span>
         </button>
-        <button class="btn btn-secondary">
-                <span>
-                    <img th:src="@{/img/room.png}" alt="" class="btn-icon">
-                    Unirse a Sala
-                </span>
+
+        <!-- Unirse a sala -->
+        <button class="btn btn-secondary"
+                th:onclick="|window.location.href='@{/configurar(modo=unirse-sala)}'|">
+            <span>
+                <img th:src="@{/img/room.png}" alt="" class="btn-icon">
+                Unirse a Sala
+            </span>
         </button>
     </div>
 

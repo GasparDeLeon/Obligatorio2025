@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados - Tutti Frutti</title>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="page-container">
+    <header class="header">
+        <div class="logo">
+            <img th:src="@{/img/logoMinimalista.png}" alt="Logo Tutti Frutti">
+            <h1>Resultados</h1>
+        </div>
+        <div class="header-info">
+            <span class="badge-letra">
+                Letra:
+                <strong th:text="${letra}">A</strong>
+            </span>
+            <span class="badge-puntaje">
+                Puntaje total:
+                <strong th:text="${puntajeTotal}">0</strong>
+            </span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="card resultados-card">
+            <h2>Detalle de respuestas</h2>
+
+            <table class="tabla-resultados">
+                <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>Respuesta</th>
+                    <th>Veredicto</th>
+                    <th>Motivo</th>
+                    <th>Puntos</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${detalle}">
+                    <td th:text="${r.categoria}">Animal</td>
+                    <td th:text="${r.respuesta}">Perro</td>
+                    <td th:text="${r.veredicto}">VÁLIDA</td>
+                    <td th:text="${r.motivo}">Palabra reconocida correctamente</td>
+                    <td th:text="${r.puntos}">10</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div class="acciones">
+                <a th:href="@{/solo/nueva}" class="btn btn-principal">Jugar otra vez</a>
+                <a th:href="@{/}" class="btn btn-secundario">Volver al inicio</a>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
