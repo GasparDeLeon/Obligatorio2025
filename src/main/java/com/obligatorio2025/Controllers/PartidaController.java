@@ -10,7 +10,6 @@ public class PartidaController {
     @GetMapping("/configurar")
     public String configurarPartida(@RequestParam(defaultValue = "solo") String modo, Model model) {
 
-        // normalizamos un poco
         if (!modo.equals("solo") && !modo.equals("crear-sala") && !modo.equals("unirse-sala")) {
             modo = "solo";
         }
@@ -25,41 +24,64 @@ public class PartidaController {
         model.addAttribute("modo", modo);
         model.addAttribute("titulo", titulo);
 
-        // objeto “formulario” vacío (lo usamos en el HTML con th:field)
         model.addAttribute("config", new ConfigurarPartidaForm());
+
+        // NUEVO: categorías para mostrar en el formulario
+        model.addAttribute("categoriasDisponibles", CatalogoCategorias.CATEGORIAS);
 
         return "configurarPartida";
     }
+
 
     @PostMapping("/configurar")
     public String procesarConfiguracion(@RequestParam String modo,
                                         @ModelAttribute("config") ConfigurarPartidaForm config,
                                         Model model) {
 
+        String redirect;
+
         switch (modo) {
             case "solo" -> {
                 System.out.println("== INICIAR PARTIDA SOLO ==");
-                System.out.println("Duración: " + config.getDuracionTurnoSeg());
-                // TODO: crear partida single + redirect a pantalla de juego
+                System.out.println("Duración turno: " + config.getDuracionTurnoSeg());
+                System.out.println("Categorías: " + config.getCategoriasSeleccionadas());
+
+                Integer duracionTurno = config.getDuracionTurnoSeg();
+                int duracionVal = (duracionTurno != null && duracionTurno > 0) ? duracionTurno : 60;
+
+                // armamos cats=1-3-4
+                String catsParam = "";
+                if (config.getCategoriasSeleccionadas() != null && !config.getCategoriasSeleccionadas().isEmpty()) {
+                    catsParam = config.getCategoriasSeleccionadas().stream()
+                            .map(String::valueOf)
+                            .collect(java.util.stream.Collectors.joining("-"));
+                }
+
+                StringBuilder url = new StringBuilder("redirect:/solo/nueva");
+                String sep = "?";
+
+                url.append(sep).append("duracionTurnoSeg=").append(duracionVal);
+                if (!catsParam.isEmpty()) {
+                    url.append("&cats=").append(catsParam);
+                }
+
+                redirect = url.toString();
             }
+            // ... resto de casos igual
             case "crear-sala" -> {
-                System.out.println("== CREAR SALA MULTI ==");
-                System.out.println("Rondas: " + config.getCantidadRondas());
-                System.out.println("Turno: " + config.getDuracionTurnoSeg());
-                System.out.println("Gracia: " + config.getTiempoGraciaSeg());
-                // TODO: crear sala, generar código y mostrarlo en otra vista
+                // pendiente
+                redirect = "redirect:/";
             }
             case "unirse-sala" -> {
-                System.out.println("== UNIRSE A SALA ==");
-                System.out.println("Código: " + config.getCodigoSala());
-                // TODO: validar código / manejar errores
+                // pendiente
+                redirect = "redirect:/";
             }
             default -> {
-                System.out.println("Modo desconocido, volviendo al inicio");
+                redirect = "redirect:/";
             }
         }
 
-        // por ahora, volvemos a la home
-        return "redirect:/";
+        return redirect;
     }
+
 }
