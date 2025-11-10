@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tutti Frutti - Modo solitario</title>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <script defer th:src="@{/js/jugarSolo.js}"></script>
+</head>
+<body>
+<div class="page-container">
+    <header class="header">
+        <div class="logo">
+            <img th:src="@{/img/logoMinimalista.png}" alt="Logo Tutti Frutti">
+            <h1>Tutti Frutti</h1>
+        </div>
+        <div class="header-info">
+            <span class="badge-modo">Modo solitario</span>
+            <span class="badge-letra">
+                Letra:
+                <strong th:text="${letra}">A</strong>
+            </span>
+            <span class="badge-tiempo">
+                Tiempo:
+                <span id="timer"
+                      th:attr="data-duracion=${duracionSegundos}">
+                    00:00
+                </span>
+            </span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="card">
+            <h2>Escribe una palabra por categoría</h2>
+            <p class="descripcion">
+                Todas las palabras deben comenzar con la letra
+                <strong th:text="${letra}">A</strong>.
+                Cuando completes todas las categorías correctamente,
+                se habilitará el botón "Tutti Frutti".
+            </p>
+
+            <form id="form-jugar-solo"
+                  th:action="@{'/solo/' + ${idPartida} + '/responder'}"
+                  method="post">
+
+                <!-- Si usás Spring Security, acá iría el token CSRF -->
+                <!-- <input type="hidden" name="_csrf" th:value="${_csrf.token}"/> -->
+
+                <input type="hidden" name="accion" id="input-accion" value="">
+
+                <div class="tabla-categorias">
+                    <div class="fila-cabecera">
+                        <span>Categoría</span>
+                        <span>Respuesta</span>
+                    </div>
+
+                    <div class="fila-categoria" th:each="cat : ${categorias}">
+                        <span class="nombre-categoria"
+                              th:text="${cat.nombre}">Animal</span>
+
+                        <input type="text"
+                               class="input-respuesta"
+                               th:attr="name=${'respuestas[' + cat.id + ']'},data-categoria=${cat.nombre},data-letra=${letra}"
+                               autocomplete="off"
+                               placeholder="Escribe aquí..."/>
+                    </div>
+                </div>
+
+                <div class="acciones">
+                    <button type="button"
+                            id="btnMeRindo"
+                            class="btn btn-secundario">
+                        Me rindo
+                    </button>
+
+                    <button type="submit"
+                            id="btnTuttiFrutti"
+                            class="btn btn-principal"
+                            disabled>
+                        Tutti Frutti
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>
