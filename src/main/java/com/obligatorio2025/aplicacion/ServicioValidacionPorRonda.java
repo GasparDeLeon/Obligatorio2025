@@ -2,17 +2,17 @@ package com.obligatorio2025.aplicacion;
 
 import com.obligatorio2025.dominio.ConfiguracionPartida;
 import com.obligatorio2025.dominio.Partida;
-import com.obligatorio2025.dominio.Ronda;
 import com.obligatorio2025.dominio.Respuesta;
+import com.obligatorio2025.dominio.Ronda;
 import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.RespuestaRepositorio;
 import com.obligatorio2025.infraestructura.ResultadoValidacionRepositorio;
 import com.obligatorio2025.validacion.JuezBasico;
 import com.obligatorio2025.validacion.Resultado;
+import com.obligatorio2025.validacion.ServicioIA;
 import com.obligatorio2025.validacion.ValidadorRespuesta;
 import com.obligatorio2025.validacion.Veredicto;
-import com.obligatorio2025.validacion.ServicioIA;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -40,7 +40,6 @@ public class ServicioValidacionPorRonda {
         this.servicioIA = servicioIA;
     }
 
-
     public List<Resultado> validarRonda(int partidaId, int numeroRonda) {
         Partida partida = partidaRepositorio.buscarPorId(partidaId);
         if (partida == null) {
@@ -56,7 +55,6 @@ public class ServicioValidacionPorRonda {
 
         char letraRonda = ronda.getLetra();
 
-        // respuestas SOLO de esta ronda
         List<Respuesta> respuestasDeRonda = respuestaRepositorio.buscarPorPartida(partidaId)
                 .stream()
                 .filter(r -> r.getRondaId() == numeroRonda)
@@ -67,13 +65,12 @@ public class ServicioValidacionPorRonda {
         }
 
         ValidadorRespuesta validador = new ValidadorRespuesta(categoriaRepositorio, servicioIA);
-
         List<Resultado> resultadosNuevos = new ArrayList<>();
 
         for (Respuesta resp : respuestasDeRonda) {
             Resultado res = validador.validar(partida, resp);
 
-            // forzar letra de ESTA ronda
+            // seguridad extra: forzar letra de ESTA ronda
             if (!coincideConLetra(resp.getTexto(), letraRonda)) {
                 res.setVeredicto(Veredicto.INVALIDA);
                 res.setMotivo("No coincide con la letra de la ronda " + letraRonda);
@@ -83,29 +80,24 @@ public class ServicioValidacionPorRonda {
             resultadosNuevos.add(res);
         }
 
-        // puntajes de la partida
         ConfiguracionPartida config = partida.getConfiguracion();
         int puntajeValida = (config != null) ? config.getPuntajeValida() : 10;
         int puntajeDuplicada = (config != null) ? config.getPuntajeDuplicada() : 5;
 
         JuezBasico juez = new JuezBasico(puntajeValida, puntajeDuplicada);
 
-        // 1) marcar válidas con puntaje de la config
         for (Resultado r : resultadosNuevos) {
             if (r.getVeredicto() == Veredicto.VALIDA) {
                 juez.marcarValida(r);
             }
         }
 
-        // 2) aplicar duplicadas solo dentro de esta ronda
         juez.aplicarDuplicadas(resultadosNuevos);
 
-        // 3) traer lo que YA HABÍA de otras rondas y acumular
         List<Resultado> resultadosAnteriores = resultadoValidacionRepositorio.buscarPorPartida(partidaId);
         List<Resultado> todos = new ArrayList<>(resultadosAnteriores);
         todos.addAll(resultadosNuevos);
 
-        // 4) guardar todo de nuevo
         resultadoValidacionRepositorio.guardarTodos(partidaId, todos);
 
         return resultadosNuevos;

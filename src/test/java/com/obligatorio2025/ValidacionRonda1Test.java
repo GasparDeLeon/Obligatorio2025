@@ -31,7 +31,7 @@ public class ValidacionRonda1Test {
                 respRepo,
                 catRepo,
                 resValRepo,
-                new ServicioIAMock()   // IA mock para el test
+                new ServicioIAMock(catRepo)   // IA mock para el test
         );
 
         ConfiguracionPartida conf = new ConfiguracionPartida(
