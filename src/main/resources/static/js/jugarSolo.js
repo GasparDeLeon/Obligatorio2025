@@ -1,99 +1,93 @@
-document.addEventListener("DOMContentLoaded", function () {
+// src/main/resources/static/js/jugarSolo.js
 
-    const form = document.getElementById("form-jugar-solo");
-    const inputAccion = document.getElementById("input-accion");
-    const btnTutti = document.getElementById("btnTuttiFrutti");
-    const btnRendirse = document.getElementById("btnMeRindo");
-    const inputs = Array.from(document.querySelectorAll(".input-respuesta"));
-    const timerElement = document.getElementById("timer");
+document.addEventListener('DOMContentLoaded', function () {
+    const timerEl      = document.getElementById('timer');
+    const form         = document.getElementById('form-jugar-solo');
+    const inputAccion  = document.getElementById('input-accion');
+    const btnTutti     = document.getElementById('btn-tutti');
+    const btnRendirse  = document.getElementById('btn-rendirse');
+    const inputs       = document.querySelectorAll('.input-respuesta');
 
-    let submitted = false;
-
-    // Letra con la que deben empezar las palabras
-    let letra = "";
-    if (inputs.length > 0) {
-        const l = inputs[0].getAttribute("data-letra");
-        if (l) {
-            letra = l.toUpperCase();
-        }
+    if (!form) {
+        // por las dudas, pero en tu vista siempre debería existir
+        return;
     }
 
-    function formatearTiempo(segundos) {
-        const min = Math.floor(segundos / 60);
-        const seg = segundos % 60;
-        const mm = String(min).padStart(2, "0");
-        const ss = String(seg).padStart(2, "0");
-        return mm + ":" + ss;
-    }
+    // ======================
+    // RELOJ / COUNTDOWN
+    // ======================
+    if (timerEl) {
+        // leemos el atributo data-duracion que pone Thymeleaf
+        const raw = timerEl.getAttribute('data-duracion');
+        let duracion = parseInt(raw, 10);
 
-    // Habilita o deshabilita el botón Tutti Frutti según las respuestas
-    function actualizarEstadoBoton() {
-        if (inputs.length === 0) {
-            btnTutti.disabled = true;
-            return;
+        if (isNaN(duracion) || duracion <= 0) {
+            duracion = 60; // fallback por si viene raro
         }
 
-        const todoValido = inputs.every(input => {
-            const valor = input.value.trim();
-            if (!valor) {
-                return false;
-            }
-            if (!letra) {
-                return true;
-            }
-            return valor[0].toUpperCase() === letra;
-        });
+        let restante = duracion;
 
-        btnTutti.disabled = !todoValido;
-    }
-
-    inputs.forEach(input => {
-        input.addEventListener("input", function () {
-            actualizarEstadoBoton();
-        });
-    });
-
-    btnTutti.addEventListener("click", function (e) {
-        e.preventDefault();
-        if (submitted) return;
-        inputAccion.value = "tutti-frutti";
-        submitted = true;
-        form.submit();
-    });
-
-    btnRendirse.addEventListener("click", function () {
-        if (submitted) return;
-        inputAccion.value = "rendirse";
-        submitted = true;
-        form.submit();
-    });
-
-    // Timer
-    if (timerElement) {
-        const duracionStr = timerElement.getAttribute("data-duracion");
-        let restante = parseInt(duracionStr, 10);
-        if (isNaN(restante) || restante <= 0) {
-            restante = 60; // por si viene algo raro
+        function renderTiempo() {
+            const m = String(Math.floor(restante / 60)).padStart(2, '0');
+            const s = String(restante % 60).padStart(2, '0');
+            timerEl.textContent = `${m}:${s}`;
         }
 
-        timerElement.textContent = formatearTiempo(restante);
+        // mostramos el valor inicial
+        renderTiempo();
 
         const intervalo = setInterval(function () {
+            restante--;
+
             if (restante <= 0) {
+                restante = 0;
+                renderTiempo();
                 clearInterval(intervalo);
-                if (!submitted) {
-                    inputAccion.value = "timeout";
-                    submitted = true;
+
+                // si todavía no se envió el formulario, lo mandamos como timeout
+                if (inputAccion && !form.dataset.enviado) {
+                    inputAccion.value = 'timeout';
+                    form.dataset.enviado = 'true';
                     form.submit();
                 }
                 return;
             }
 
-            restante--;
-            timerElement.textContent = formatearTiempo(restante);
+            renderTiempo();
         }, 1000);
     }
 
-    // Estado inicial del botón
-    actualizarEstadoBoton();
+    // ======================
+    // HABILITAR BOTÓN "TUTTI FRUTTI"
+    // ======================
+    function actualizarEstadoTutti() {
+        if (!btnTutti || inputs.length === 0) return;
+
+        const todasLlenas = Array.from(inputs)
+            .every(inp => inp.value.trim() !== '');
+
+        btnTutti.disabled = !todasLlenas;
+    }
+
+    inputs.forEach(inp => {
+        inp.addEventListener('input', actualizarEstadoTutti);
+    });
+    actualizarEstadoTutti(); // cálculo inicial
+
+    // ======================
+    // BOTONES (por si no usás inline onclick)
+    // ======================
+    if (btnRendirse && inputAccion) {
+        btnRendirse.addEventListener('click', function () {
+            inputAccion.value = 'rendirse';
+            form.submit();
+        });
+    }
+
+    if (btnTutti && inputAccion) {
+        btnTutti.addEventListener('click', function () {
+            inputAccion.value = 'tutti-frutti';
+            form.submit();
+        });
+    }
 });

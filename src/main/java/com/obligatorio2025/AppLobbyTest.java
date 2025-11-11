@@ -22,7 +22,7 @@ public class AppLobbyTest {
         ResultadoValidacionRepositorioEnMemoria resValRepo = new ResultadoValidacionRepositorioEnMemoria();
 
         // 2. servicio de IA (mock)
-        ServicioIA servicioIA = new ServicioIAMock();
+        ServicioIA servicioIA = new ServicioIAMock(catRepo);
 
         // 2. servicios base
         PlanificadorTicksDummy planificador = new PlanificadorTicksDummy();
