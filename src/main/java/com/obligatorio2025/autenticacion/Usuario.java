@@ -14,13 +14,13 @@ public class Usuario {
     private Long id;
 
     @Column(name = "nombre_usuario")
-    private final String nombreUsuario;
+    private String nombreUsuario;
 
     @Column(name = "hash_password")
-    private final String hashPassword;
+    private String hashPassword;
 
     @Enumerated(EnumType.STRING)
-    private final Rol rol;
+    private Rol rol;
 
     public Usuario(String nombreUsuario, String hashPassword, Rol rol) {
         this.nombreUsuario = nombreUsuario;

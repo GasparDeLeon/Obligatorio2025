@@ -10,20 +10,20 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DatabaseInit {
 
-    @Bean
-    CommandLineRunner initDatabase(UsuarioRepositorio repo) {
-        return args -> {
-            System.out.println("✅ Verificando si existen usuarios...");
-
-            if (repo.count() == 0) {
-                System.out.println("🧱 No hay usuarios, creando usuario de prueba...");
-                Usuario admin = new Usuario("admin", "1234", Rol.ADMINISTRADOR);
-                repo.save(admin);
-                System.out.println("✅ Usuario 'admin' creado correctamente.");
-            } else {
-                System.out.println("📦 Usuarios ya existentes en la base: " + repo.count());
-            }
-        };
-    }
+//    @Bean
+//    CommandLineRunner initDatabase(UsuarioRepositorio repo) {
+//        return args -> {
+//            System.out.println("✅ Verificando si existen usuarios...");
+//
+//            if (repo.count() == 0) {
+//                System.out.println("🧱 No hay usuarios, creando usuario de prueba...");
+//                Usuario admin = new Usuario("admin", "1234", Rol.ADMINISTRADOR);
+//                repo.save(admin);
+//                System.out.println("✅ Usuario 'admin' creado correctamente.");
+//            } else {
+//                System.out.println("📦 Usuarios ya existentes en la base: " + repo.count());
+//            }
+//        };
+//    }
 }
 

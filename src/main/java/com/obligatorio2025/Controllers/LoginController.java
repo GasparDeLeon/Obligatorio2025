@@ -49,7 +49,7 @@ public class LoginController {
         }
 
         model.addAttribute("error", "Usuario o contraseña incorrectos");
-        System.out.println("Login fallido. Volviendo a login.jsp");
+        System.out.println("Login fallido. Volviendo a login.html");
         return "login";
     }
 

@@ -51,6 +51,7 @@ public class ServicioAutenticacion {
 
         // Hasheamos la contraseña antes de guardar
         String hash = passwordEncoder.encode(password);
+        System.out.println("Contraseña hasheada: " + hash);
 
         Usuario nuevo = new Usuario(nombreUsuario, hash, rol);
         usuarioRepositorio.save(nuevo);
