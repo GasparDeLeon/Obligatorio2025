@@ -1,4 +1,11 @@
-spring.thymeleaf.cache=false
+# --- Configuración general del proyecto ---
 spring.application.name=obligatorio2025
+spring.thymeleaf.cache=false
 spring.mvc.view.prefix=/WEB-INF/views/
 spring.mvc.view.suffix=.jsp
+
+# --- Configuración de la IA ---
+app.ia.enabled=false              # cambiar a true para activar la IA real
+app.ia.apiKey=                    # tu clave de OpenAI si usas IA real
+app.ia.base-url=https://api.openai.com/v1
+app.ia.model=gpt-4o-mini

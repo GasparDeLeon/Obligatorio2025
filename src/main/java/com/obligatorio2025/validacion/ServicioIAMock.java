@@ -3,7 +3,7 @@ package com.obligatorio2025.validacion;
 import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 
 import java.text.Normalizer;
-import java.util.List;
+import java.util.Locale;
 
 public class ServicioIAMock implements ServicioIA {
 
@@ -15,33 +15,29 @@ public class ServicioIAMock implements ServicioIA {
 
     @Override
     public VeredictoIA validar(int categoriaId, char letraRonda, String textoRespuesta) {
-
         if (textoRespuesta == null || textoRespuesta.isBlank()) {
-            return new VeredictoIA(false, "Respuesta vacía");
+            return new VeredictoIA(false, "Vacío");
         }
 
-        List<String> permitidas = categoriaRepositorio.obtenerPalabrasDe(categoriaId);
-        if (permitidas == null || permitidas.isEmpty()) {
+        var cat = categoriaRepositorio.buscarPorId(categoriaId);
+        if (cat == null) {
             return new VeredictoIA(false, "Categoría desconocida");
         }
 
-        String respNorm = normalizar(textoRespuesta);
+        String normalizado = Normalizer.normalize(textoRespuesta.trim(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toUpperCase(Locale.ROOT);
 
-        boolean existe = permitidas.stream()
-                .map(this::normalizar)
-                .anyMatch(p -> p.equals(respNorm));
-
-        if (!existe) {
-            return new VeredictoIA(false, "No pertenece a la categoría");
+        if (normalizado.isEmpty()) {
+            return new VeredictoIA(false, "Vacío");
         }
 
-        return new VeredictoIA(true, "OK");
-    }
+        char primera = normalizado.charAt(0);
+        if (primera != Character.toUpperCase(letraRonda)) {
+            return new VeredictoIA(false, "No coincide con la letra de la ronda " + letraRonda);
+        }
 
-    private String normalizar(String texto) {
-        if (texto == null) return "";
-        String nfd = Normalizer.normalize(texto, Normalizer.Form.NFD);
-        String sinTildes = nfd.replaceAll("\\p{M}", "");
-        return sinTildes.toLowerCase().trim();
+        // Mock permisivo: si pasa letra y categoría existe, es válido.
+        return new VeredictoIA(true, "OK");
     }
 }

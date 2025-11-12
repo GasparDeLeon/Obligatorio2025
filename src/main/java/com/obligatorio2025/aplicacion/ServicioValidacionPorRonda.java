@@ -13,6 +13,8 @@ import com.obligatorio2025.validacion.Resultado;
 import com.obligatorio2025.validacion.ServicioIA;
 import com.obligatorio2025.validacion.ValidadorRespuesta;
 import com.obligatorio2025.validacion.Veredicto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -21,6 +23,8 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class ServicioValidacionPorRonda {
+
+    private static final Logger log = LoggerFactory.getLogger(ServicioValidacionPorRonda.class);
 
     private final PartidaRepositorio partidaRepositorio;
     private final RespuestaRepositorio respuestaRepositorio;
@@ -68,6 +72,17 @@ public class ServicioValidacionPorRonda {
         List<Resultado> resultadosNuevos = new ArrayList<>();
 
         for (Respuesta resp : respuestasDeRonda) {
+            String nombreCat = categoriaRepositorio.buscarPorId(resp.getCategoriaId()) != null
+                    ? categoriaRepositorio.buscarPorId(resp.getCategoriaId()).getNombre()
+                    : ("Categoría " + resp.getCategoriaId());
+
+            // log antes de validar (lo que verá el juez/IA)
+            log.info("[VALIDAR] p={} r={} j={} catId={} ({}) letra={} texto='{}'",
+                    partidaId, numeroRonda, resp.getJugadorId(),
+                    resp.getCategoriaId(), nombreCat,
+                    Character.toUpperCase(letraRonda),
+                    resp.getTexto());
+
             Resultado res = validador.validar(partida, resp);
 
             // seguridad extra: forzar letra de ESTA ronda
@@ -76,6 +91,11 @@ public class ServicioValidacionPorRonda {
                 res.setMotivo("No coincide con la letra de la ronda " + letraRonda);
                 res.setPuntos(0);
             }
+
+            // log después de validar (qué resolvió el validador/IA)
+            log.info("[RESULTADO] p={} r={} j={} catId={} veredicto={} motivo='{}' puntos={}",
+                    partidaId, numeroRonda, resp.getJugadorId(),
+                    resp.getCategoriaId(), res.getVeredicto(), res.getMotivo(), res.getPuntos());
 
             resultadosNuevos.add(res);
         }

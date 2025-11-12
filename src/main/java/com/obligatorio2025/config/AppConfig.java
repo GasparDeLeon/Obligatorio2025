@@ -3,11 +3,12 @@ package com.obligatorio2025.config;
 import com.obligatorio2025.aplicacion.*;
 import com.obligatorio2025.infraestructura.*;
 import com.obligatorio2025.infraestructura.memoria.*;
-import com.obligatorio2025.validacion.Juez;
-import com.obligatorio2025.validacion.ServicioIA;
-import com.obligatorio2025.validacion.ServicioIAMock;
+import com.obligatorio2025.infraestructura.memoria.CategoriaRepositorioEnMemoria;
+import com.obligatorio2025.validacion.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
+
 
 @Configuration
 public class AppConfig {
@@ -42,14 +43,6 @@ public class AppConfig {
     @Bean
     public PlanificadorTicks planificadorTicks() {
         return new PlanificadorTicksDummy();
-    }
-
-    // ==== SERVICIO DE IA ====
-
-    @Bean
-    public ServicioIA servicioIA(CategoriaRepositorio categoriaRepositorio) {
-        // Implementación mock, más adelante se podrá reemplazar por una IA real
-        return new ServicioIAMock(categoriaRepositorio);
     }
 
     // ==== SERVICIOS ====
@@ -107,4 +100,20 @@ public class AppConfig {
                                                  PartidaRepositorio partidaRepo) {
         return new ServicioRespuestas(respRepo, partidaRepo);
     }
+    @Bean
+    public ServicioIA servicioIA(CategoriaRepositorio categoriaRepositorio,
+                                 @Value("${app.ia.enabled:false}") boolean iaEnabled,
+                                 @Value("${openai.api.key:}") String apiKey,
+                                 @Value("${openai.base-url:https://api.openai.com/v1}") String baseUrl,
+                                 @Value("${openai.model:gpt-4o-mini}") String model) {
+
+        if (iaEnabled && apiKey != null && !apiKey.isBlank()) {
+            return new ServicioIAOpenAI(categoriaRepositorio, apiKey, baseUrl, model);
+        }
+        // fallback seguro para dev/tests
+        return new ServicioIAMock(categoriaRepositorio);
+    }
+
+
+
 }
