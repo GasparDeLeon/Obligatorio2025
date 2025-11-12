@@ -16,6 +16,9 @@ public class Sesion {
         this.expiraEn = expiraEn;
     }
 
+    public Sesion(String id) {
+    }
+
     public String getId() {
         return id;
     }
