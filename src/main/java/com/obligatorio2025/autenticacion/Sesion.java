@@ -17,6 +17,7 @@ public class Sesion {
     }
 
     public Sesion(String id) {
+        this.id = id;
     }
 
     public String getId() {
