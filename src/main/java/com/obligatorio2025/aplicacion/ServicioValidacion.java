@@ -10,6 +10,8 @@ import com.obligatorio2025.validacion.JuezBasico;
 import com.obligatorio2025.validacion.Resultado;
 import com.obligatorio2025.validacion.ValidadorRespuesta;
 import com.obligatorio2025.validacion.Veredicto;
+import com.obligatorio2025.validacion.ServicioIA;
+import com.obligatorio2025.validacion.ValidadorRespuesta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +22,18 @@ public class ServicioValidacion {
     private final RespuestaRepositorio respuestaRepo;
     private final CategoriaRepositorio categoriaRepo;
     private final ResultadoValidacionRepositorio resultadoRepo;
+    private final ServicioIA servicioIA;
 
     public ServicioValidacion(PartidaRepositorio partidaRepo,
                               RespuestaRepositorio respuestaRepo,
                               CategoriaRepositorio categoriaRepo,
-                              ResultadoValidacionRepositorio resultadoRepo) {
+                              ResultadoValidacionRepositorio resultadoRepo,
+                              ServicioIA servicioIA) {
         this.partidaRepo = partidaRepo;
         this.respuestaRepo = respuestaRepo;
         this.categoriaRepo = categoriaRepo;
         this.resultadoRepo = resultadoRepo;
+        this.servicioIA = servicioIA;
     }
 
     public List<Resultado> validarRespuestas(int partidaId) {
@@ -41,7 +46,8 @@ public class ServicioValidacion {
         var respuestas = respuestaRepo.buscarPorPartida(partidaId);
 
         // 2. validador básico (letra + categoría)
-        var validador = new ValidadorRespuesta(categoriaRepo);
+        var validador = new ValidadorRespuesta(categoriaRepo, servicioIA);
+
 
         List<Resultado> resultados = new ArrayList<>();
         for (var r : respuestas) {

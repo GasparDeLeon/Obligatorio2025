@@ -12,11 +12,15 @@ public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String nombreUsuario;
-    private String hashPassword;
+
+    @Column(name = "nombre_usuario")
+    private final String nombreUsuario;
+
+    @Column(name = "hash_password")
+    private final String hashPassword;
 
     @Enumerated(EnumType.STRING)
-    private Rol rol;
+    private final Rol rol;
 
     public Usuario(String nombreUsuario, String hashPassword, Rol rol) {
         this.nombreUsuario = nombreUsuario;

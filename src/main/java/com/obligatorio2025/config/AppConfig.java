@@ -1,8 +1,10 @@
 package com.obligatorio2025.config;
 
+import com.obligatorio2025.validacion.ServicioIA;
 import com.obligatorio2025.aplicacion.*;
 import com.obligatorio2025.infraestructura.*;
 import com.obligatorio2025.infraestructura.memoria.*;
+import com.obligatorio2025.validacion.Juez;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -47,16 +49,18 @@ public class AppConfig {
     public ServicioValidacion servicioValidacion(PartidaRepositorio partidaRepo,
                                                  RespuestaRepositorio respRepo,
                                                  CategoriaRepositorio catRepo,
-                                                 ResultadoValidacionRepositorio resValRepo) {
-        return new ServicioValidacion(partidaRepo, respRepo, catRepo, resValRepo);
+                                                 ResultadoValidacionRepositorio resValRepo,
+                                                 ServicioIA servicioIA) {
+        return new ServicioValidacion(partidaRepo, respRepo, catRepo, resValRepo, servicioIA);
     }
 
     @Bean
     public ServicioValidacionPorRonda servicioValidacionPorRonda(PartidaRepositorio partidaRepo,
                                                                  RespuestaRepositorio respRepo,
                                                                  CategoriaRepositorio catRepo,
-                                                                 ResultadoValidacionRepositorio resValRepo) {
-        return new ServicioValidacionPorRonda(partidaRepo, respRepo, catRepo, resValRepo);
+                                                                 ResultadoValidacionRepositorio resValRepo,
+                                                                 ServicioIA servicioIA) {
+        return new ServicioValidacionPorRonda(partidaRepo, respRepo, catRepo, resValRepo, servicioIA);
     }
 
     @Bean

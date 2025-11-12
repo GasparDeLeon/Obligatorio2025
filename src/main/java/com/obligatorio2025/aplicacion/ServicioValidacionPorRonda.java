@@ -12,6 +12,7 @@ import com.obligatorio2025.validacion.JuezBasico;
 import com.obligatorio2025.validacion.Resultado;
 import com.obligatorio2025.validacion.ValidadorRespuesta;
 import com.obligatorio2025.validacion.Veredicto;
+import com.obligatorio2025.validacion.ServicioIA;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -25,16 +26,20 @@ public class ServicioValidacionPorRonda {
     private final RespuestaRepositorio respuestaRepositorio;
     private final CategoriaRepositorio categoriaRepositorio;
     private final ResultadoValidacionRepositorio resultadoValidacionRepositorio;
+    private final ServicioIA servicioIA;
 
     public ServicioValidacionPorRonda(PartidaRepositorio partidaRepositorio,
                                       RespuestaRepositorio respuestaRepositorio,
                                       CategoriaRepositorio categoriaRepositorio,
-                                      ResultadoValidacionRepositorio resultadoValidacionRepositorio) {
+                                      ResultadoValidacionRepositorio resultadoValidacionRepositorio,
+                                      ServicioIA servicioIA) {
         this.partidaRepositorio = partidaRepositorio;
         this.respuestaRepositorio = respuestaRepositorio;
         this.categoriaRepositorio = categoriaRepositorio;
         this.resultadoValidacionRepositorio = resultadoValidacionRepositorio;
+        this.servicioIA = servicioIA;
     }
+
 
     public List<Resultado> validarRonda(int partidaId, int numeroRonda) {
         Partida partida = partidaRepositorio.buscarPorId(partidaId);
@@ -61,7 +66,8 @@ public class ServicioValidacionPorRonda {
             return new ArrayList<>();
         }
 
-        ValidadorRespuesta validador = new ValidadorRespuesta(categoriaRepositorio);
+        ValidadorRespuesta validador = new ValidadorRespuesta(categoriaRepositorio, servicioIA);
+
         List<Resultado> resultadosNuevos = new ArrayList<>();
 
         for (Respuesta resp : respuestasDeRonda) {

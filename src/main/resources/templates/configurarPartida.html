@@ -97,6 +97,25 @@
             margin-bottom: 10px;
             font-weight: 600;
         }
+
+        /* NUEVO: estilos para la lista de categorías */
+        .lista-categorias {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 16px;
+            margin-top: 4px;
+        }
+
+        .checkbox-categoria {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+
+        .checkbox-categoria input {
+            width: auto;
+        }
     </style>
 </head>
 <body>
@@ -111,7 +130,7 @@
     <form method="post" th:action="@{/configurar}">
         <input type="hidden" name="modo" th:value="${modo}"/>
 
-        <!-- MODO SOLO: solo duración de turno -->
+        <!-- MODO SOLO -->
         <div th:if="${modo == 'solo'}">
             <div class="field-group">
                 <label for="duracionTurnoSolo">Duración de la ronda (segundos)</label>
@@ -119,12 +138,26 @@
                        th:field="*{duracionTurnoSeg}"
                        min="10" max="300">
             </div>
+
+            <!-- NUEVO: selección de categorías para modo solo -->
+            <div class="field-group">
+                <label>Categorías a utilizar</label>
+                <div class="lista-categorias" th:each="cat : ${categoriasDisponibles}">
+                    <label class="checkbox-categoria">
+                        <input type="checkbox"
+                               th:field="*{categoriasSeleccionadas}"
+                               th:value="${cat.id}"/>
+                        <span th:text="${cat.nombre}">Países</span>
+                    </label>
+                </div>
+            </div>
+
             <!-- valores fijos ocultos -->
             <input type="hidden" th:field="*{cantidadRondas}" value="1"/>
             <input type="hidden" th:field="*{tiempoGraciaSeg}" value="0"/>
         </div>
 
-        <!-- MODO CREAR-SALA: rondas + turno + gracia -->
+        <!-- MODO CREAR-SALA: rondas + turno + gracia + categorías + jugadores -->
         <div th:if="${modo == 'crear-sala'}">
             <div class="field-group">
                 <label for="cantRondas">Cantidad de rondas</label>
@@ -148,7 +181,29 @@
                        th:field="*{tiempoGraciaSeg}"
                        min="5" max="60">
             </div>
+
+            <!-- NUEVO: número de jugadores -->
+            <div class="field-group">
+                <label for="numJugadores">Número de jugadores (2 a 6)</label>
+                <input type="number" id="numJugadores"
+                       th:field="*{numeroJugadores}"
+                       min="2" max="6">
+            </div>
+
+            <!-- categorías (ya las teníamos) -->
+            <div class="field-group">
+                <label>Categorías a utilizar</label>
+                <div class="lista-categorias" th:each="cat : ${categoriasDisponibles}">
+                    <label class="checkbox-categoria">
+                        <input type="checkbox"
+                               th:field="*{categoriasSeleccionadas}"
+                               th:value="${cat.id}"/>
+                        <span th:text="${cat.nombre}">Países</span>
+                    </label>
+                </div>
+            </div>
         </div>
+
 
         <!-- MODO UNIRSE-SALA: solo código de sala -->
         <div th:if="${modo == 'unirse-sala'}">
