@@ -17,9 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ServicioValidacionPorRonda {
@@ -76,7 +74,6 @@ public class ServicioValidacionPorRonda {
                     ? categoriaRepositorio.buscarPorId(resp.getCategoriaId()).getNombre()
                     : ("Categoría " + resp.getCategoriaId());
 
-            // log antes de validar (lo que verá el juez/IA)
             log.info("[VALIDAR] p={} r={} j={} catId={} ({}) letra={} texto='{}'",
                     partidaId, numeroRonda, resp.getJugadorId(),
                     resp.getCategoriaId(), nombreCat,
@@ -85,14 +82,13 @@ public class ServicioValidacionPorRonda {
 
             Resultado res = validador.validar(partida, resp);
 
-            // seguridad extra: forzar letra de ESTA ronda
+            // chequeo duro de la letra: si no coincide, invalida
             if (!coincideConLetra(resp.getTexto(), letraRonda)) {
                 res.setVeredicto(Veredicto.INVALIDA);
                 res.setMotivo("No coincide con la letra de la ronda " + letraRonda);
                 res.setPuntos(0);
             }
 
-            // log después de validar (qué resolvió el validador/IA)
             log.info("[RESULTADO] p={} r={} j={} catId={} veredicto={} motivo='{}' puntos={}",
                     partidaId, numeroRonda, resp.getJugadorId(),
                     resp.getCategoriaId(), res.getVeredicto(), res.getMotivo(), res.getPuntos());
@@ -104,15 +100,31 @@ public class ServicioValidacionPorRonda {
         int puntajeValida = (config != null) ? config.getPuntajeValida() : 10;
         int puntajeDuplicada = (config != null) ? config.getPuntajeDuplicada() : 5;
 
-        JuezBasico juez = new JuezBasico(puntajeValida, puntajeDuplicada);
+        // Calculamos si esta ronda es multi-jugador o solo
+        Set<Integer> jugadoresEnRonda = respuestasDeRonda.stream()
+                .map(Respuesta::getJugadorId)
+                .collect(Collectors.toSet());
+        boolean esMultijugador = jugadoresEnRonda.size() > 1;
 
-        for (Resultado r : resultadosNuevos) {
-            if (r.getVeredicto() == Veredicto.VALIDA) {
-                juez.marcarValida(r);
+        if (esMultijugador) {
+            // Lógica original: válidas + duplicadas entre jugadores
+            JuezBasico juez = new JuezBasico(puntajeValida, puntajeDuplicada);
+
+            for (Resultado r : resultadosNuevos) {
+                if (r.getVeredicto() == Veredicto.VALIDA) {
+                    juez.marcarValida(r);
+                }
+            }
+
+            juez.aplicarDuplicadas(resultadosNuevos);
+        } else {
+            // Modo solo: NO tiene sentido marcar duplicadas
+            for (Resultado r : resultadosNuevos) {
+                if (r.getVeredicto() == Veredicto.VALIDA) {
+                    r.setPuntos(puntajeValida);
+                }
             }
         }
-
-        juez.aplicarDuplicadas(resultadosNuevos);
 
         List<Resultado> resultadosAnteriores = resultadoValidacionRepositorio.buscarPorPartida(partidaId);
         List<Resultado> todos = new ArrayList<>(resultadosAnteriores);
