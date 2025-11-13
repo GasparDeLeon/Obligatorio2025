@@ -2,8 +2,8 @@ package com.obligatorio2025.validacion;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 import com.obligatorio2025.dominio.Categoria;
+import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -20,8 +20,8 @@ public class ServicioIAOpenAI implements ServicioIA {
 
     private final CategoriaRepositorio categoriaRepositorio;
     private final String apiKey;
-    private final String baseUrl; // p.ej. https://api.openai.com/v1
-    private final String model;   // p.ej. gpt-4o-mini
+    private final String baseUrl; // ej: https://api.openai.com/v1
+    private final String model;   // ej: gpt-4o-mini
     private final HttpClient http;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -43,58 +43,77 @@ public class ServicioIAOpenAI implements ServicioIA {
     @Override
     public VeredictoIA validar(int categoriaId, char letraRonda, String textoRespuesta) {
         try {
-            // Normalizamos entrada
             if (textoRespuesta == null || textoRespuesta.trim().isEmpty()) {
                 return new VeredictoIA(false, "Vacío");
             }
             String texto = textoRespuesta.trim();
 
-            // Obtenemos el nombre de la categoría desde la CLASE dominio.Categoria
             Categoria categoria = categoriaRepositorio.buscarPorId(categoriaId);
             String nombreCategoria = (categoria != null)
                     ? categoria.getNombre()
                     : ("categoría " + categoriaId);
 
-            // Prompt + schema para obtener JSON estricto
+            // IMPORTANTE: la IA SOLO decide si encaja en la CATEGORÍA.
+            // La letra se valida en ServicioValidacionPorRonda.coincideConLetra(...)
+            String systemPrompt =
+                    "Eres un juez estricto del juego Tutti Frutti.\n" +
+                            "Tu única tarea es decidir si una palabra pertenece razonablemente " +
+                            "a la categoría dada.\n" +
+                            "\n" +
+                            "NO debes verificar con qué letra comienza la palabra; " +
+                            "eso ya lo controla el sistema por separado.\n" +
+                            "Ignora completamente cualquier letra inicial.\n" +
+                            "\n" +
+                            "Reglas importantes:\n" +
+                            "- Considera válida cualquier palabra que entre de forma razonable en la categoría.\n" +
+                            "- No inventes criterios extra como 'moderna', 'antigua', 'muy genérica', " +
+                            "  'demasiado específica', 'poco usada', etc.\n" +
+                            "- Las respuestas tienen que ser si o si en español, si no sera Invalida" +
+                            "- Si no estás seguro de que encaje claramente en la categoría, márcala como inválida.\n" +
+                            "\n" +
+                            "Debes devolver SOLO un JSON válido con exactamente esta forma:\n" +
+                            "{\"valida\":true|false,\"motivo\":\"...\"}\n" +
+                            "Sin texto adicional fuera del JSON.";
+
+            // Ya NO le mandamos la letra. Solo categoría + texto.
+            String userPrompt =
+                    "Categoría: " + nombreCategoria + "\n" +
+                            "Texto: " + texto + "\n";
+
+            // Schema JSON para response_format
+            Map<String, Object> schema = new HashMap<>();
+            schema.put("type", "object");
+            Map<String, Object> props = new HashMap<>();
+            props.put("valida", Map.of("type", "boolean"));
+            props.put("motivo", Map.of("type", "string"));
+            schema.put("properties", props);
+            schema.put("required", new String[]{"valida", "motivo"});
+            schema.put("additionalProperties", false);
+
             Map<String, Object> body = new HashMap<>();
             body.put("model", model);
-            body.put("input", new Object[]{
+            body.put("messages", new Object[]{
                     Map.of(
                             "role", "system",
-                            "content",
-                            "Eres un juez estricto de Tutti Frutti. Devuelve SOLO JSON con " +
-                                    "{\"valida\":true|false,\"motivo\":\"...\"}. " +
-                                    "Valida si el texto pertenece a la categoría indicada " +
-                                    "y si empieza con la letra dada. Sin explicaciones extra."
+                            "content", systemPrompt
                     ),
                     Map.of(
                             "role", "user",
-                            "content",
-                            "Categoria: " + nombreCategoria + "\n" +
-                                    "Letra: " + Character.toUpperCase(letraRonda) + "\n" +
-                                    "Texto: " + texto
+                            "content", userPrompt
                     )
             });
             body.put("response_format", Map.of(
                     "type", "json_schema",
                     "json_schema", Map.of(
                             "name", "ValidacionCategoria",
-                            "schema", Map.of(
-                                    "type", "object",
-                                    "properties", Map.of(
-                                            "valida", Map.of("type", "boolean"),
-                                            "motivo", Map.of("type", "string")
-                                    ),
-                                    "required", new String[]{"valida", "motivo"},
-                                    "additionalProperties", false
-                            )
+                            "schema", schema
                     )
             ));
 
             String json = mapper.writeValueAsString(body);
 
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/responses"))
+                    .uri(URI.create(baseUrl + "/chat/completions"))
                     .timeout(Duration.ofSeconds(20))
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
@@ -110,28 +129,19 @@ public class ServicioIAOpenAI implements ServicioIA {
 
             JsonNode root = mapper.readTree(resp.body());
 
-            // 1) Camino feliz: output_text directo
+            // Chat completions: choices[0].message.content
             String payload = null;
-            if (root.hasNonNull("output_text")) {
-                payload = root.get("output_text").asText();
-            }
+            if (root.has("choices") && root.path("choices").isArray()
+                    && root.path("choices").size() > 0) {
 
-            // 2) Camino responses.output[*].content[*].text
-            if ((payload == null || payload.isBlank()) && root.has("output")) {
-                for (JsonNode outItem : root.path("output")) {
-                    for (JsonNode c : outItem.path("content")) {
-                        if (c.hasNonNull("text")) {
-                            payload = c.get("text").asText();
-                            if (payload != null && !payload.isBlank()) break;
-                        }
-                    }
-                    if (payload != null && !payload.isBlank()) break;
+                JsonNode msg = root.path("choices").get(0).path("message");
+                if (msg.hasNonNull("content")) {
+                    payload = msg.get("content").asText();
                 }
             }
 
-            // 3) Si aún no tenemos JSON, tratamos el body entero y extraemos el primer {...}
+            // Si viene con basura alrededor, intento extraer el primer {...}
             if (payload == null || payload.isBlank()) {
-                // intenta encontrar un objeto JSON dentro del texto de respuesta
                 payload = tryExtractFirstJsonObject(resp.body());
             }
 
@@ -139,7 +149,6 @@ public class ServicioIAOpenAI implements ServicioIA {
                 return new VeredictoIA(false, "IA sin contenido");
             }
 
-            // Parse final del JSON del schema
             JsonNode parsed = mapper.readTree(payload);
             boolean valida = parsed.path("valida").asBoolean(false);
             String motivo = parsed.path("motivo").asText("Sin motivo");
@@ -151,14 +160,10 @@ public class ServicioIAOpenAI implements ServicioIA {
         }
     }
 
-    /**
-     * Extrae el primer objeto JSON bien balanceado encontrado en un texto.
-     * Útil cuando el modelo envía prólogo/epílogo alrededor del JSON.
-     */
+    // Igual que antes: heurística para encontrar el primer objeto JSON {...}
     private static String tryExtractFirstJsonObject(String text) {
         if (text == null) return null;
 
-        // Heurística simple: buscar el primer bloque {...} balanceado
         int depth = 0;
         int start = -1;
         for (int i = 0; i < text.length(); i++) {
@@ -174,7 +179,6 @@ public class ServicioIAOpenAI implements ServicioIA {
             }
         }
 
-        // Plan B: regex muy permisivo (puede fallar en casos con anidados)
         Pattern p = Pattern.compile("\\{.*\\}", Pattern.DOTALL);
         Matcher m = p.matcher(text);
         if (m.find()) return m.group();

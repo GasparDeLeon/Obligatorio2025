@@ -101,19 +101,30 @@ public class AppConfig {
         return new ServicioRespuestas(respRepo, partidaRepo);
     }
     @Bean
-    public ServicioIA servicioIA(CategoriaRepositorio categoriaRepositorio,
-                                 @Value("${app.ia.enabled:false}") boolean iaEnabled,
-                                 @Value("${openai.api.key:}") String apiKey,
-                                 @Value("${openai.base-url:https://api.openai.com/v1}") String baseUrl,
-                                 @Value("${openai.model:gpt-4o-mini}") String model) {
+    public ServicioIA servicioIA(
+            CategoriaRepositorio categoriaRepositorio,
+            @Value("${openai.api.key:}") String apiKey,
+            @Value("${openai.base-url:https://api.openai.com/v1}") String baseUrl,
+            @Value("${openai.model:gpt-4o-mini}") String model,
+            @Value("${app.ia.enabled:true}") boolean iaEnabled
+    ) {
+        // Solo para depurar un poco
+        System.out.println("[IA/AppConfig] app.ia.enabled=" + iaEnabled);
+        System.out.println("[IA/AppConfig] apiKey vacía? " + (apiKey == null || apiKey.isBlank()));
 
-        if (iaEnabled && apiKey != null && !apiKey.isBlank()) {
-            return new ServicioIAOpenAI(categoriaRepositorio, apiKey, baseUrl, model);
+        if (!iaEnabled) {
+            System.out.println("[IA/AppConfig] IA deshabilitada por configuración. Usando mock.");
+            return new ServicioIAMock(categoriaRepositorio);
         }
-        // fallback seguro para dev/tests
-        return new ServicioIAMock(categoriaRepositorio);
-    }
 
+        if (apiKey == null || apiKey.isBlank()) {
+            System.out.println("[IA/AppConfig] API key no configurada. Usando mock.");
+            return new ServicioIAMock(categoriaRepositorio);
+        }
+
+        System.out.println("[IA/AppConfig] Usando ServicioIAOpenAI");
+        return new ServicioIAOpenAI(categoriaRepositorio, apiKey, baseUrl, model);
+    }
 
 
 }
