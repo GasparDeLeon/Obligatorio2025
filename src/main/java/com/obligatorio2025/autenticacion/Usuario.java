@@ -28,19 +28,4 @@ public class Usuario {
         this.rol = rol;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getNombreUsuario() {
-        return nombreUsuario;
-    }
-
-    public String getHashPassword() {
-        return hashPassword;
-    }
-
-    public Rol getRol() {
-        return rol;
-    }
 }

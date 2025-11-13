@@ -19,12 +19,6 @@ public class ServicioAutenticacion {
     }
 
     public Sesion iniciarSesion(String nombreUsuario, String password) {
-//        Optional<Usuario> usuarioOpt = usuarioRepositorio.findByNombreUsuario(nombreUsuario);
-//
-//        if (usuarioOpt.isPresent() && passwordEncoder.matches(password, usuarioOpt.get().getHashPassword())) {
-//            return new Sesion(usuarioOpt.get().getId().toString());
-//        }
-//        return null;
 
         Optional<Usuario> usuarioOpt = usuarioRepositorio.findByNombreUsuario(nombreUsuario);
         System.out.println("Buscando usuario: " + nombreUsuario);

@@ -3,6 +3,7 @@ package com.obligatorio2025.Controllers;
 import com.obligatorio2025.aplicacion.ServicioAutenticacion;
 import com.obligatorio2025.autenticacion.Rol;
 import com.obligatorio2025.autenticacion.Sesion;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -18,25 +19,35 @@ public class LoginController {
     }
 
     @GetMapping("/login")
-    public String mostrarLogin() {
-        return "login"; // WEB-INF/views/login.jsp
+    public String mostrarLogin(HttpSession session, HttpServletResponse response) {
+        // Evita que el navegador guarde en caché el formulario de login
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Expires", "0");
+
+        if (session.getAttribute("sesionId") != null) {
+            return "redirect:/index";
+        }
+        return "login";
     }
 
     @PostMapping("/login")
     public String procesarLogin(@RequestParam String usuario,
                                 @RequestParam String password,
-                                HttpSession session, Model model) {
+                                HttpSession session,
+                                HttpServletResponse response,
+                                Model model) {
 
-//        Sesion sesion = servicioAutenticacion.iniciarSesion(usuario, password);
-//
-//        if (sesion != null) {
-//            session.setAttribute("sesionId", sesion.getId());
-//            return "redirect:/index";
-//        }
-//        model.addAttribute("error", "Usuario o contraseña incorrectos");
-//
-//        return "login";
+        // Evita que el navegador guarde la página en caché
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Expires", "0");
 
+        // Si ya hay sesión activa, redirige directamente al index
+        if (session.getAttribute("sesionId") != null) {
+            System.out.println("Intento de login con sesión activa. Redirigiendo a /index");
+            return "redirect:/index";
+        }
 
         System.out.println("Intentando iniciar sesión con: " + usuario);
         Sesion sesion = servicioAutenticacion.iniciarSesion(usuario, password);
@@ -53,6 +64,23 @@ public class LoginController {
         return "login";
     }
 
+    //PROCESAR LOGIN VIEJO POR SI VUELVO A ESTE
+//    @PostMapping("/login")
+//    public String procesarLogin(@RequestParam String usuario,
+//                                @RequestParam String password,
+//                                HttpSession session, Model model) {
+    //        Sesion sesion = servicioAutenticacion.iniciarSesion(usuario, password);
+//
+//        if (sesion != null) {
+//            session.setAttribute("sesionId", sesion.getId());
+//            return "redirect:/index";
+//        }
+//        model.addAttribute("error", "Usuario o contraseña incorrectos");
+//
+//        return "login";
+//    }
+
+
     @GetMapping("/home")
     public String home() {
         return "home";
@@ -60,7 +88,7 @@ public class LoginController {
 
     @GetMapping("/register")
     public String mostrarRegistro() {
-        return "register"; // WEB-INF/views/register.jsp o register.html
+        return "register";
     }
 
     @PostMapping("/register")
