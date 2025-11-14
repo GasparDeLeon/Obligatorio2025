@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Lobby sala ' + ${sala.codigo}">Lobby</title>
+
+    <!-- Por ahora sin estilos, después se maqueta -->
+    <!-- SockJS + STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <!-- Nuestro JS -->
+    <script defer th:src="@{/js/lobby-ws.js}"></script>
+</head>
+<body>
+
+<h1 th:text="'Lobby sala ' + ${sala.codigo}">Lobby sala XXXX</h1>
+
+<p><strong>Configuración de la sala</strong></p>
+<p>
+    La configuración detallada de la sala la ajustaremos más adelante.
+</p>
+
+<hr>
+
+<h2>Jugadores en la sala</h2>
+<ul id="lista-jugadores">
+    <li>(Todavía no hay jugadores en la lista renderizada)</li>
+</ul>
+
+<hr>
+
+<h2>Mensajes en tiempo real</h2>
+
+<div id="log" style="border: 1px solid #ccc; padding: 8px; height: 200px; overflow-y: auto;">
+    <em>Esperando mensajes...</em>
+</div>
+
+<div style="margin-top: 10px;">
+    <input type="text" id="input-mensaje" placeholder="Escribe un mensaje de prueba">
+    <button id="btn-enviar">Enviar a la sala</button>
+</div>
+
+<!-- Datos que el JS necesita -->
+<input type="hidden" id="codigoSala" th:value="${sala.codigo}">
+<!-- Por ahora jugadorId fijo = 1 para el host; luego vendrá del login -->
+<input type="hidden" id="jugadorId" value="1">
+
+</body>
+</html>
