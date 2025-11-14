@@ -1,14 +1,18 @@
 package com.obligatorio2025.aplicacion;
 
 import com.obligatorio2025.dominio.*;
+import com.obligatorio2025.dominio.enums.ModoJuego;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
 import com.obligatorio2025.dominio.enums.EstadoPartida;
+import org.springframework.stereotype.Service;
 
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
+@Service
 public class ServicioLobby {
 
     private final SalaRepositorio salaRepositorio;
@@ -16,6 +20,10 @@ public class ServicioLobby {
 
     // nuevo: locks por sala
     private final Map<Integer, Object> locksPorSala = new ConcurrentHashMap<>();
+
+    private final AtomicInteger secuenciaSala = new AtomicInteger(1);
+    private final AtomicInteger secuenciaPartida = new AtomicInteger(1000);
+
 
     public ServicioLobby(SalaRepositorio salaRepositorio,
                          PartidaRepositorio partidaRepositorio) {
@@ -25,6 +33,36 @@ public class ServicioLobby {
 
     private Object lockForSala(int salaId) {
         return locksPorSala.computeIfAbsent(salaId, id -> new Object());
+    }
+
+    public Sala crearSala(ConfiguracionPartida configuracion, String hostId) {
+
+        if (configuracion.getModo() != ModoJuego.MULTI) {
+            throw new IllegalArgumentException("crearSala solo debe usarse para MODO MULTI");
+        }
+
+        int idSala = secuenciaSala.getAndIncrement();
+        int idPartida = secuenciaPartida.getAndIncrement();
+
+        String codigo = generarCodigoSala(idSala);
+
+        Sala sala = new Sala(idSala, codigo, hostId);
+
+        Partida partida = new Partida(idPartida, configuracion);
+        partida.setEstado(EstadoPartida.CREADA); // o el estado inicial que uses
+
+        sala.setPartidaActual(partida);
+
+        // persistimos en memoria
+        partidaRepositorio.guardar(partida);
+        salaRepositorio.guardar(sala);
+
+        return sala;
+    }
+
+    // código simple de 4 dígitos; luego podés hacerlo más lindo
+    private String generarCodigoSala(int idSala) {
+        return String.format("%04d", idSala);
     }
 
     public void unirseSala(String codigo, JugadorEnPartida jugador) {
