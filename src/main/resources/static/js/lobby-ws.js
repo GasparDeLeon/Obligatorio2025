@@ -1,5 +1,6 @@
 let stompClient = null;
 const jugadoresEnSala = new Set();
+const jugadoresListos = new Set(); // quiénes están listos
 
 function appendLog(texto) {
     const logDiv = document.getElementById('log');
@@ -24,24 +25,10 @@ function renderJugadores() {
         .sort((a, b) => a - b)
         .forEach(id => {
             const li = document.createElement('li');
-            li.textContent = 'Jugador ' + id;
+            const estaListo = jugadoresListos.has(id);
+            li.textContent = 'Jugador ' + id + (estaListo ? ' (Listo)' : '');
             ul.appendChild(li);
         });
-}
-
-// NUEVO: leer jugadores iniciales del hidden "jugadoresActuales"
-function inicializarJugadoresDesdeHtml() {
-    const hidden = document.getElementById('jugadoresActuales');
-    if (!hidden) return;
-
-    const value = hidden.value;
-    if (!value) return; // puede venir vacío
-
-    value
-        .split(',')
-        .map(v => parseInt(v, 10))
-        .filter(n => !isNaN(n))
-        .forEach(id => jugadoresEnSala.add(id));
 }
 
 function manejarEventoSala(evento) {
@@ -61,13 +48,47 @@ function manejarEventoSala(evento) {
             }
             break;
         }
+        case 'JUGADOR_LISTO': {
+            const payload = evento.payload || {};
+            const jugadorId = payload.jugadorId;
+            if (typeof jugadorId === 'number') {
+                jugadoresEnSala.add(jugadorId); // por si acaso aún no estaba
+                jugadoresListos.add(jugadorId);
+                appendLog('Jugador ' + jugadorId + ' está listo.');
+                renderJugadores();
+            }
+            break;
+        }
         case 'PARTIDA_INICIA': {
             const payload = evento.payload || {};
             const codigo = payload.codigoSala || '';
             appendLog('La partida ha sido iniciada en la sala ' + (codigo || '') + '.');
-            // más adelante podrías redirigir a la pantalla de juego
+            // más adelante acá podríamos redirigir a la pantalla de juego
             break;
         }
+                case 'ERROR_INICIO': {
+                    const payload = evento.payload || {};
+                    const mensaje = payload.mensaje || 'No se pudo iniciar la partida.';
+
+                    // id del jugador actual (el que está viendo esta pestaña)
+                    const jugadorActualId = parseInt(
+                        document.getElementById('jugadorId').value,
+                        10
+                    );
+
+                    // Solo el host (jugador 1) ve el alert y el log explícito
+                    if (jugadorActualId === 1) {
+                        appendLog('[ERROR] ' + mensaje);
+                        alert(mensaje);
+                    } else {
+                        // si querés, para los demás no mostramos nada,
+                        // o dejamos un log suave:
+                        // appendLog('[INFO] El host intentó iniciar la partida pero faltan jugadores listos.');
+                    }
+
+                    break;
+                }
+
         default:
             appendLog('Evento [' + evento.tipo + '] recibido: ' + JSON.stringify(evento.payload));
             break;
@@ -81,7 +102,7 @@ function conectarLobby() {
     const socket = new SockJS('/ws-tutti');
     stompClient = Stomp.over(socket);
 
-    // si querés silenciar logs:
+    // para silenciar logs:
     // stompClient.debug = null;
 
     stompClient.connect({}, function (frame) {
@@ -167,10 +188,45 @@ function configurarBotonIniciar() {
     });
 }
 
+function configurarBotonListo() {
+    const btn = document.getElementById('btn-listo');
+    if (!btn) return;
+
+    const codigoSala = document.getElementById('codigoSala').value;
+    const jugadorId = parseInt(document.getElementById('jugadorId').value, 10);
+
+    btn.addEventListener('click', function () {
+        if (!stompClient || !stompClient.connected) {
+            appendLog('No estás conectado al WebSocket.');
+            return;
+        }
+
+        const payload = {
+            codigoSala: codigoSala,
+            jugadorId: jugadorId
+        };
+
+        stompClient.send('/app/sala.listo', {}, JSON.stringify(payload));
+        appendLog('Marcándome como listo...');
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
-    inicializarJugadoresDesdeHtml(); // 1) cargo lo que vino del servidor
-    renderJugadores();               // 2) pinto la lista inicial
-    conectarLobby();                 // 3) me conecto al WS
-    configurarBotonEnviar();         // 4) chat
-    configurarBotonIniciar();        // 5) botón iniciar (si es host)
+    // 1) Inicializar los jugadores que ya estaban en la sala (datos del servidor)
+    if (Array.isArray(window.jugadoresIniciales)) {
+        window.jugadoresIniciales.forEach(id => {
+            if (typeof id === 'number') {
+                jugadoresEnSala.add(id);
+            }
+        });
+    }
+
+    // 2) Render inicial de la lista
+    renderJugadores();
+
+    // 3) Conectar WebSocket y configurar botones
+    conectarLobby();
+    configurarBotonEnviar();
+    configurarBotonIniciar();
+    configurarBotonListo();
 });

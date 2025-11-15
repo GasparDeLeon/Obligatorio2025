@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,13 +32,24 @@ public class LobbyController {
             return "error";
         }
 
-        int jugadorId = (jugadorIdParam != null) ? jugadorIdParam : 1; // default host = 1
+        // Si no viene el jugadorId por querystring, asumimos host = 1
+        int jugadorId = (jugadorIdParam != null) ? jugadorIdParam : 1;
 
-        // AHORA: leer jugadores desde Sala, no desde Partida
+        // Leemos los jugadores que la sala ya conoce
         List<Integer> jugadoresActuales = sala.getJugadores()
                 .stream()
                 .map(JugadorEnPartida::getJugadorId)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new)); // lista mutable
+
+        // Nos aseguramos de que el jugador actual figure en la lista
+        if (!jugadoresActuales.contains(jugadorId)) {
+            jugadoresActuales.add(jugadorId);
+        }
+
+        // Nos aseguramos de que el host (jugador 1) también figure siempre
+        if (!jugadoresActuales.contains(1)) {
+            jugadoresActuales.add(1);
+        }
 
         model.addAttribute("sala", sala);
         model.addAttribute("config", sala.getPartidaActual().getConfiguracion());
@@ -45,7 +57,7 @@ public class LobbyController {
         model.addAttribute("jugadorId", jugadorId);
         model.addAttribute("esHost", jugadorId == 1);
 
-        // pasamos la lista de IDs de jugadores
+        // Lista de IDs de jugadores que el front usará como estado inicial
         model.addAttribute("jugadoresActuales", jugadoresActuales);
 
         return "lobby";
