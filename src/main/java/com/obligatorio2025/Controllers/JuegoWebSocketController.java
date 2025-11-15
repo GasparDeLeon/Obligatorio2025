@@ -1,7 +1,6 @@
 package com.obligatorio2025.Controllers;
 
 import com.obligatorio2025.aplicacion.GestorSesionesWS;
-import com.obligatorio2025.aplicacion.GestorSesionesWS.SesionJugadorWS;
 import com.obligatorio2025.aplicacion.ServicioLobby;
 import com.obligatorio2025.dominio.JugadorEnPartida;
 import org.slf4j.Logger;
@@ -29,12 +28,20 @@ public class JuegoWebSocketController {
         this.servicioLobby = servicioLobby;
     }
 
+    // =====================================================
+    //  PING DE PRUEBA
+    // =====================================================
+
     @MessageMapping("/juego.ping")
     public void ping(String payload) {
         String respuesta = "pong-juego: " + payload;
         log.info("[WS] ping recibido: {}", payload);
         messagingTemplate.convertAndSend("/topic/juego.ping", respuesta);
     }
+
+    // =====================================================
+    //  MENSAJE DE CHAT A UNA SALA
+    // =====================================================
 
     @MessageMapping("/sala.{codigoSala}.mensaje")
     public void mensajeSala(@DestinationVariable String codigoSala,
@@ -46,6 +53,10 @@ public class JuegoWebSocketController {
 
         messagingTemplate.convertAndSend(destino, texto);
     }
+
+    // =====================================================
+    //  DTOs de mensajes de entrada
+    // =====================================================
 
     public static class JoinSalaMessage {
         private String codigoSala;
@@ -73,6 +84,24 @@ public class JuegoWebSocketController {
         public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
     }
 
+    // mensaje para marcar jugador listo
+    public static class JugadorListoMessage {
+        private String codigoSala;
+        private int jugadorId;
+
+        public JugadorListoMessage() {}
+
+        public String getCodigoSala() { return codigoSala; }
+        public void setCodigoSala(String codigoSala) { this.codigoSala = codigoSala; }
+
+        public int getJugadorId() { return jugadorId; }
+        public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
+    }
+
+    // =====================================================
+    //  DTO de eventos hacia la sala
+    // =====================================================
+
     public static class SalaEvent {
         private String tipo;
         private Object payload;
@@ -90,12 +119,24 @@ public class JuegoWebSocketController {
         public Object getPayload() { return payload; }
         public void setPayload(Object payload) { this.payload = payload; }
 
+        // jugador entra al lobby
         public static SalaEvent jugadorEntra(int jugadorId) {
             return new SalaEvent("JUGADOR_ENTRA", new JugadorPayload(jugadorId));
         }
 
+        // jugador marca "listo"
+        public static SalaEvent jugadorListo(int jugadorId) {
+            return new SalaEvent("JUGADOR_LISTO", new JugadorPayload(jugadorId));
+        }
+
+        // partida inicia
         public static SalaEvent partidaInicia(String codigoSala) {
             return new SalaEvent("PARTIDA_INICIA", new PartidaPayload(codigoSala));
+        }
+
+        // error al intentar iniciar
+        public static SalaEvent errorInicio(String mensaje) {
+            return new SalaEvent("ERROR_INICIO", new ErrorPayload(mensaje));
         }
     }
 
@@ -125,6 +166,23 @@ public class JuegoWebSocketController {
         public void setCodigoSala(String codigoSala) { this.codigoSala = codigoSala; }
     }
 
+    public static class ErrorPayload {
+        private String mensaje;
+
+        public ErrorPayload() {}
+
+        public ErrorPayload(String mensaje) {
+            this.mensaje = mensaje;
+        }
+
+        public String getMensaje() { return mensaje; }
+        public void setMensaje(String mensaje) { this.mensaje = mensaje; }
+    }
+
+    // =====================================================
+    //  MANEJADORES
+    // =====================================================
+
     @MessageMapping("/sala.unirse")
     public void unirseSala(JoinSalaMessage msg,
                            SimpMessageHeaderAccessor headers) {
@@ -136,8 +194,10 @@ public class JuegoWebSocketController {
         log.info("[WS] unirseSala -> sessionId={}, sala={}, jugador={}",
                 sessionId, codigoSala, jugadorId);
 
+        // 1) registrar la sesión
         gestorSesionesWS.registrar(sessionId, codigoSala, jugadorId);
 
+        // 2) actualizar dominio
         try {
             JugadorEnPartida jugador = new JugadorEnPartida(jugadorId);
             servicioLobby.unirseSala(codigoSala, jugador);
@@ -146,6 +206,7 @@ public class JuegoWebSocketController {
             return;
         }
 
+        // 3) notificar a la sala
         String destino = "/topic/sala." + codigoSala;
         SalaEvent evento = SalaEvent.jugadorEntra(jugadorId);
 
@@ -164,11 +225,54 @@ public class JuegoWebSocketController {
         log.info("[WS] iniciarSala -> sessionId={}, sala={}, jugador={}",
                 sessionId, codigoSala, jugadorId);
 
-        // Más adelante: validar que jugadorId sea el host.
-        // Por ahora solo notificamos a todos que la partida inicia.
+        String destino = "/topic/sala." + codigoSala;
+
+        // 1) Validar con el dominio: no iniciar si no están todos listos
+        boolean todosListos;
+        try {
+            todosListos = servicioLobby.estanTodosListos(codigoSala);
+        } catch (IllegalArgumentException ex) {
+            log.warn("[WS] iniciarSala fallo: {}", ex.getMessage());
+            SalaEvent error = SalaEvent.errorInicio("No se pudo iniciar la partida: sala inexistente.");
+            messagingTemplate.convertAndSend(destino, error);
+            return;
+        }
+
+        if (!todosListos) {
+            String msgError = "No se puede iniciar la partida: hay jugadores que no están marcados como 'Listo'.";
+            log.warn("[WS] iniciarSala rechazado en sala {}: {}", codigoSala, msgError);
+            SalaEvent error = SalaEvent.errorInicio(msgError);
+            messagingTemplate.convertAndSend(destino, error);
+            return;
+        }
+
+        // (Opcional a futuro: validar que jugadorId sea el host de la sala)
+
+        // 2) Si todo OK, avisar a todos que la partida inicia
+        SalaEvent evento = SalaEvent.partidaInicia(codigoSala);
+
+        log.info("[WS] broadcast evento {} a {}", evento.getTipo(), destino);
+        messagingTemplate.convertAndSend(destino, evento);
+    }
+
+    // marcar jugador como listo y notificar
+    @MessageMapping("/sala.listo")
+    public void jugadorListo(JugadorListoMessage msg) {
+
+        String codigoSala = msg.getCodigoSala();
+        int jugadorId = msg.getJugadorId();
+
+        log.info("[WS] jugadorListo -> sala={}, jugador={}", codigoSala, jugadorId);
+
+        try {
+            servicioLobby.marcarListo(codigoSala, jugadorId);
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            log.warn("[WS] marcarListo fallo: {}", ex.getMessage());
+            return;
+        }
 
         String destino = "/topic/sala." + codigoSala;
-        SalaEvent evento = SalaEvent.partidaInicia(codigoSala);
+        SalaEvent evento = SalaEvent.jugadorListo(jugadorId);
 
         log.info("[WS] broadcast evento {} a {}", evento.getTipo(), destino);
         messagingTemplate.convertAndSend(destino, evento);

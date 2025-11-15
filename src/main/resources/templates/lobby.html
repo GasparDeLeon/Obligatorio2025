@@ -8,6 +8,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
+    <!-- Exponer jugadores actuales como array JS -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var jugadoresIniciales = /*[[${jugadoresActuales}]]*/ [];
+        /*]]>*/
+    </script>
+
     <!-- Nuestro JS -->
     <script defer th:src="@{/js/lobby-ws.js}"></script>
 </head>
@@ -25,6 +32,13 @@
 <div th:if="${esHost}">
     <button id="btn-iniciar">Iniciar partida</button>
 </div>
+
+<!-- Botón para marcarse como listo (lo ven todos los jugadores) -->
+<div style="margin-top: 10px;">
+    <button id="btn-listo">Estoy listo</button>
+</div>
+
+<hr>
 
 <h2>Jugadores en la sala</h2>
 <ul id="lista-jugadores">
@@ -47,12 +61,6 @@
 <!-- Datos que el JS necesita -->
 <input type="hidden" id="codigoSala" th:value="${codigoSala}">
 <input type="hidden" id="jugadorId" th:value="${jugadorId}">
-
-<!-- NUEVO: IDs de jugadores ya presentes en la sala, ej: "1,2" -->
-<input type="hidden"
-       id="jugadoresActuales"
-       th:value="${jugadoresActuales != null ? #strings.listJoin(jugadoresActuales, ',') : ''}">
-
 
 </body>
 </html>

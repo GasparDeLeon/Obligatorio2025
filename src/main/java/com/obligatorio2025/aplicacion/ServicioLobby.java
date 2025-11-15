@@ -126,5 +126,15 @@ public class ServicioLobby {
             salaRepositorio.guardar(sala);
         }
     }
+    public boolean estanTodosListos(String codigoSala) {
+        Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
+        if (sala == null) {
+            throw new IllegalArgumentException("No existe sala con código " + codigoSala);
+        }
+
+        synchronized (lockForSala(sala.getId())) {
+            return sala.todosListos();
+        }
+    }
 
 }
