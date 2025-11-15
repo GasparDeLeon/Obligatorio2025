@@ -106,7 +106,7 @@ public class PartidaController {
                 bindingResult.rejectValue(
                         "codigoSala",
                         "codigoSala.vacio",
-                        "Debe ingresar un código de sala."
+                        "Debe ingresar el código de la sala."
                 );
             }
         }
@@ -179,7 +179,8 @@ public class PartidaController {
                 redirect = "redirect:/lobby/" + sala.getCodigo();
             }
             case "unirse-sala" -> {
-                String codigoSala = config.getCodigoSala().trim();
+                // Normalizamos código: sin espacios y en mayúsculas
+                String codigoSala = config.getCodigoSala().trim().toUpperCase();
                 redirect = "redirect:/lobby/" + codigoSala;
             }
             default -> redirect = "redirect:/";
