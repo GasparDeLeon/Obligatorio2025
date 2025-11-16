@@ -22,7 +22,7 @@ public class AppConsolaMulti {
         ResultadoValidacionRepositorioEnMemoria resValRepo = new ResultadoValidacionRepositorioEnMemoria();
 
         // Servicio de IA (mock) para validar respuestas
-        ServicioIA servicioIA = new ServicioIAMock();
+        ServicioIA servicioIA = new ServicioIAMock(catRepo);
 
         ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);
         ServicioRespuestas servRespuestas = new ServicioRespuestas(respRepo, partidaRepo);

@@ -23,7 +23,7 @@ public class AppConsolaSingle {
         ResultadoValidacionRepositorioEnMemoria resValRepo = new ResultadoValidacionRepositorioEnMemoria();
 
         // servicio de IA (mock)
-        ServicioIA servicioIA = new ServicioIAMock();
+        ServicioIA servicioIA = new ServicioIAMock(catRepo);
 
         // servicios
         ServicioLobby lobby = new ServicioLobby(salaRepo, partidaRepo);

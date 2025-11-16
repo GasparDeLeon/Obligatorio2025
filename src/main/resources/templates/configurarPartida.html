@@ -39,7 +39,7 @@
         .modo {
             font-size: 18px;
             color: #666;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .field-group {
@@ -94,11 +94,12 @@
 
         .error {
             color: #c0392b;
-            margin-bottom: 10px;
+            margin-top: 4px;
+            font-size: 13px;
             font-weight: 600;
+            display: block;
         }
 
-        /* NUEVO: estilos para la lista de categorías */
         .lista-categorias {
             display: flex;
             flex-wrap: wrap;
@@ -116,6 +117,20 @@
         .checkbox-categoria input {
             width: auto;
         }
+
+        .error-list {
+            margin-bottom: 15px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: #fdecea;
+            border: 1px solid #f5c6cb;
+        }
+
+        .error-list li {
+            list-style: none;
+            color: #c0392b;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -126,8 +141,8 @@
 
     <p class="error" th:if="${error}" th:text="${error}"></p>
 
-    <!-- importante: mandamos el modo de vuelta en el POST -->
     <form method="post" th:action="@{/configurar}">
+        <!-- modo siempre viaja en el POST -->
         <input type="hidden" name="modo" th:value="${modo}"/>
 
         <!-- MODO SOLO -->
@@ -137,9 +152,11 @@
                 <input type="number" id="duracionTurnoSolo"
                        th:field="*{duracionTurnoSeg}"
                        min="10" max="300">
+                <span class="error"
+                      th:if="${#fields.hasErrors('duracionTurnoSeg')}"
+                      th:errors="*{duracionTurnoSeg}"></span>
             </div>
 
-            <!-- NUEVO: selección de categorías para modo solo -->
             <div class="field-group">
                 <label>Categorías a utilizar</label>
                 <div class="lista-categorias" th:each="cat : ${categoriasDisponibles}">
@@ -150,22 +167,28 @@
                         <span th:text="${cat.nombre}">Países</span>
                     </label>
                 </div>
+                <span class="error"
+                      th:if="${#fields.hasErrors('categoriasSeleccionadas')}"
+                      th:errors="*{categoriasSeleccionadas}"></span>
             </div>
 
-            <!-- valores fijos ocultos -->
+            <!-- valores fijos ocultos para solo -->
             <input type="hidden" th:field="*{cantidadRondas}" value="1"/>
             <input type="hidden" th:field="*{tiempoGraciaSeg}" value="0"/>
         </div>
 
-        <!-- MODO CREAR-SALA: rondas + turno + gracia + categorías + jugadores -->
+        <!-- MODO CREAR-SALA -->
         <div th:if="${modo == 'crear-sala'}">
             <div class="field-group">
                 <label for="cantRondas">Cantidad de rondas</label>
                 <select id="cantRondas" th:field="*{cantidadRondas}">
                     <option value="1">1 ronda</option>
-                    <option value="3" selected>3 rondas</option>
+                    <option value="3">3 rondas</option>
                     <option value="5">5 rondas</option>
                 </select>
+                <span class="error"
+                      th:if="${#fields.hasErrors('cantidadRondas')}"
+                      th:errors="*{cantidadRondas}"></span>
             </div>
 
             <div class="field-group">
@@ -173,6 +196,9 @@
                 <input type="number" id="duracionTurnoMulti"
                        th:field="*{duracionTurnoSeg}"
                        min="10" max="300">
+                <span class="error"
+                      th:if="${#fields.hasErrors('duracionTurnoSeg')}"
+                      th:errors="*{duracionTurnoSeg}"></span>
             </div>
 
             <div class="field-group">
@@ -180,17 +206,21 @@
                 <input type="number" id="duracionGracia"
                        th:field="*{tiempoGraciaSeg}"
                        min="5" max="60">
+                <span class="error"
+                      th:if="${#fields.hasErrors('tiempoGraciaSeg')}"
+                      th:errors="*{tiempoGraciaSeg}"></span>
             </div>
 
-            <!-- NUEVO: número de jugadores -->
             <div class="field-group">
                 <label for="numJugadores">Número de jugadores (2 a 6)</label>
                 <input type="number" id="numJugadores"
                        th:field="*{numeroJugadores}"
                        min="2" max="6">
+                <span class="error"
+                      th:if="${#fields.hasErrors('numeroJugadores')}"
+                      th:errors="*{numeroJugadores}"></span>
             </div>
 
-            <!-- categorías (ya las teníamos) -->
             <div class="field-group">
                 <label>Categorías a utilizar</label>
                 <div class="lista-categorias" th:each="cat : ${categoriasDisponibles}">
@@ -201,18 +231,23 @@
                         <span th:text="${cat.nombre}">Países</span>
                     </label>
                 </div>
+                <span class="error"
+                      th:if="${#fields.hasErrors('categoriasSeleccionadas')}"
+                      th:errors="*{categoriasSeleccionadas}"></span>
             </div>
         </div>
 
-
-        <!-- MODO UNIRSE-SALA: solo código de sala -->
+        <!-- MODO UNIRSE-SALA -->
         <div th:if="${modo == 'unirse-sala'}">
             <div class="field-group">
                 <label for="codigoSala">Código de la sala</label>
                 <input type="text" id="codigoSala"
                        th:field="*{codigoSala}"
-                       placeholder="Ej: ABCD"
+                       placeholder="Ej: 0003"
                        maxlength="10">
+                <span class="error"
+                      th:if="${#fields.hasErrors('codigoSala')}"
+                      th:errors="*{codigoSala}"></span>
             </div>
         </div>
 

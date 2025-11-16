@@ -44,46 +44,66 @@
                   th:action="@{'/solo/' + ${idPartida} + '/responder'}"
                   method="post">
 
-                <!-- Si usás Spring Security, acá iría el token CSRF -->
-                <!-- <input type="hidden" name="_csrf" th:value="${_csrf.token}"/> -->
-
+                <!-- acción que vamos a setear desde JS o desde el onClick -->
                 <input type="hidden" name="accion" id="input-accion" value="">
 
-                <div class="tabla-categorias">
-                    <div class="fila-cabecera">
-                        <span>Categoría</span>
-                        <span>Respuesta</span>
-                    </div>
+                <!-- conservar configuración al enviar -->
+                <input type="hidden" name="duracionTurnoSeg"
+                       th:value="${duracionSegundos}" />
 
-                    <div class="fila-categoria" th:each="cat : ${categorias}">
-                        <span class="nombre-categoria"
-                              th:text="${cat.nombre}">Animal</span>
+                <input type="hidden" name="cats"
+                       th:value="${cats}" />
 
-                        <input type="text"
-                               class="input-respuesta"
-                               th:attr="name=${'respuestas[' + cat.id + ']'},data-categoria=${cat.nombre},data-letra=${letra}"
-                               autocomplete="off"
-                               placeholder="Escribe aquí..."/>
-                    </div>
-                </div>
+                <table class="tabla-categorias">
+                    <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Respuesta</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="cat : ${categorias}">
+                        <td th:text="${cat.nombre}">Categoría</td>
+                        <td>
+                            <input type="text"
+                                   class="input-respuesta"
+                                   autocomplete="off"
+                                   th:name="${'respuestas[' + cat.id + ']'}">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
 
                 <div class="acciones">
                     <button type="button"
-                            id="btnMeRindo"
-                            class="btn btn-secundario">
+                            id="btn-rendirse"
+                            class="btn btn-secundario"
+                            onclick="enviarAccion('rendirse')">
                         Me rindo
                     </button>
 
-                    <button type="submit"
-                            id="btnTuttiFrutti"
-                            class="btn btn-principal"
-                            disabled>
+                    <button type="button"
+                            id="btn-tutti"
+                            class="btn btn-primario"
+                            disabled
+                            onclick="enviarAccion('tutti-frutti')">
                         Tutti Frutti
                     </button>
                 </div>
             </form>
+
         </section>
     </main>
 </div>
+
+<script>
+    // Si ya tenés algo parecido en jugarSolo.js, podés borrarlo de acá
+    function enviarAccion(valor) {
+        const inputAccion = document.getElementById('input-accion');
+        const form = document.getElementById('form-jugar-solo');
+        inputAccion.value = valor;
+        form.submit();
+    }
+</script>
 </body>
 </html>

@@ -51,8 +51,14 @@
             </table>
 
             <div class="acciones">
-                <a th:href="@{/solo/nueva}" class="btn btn-principal">Jugar otra vez</a>
-                <a th:href="@{/}" class="btn btn-secundario">Volver al inicio</a>
+                <a th:href="@{'/solo/nueva'(duracionTurnoSeg=${duracionSegundos}, cats=${cats})}"
+                   class="btn btn-principal">
+                    Volver a jugar
+                </a>
+
+                <a th:href="@{/}" class="btn btn-secundario">
+                    Volver al inicio
+                </a>
             </div>
         </section>
     </main>

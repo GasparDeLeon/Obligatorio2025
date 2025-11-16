@@ -1,18 +1,31 @@
 package com.obligatorio2025.Controllers;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigurarPartidaForm {
 
+    @NotNull(message = "La cantidad de rondas es obligatoria.")
+    @Min(value = 1, message = "Debe haber al menos 1 ronda.")
+    @Max(value = 26, message = "No puede haber más de 26 rondas.")
     private Integer cantidadRondas;
+
+    @NotNull(message = "La duración del turno es obligatoria.")
+    @Min(value = 10, message = "La duración mínima del turno es de 10 segundos.")
+    @Max(value = 300, message = "La duración máxima del turno es de 300 segundos.")
     private Integer duracionTurnoSeg;
+
+    // En modo solo lo vamos a ignorar. Lo usaremos después para multi.
     private Integer tiempoGraciaSeg;
+
     private String codigoSala;
     private Integer numeroJugadores;
-    private List<Integer> categoriasSeleccionadas = new ArrayList<>();
 
-    // getters/setters existentes...
+    // IDs de categorías elegidas
+    private List<Integer> categoriasSeleccionadas = new ArrayList<>();
 
     public Integer getNumeroJugadores() {
         return numeroJugadores;
@@ -53,8 +66,6 @@ public class ConfigurarPartidaForm {
     public void setCodigoSala(String codigoSala) {
         this.codigoSala = codigoSala;
     }
-
-    // getters/setters nuevos
 
     public List<Integer> getCategoriasSeleccionadas() {
         return categoriasSeleccionadas;

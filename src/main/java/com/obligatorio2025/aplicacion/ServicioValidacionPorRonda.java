@@ -2,25 +2,27 @@ package com.obligatorio2025.aplicacion;
 
 import com.obligatorio2025.dominio.ConfiguracionPartida;
 import com.obligatorio2025.dominio.Partida;
-import com.obligatorio2025.dominio.Ronda;
 import com.obligatorio2025.dominio.Respuesta;
+import com.obligatorio2025.dominio.Ronda;
 import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.RespuestaRepositorio;
 import com.obligatorio2025.infraestructura.ResultadoValidacionRepositorio;
 import com.obligatorio2025.validacion.JuezBasico;
 import com.obligatorio2025.validacion.Resultado;
+import com.obligatorio2025.validacion.ServicioIA;
 import com.obligatorio2025.validacion.ValidadorRespuesta;
 import com.obligatorio2025.validacion.Veredicto;
-import com.obligatorio2025.validacion.ServicioIA;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ServicioValidacionPorRonda {
+
+    private static final Logger log = LoggerFactory.getLogger(ServicioValidacionPorRonda.class);
 
     private final PartidaRepositorio partidaRepositorio;
     private final RespuestaRepositorio respuestaRepositorio;
@@ -40,7 +42,6 @@ public class ServicioValidacionPorRonda {
         this.servicioIA = servicioIA;
     }
 
-
     public List<Resultado> validarRonda(int partidaId, int numeroRonda) {
         Partida partida = partidaRepositorio.buscarPorId(partidaId);
         if (partida == null) {
@@ -56,7 +57,6 @@ public class ServicioValidacionPorRonda {
 
         char letraRonda = ronda.getLetra();
 
-        // respuestas SOLO de esta ronda
         List<Respuesta> respuestasDeRonda = respuestaRepositorio.buscarPorPartida(partidaId)
                 .stream()
                 .filter(r -> r.getRondaId() == numeroRonda)
@@ -67,45 +67,69 @@ public class ServicioValidacionPorRonda {
         }
 
         ValidadorRespuesta validador = new ValidadorRespuesta(categoriaRepositorio, servicioIA);
-
         List<Resultado> resultadosNuevos = new ArrayList<>();
 
         for (Respuesta resp : respuestasDeRonda) {
+            String nombreCat = categoriaRepositorio.buscarPorId(resp.getCategoriaId()) != null
+                    ? categoriaRepositorio.buscarPorId(resp.getCategoriaId()).getNombre()
+                    : ("Categoría " + resp.getCategoriaId());
+
+            log.info("[VALIDAR] p={} r={} j={} catId={} ({}) letra={} texto='{}'",
+                    partidaId, numeroRonda, resp.getJugadorId(),
+                    resp.getCategoriaId(), nombreCat,
+                    Character.toUpperCase(letraRonda),
+                    resp.getTexto());
+
             Resultado res = validador.validar(partida, resp);
 
-            // forzar letra de ESTA ronda
+            // chequeo duro de la letra: si no coincide, invalida
             if (!coincideConLetra(resp.getTexto(), letraRonda)) {
                 res.setVeredicto(Veredicto.INVALIDA);
                 res.setMotivo("No coincide con la letra de la ronda " + letraRonda);
                 res.setPuntos(0);
             }
 
+            log.info("[RESULTADO] p={} r={} j={} catId={} veredicto={} motivo='{}' puntos={}",
+                    partidaId, numeroRonda, resp.getJugadorId(),
+                    resp.getCategoriaId(), res.getVeredicto(), res.getMotivo(), res.getPuntos());
+
             resultadosNuevos.add(res);
         }
 
-        // puntajes de la partida
         ConfiguracionPartida config = partida.getConfiguracion();
         int puntajeValida = (config != null) ? config.getPuntajeValida() : 10;
         int puntajeDuplicada = (config != null) ? config.getPuntajeDuplicada() : 5;
 
-        JuezBasico juez = new JuezBasico(puntajeValida, puntajeDuplicada);
+        // Calculamos si esta ronda es multi-jugador o solo
+        Set<Integer> jugadoresEnRonda = respuestasDeRonda.stream()
+                .map(Respuesta::getJugadorId)
+                .collect(Collectors.toSet());
+        boolean esMultijugador = jugadoresEnRonda.size() > 1;
 
-        // 1) marcar válidas con puntaje de la config
-        for (Resultado r : resultadosNuevos) {
-            if (r.getVeredicto() == Veredicto.VALIDA) {
-                juez.marcarValida(r);
+        if (esMultijugador) {
+            // Lógica original: válidas + duplicadas entre jugadores
+            JuezBasico juez = new JuezBasico(puntajeValida, puntajeDuplicada);
+
+            for (Resultado r : resultadosNuevos) {
+                if (r.getVeredicto() == Veredicto.VALIDA) {
+                    juez.marcarValida(r);
+                }
+            }
+
+            juez.aplicarDuplicadas(resultadosNuevos);
+        } else {
+            // Modo solo: NO tiene sentido marcar duplicadas
+            for (Resultado r : resultadosNuevos) {
+                if (r.getVeredicto() == Veredicto.VALIDA) {
+                    r.setPuntos(puntajeValida);
+                }
             }
         }
 
-        // 2) aplicar duplicadas solo dentro de esta ronda
-        juez.aplicarDuplicadas(resultadosNuevos);
-
-        // 3) traer lo que YA HABÍA de otras rondas y acumular
         List<Resultado> resultadosAnteriores = resultadoValidacionRepositorio.buscarPorPartida(partidaId);
         List<Resultado> todos = new ArrayList<>(resultadosAnteriores);
         todos.addAll(resultadosNuevos);
 
-        // 4) guardar todo de nuevo
         resultadoValidacionRepositorio.guardarTodos(partidaId, todos);
 
         return resultadosNuevos;
