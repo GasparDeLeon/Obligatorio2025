@@ -3,6 +3,7 @@ package com.obligatorio2025.Controllers;
 import com.obligatorio2025.aplicacion.GestorSesionesWS;
 import com.obligatorio2025.aplicacion.ServicioLobby;
 import com.obligatorio2025.dominio.JugadorEnPartida;
+import com.obligatorio2025.dominio.Ronda;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -129,7 +130,7 @@ public class JuegoWebSocketController {
             return new SalaEvent("JUGADOR_LISTO", new JugadorPayload(jugadorId));
         }
 
-        // partida inicia
+        // partida inicia (si querés seguir usando este evento más adelante)
         public static SalaEvent partidaInicia(String codigoSala) {
             return new SalaEvent("PARTIDA_INICIA", new PartidaPayload(codigoSala));
         }
@@ -137,6 +138,11 @@ public class JuegoWebSocketController {
         // error al intentar iniciar
         public static SalaEvent errorInicio(String mensaje) {
             return new SalaEvent("ERROR_INICIO", new ErrorPayload(mensaje));
+        }
+
+        // NUEVO: inicio de ronda
+        public static SalaEvent rondaInicia(int numeroRonda, char letra) {
+            return new SalaEvent("RONDA_INICIA", new RondaIniciaPayload(numeroRonda, letra));
         }
     }
 
@@ -177,6 +183,35 @@ public class JuegoWebSocketController {
 
         public String getMensaje() { return mensaje; }
         public void setMensaje(String mensaje) { this.mensaje = mensaje; }
+    }
+
+    // NUEVO: payload para inicio de ronda
+    public static class RondaIniciaPayload {
+        private int numero;
+        private char letra;
+
+        public RondaIniciaPayload() {}
+
+        public RondaIniciaPayload(int numero, char letra) {
+            this.numero = numero;
+            this.letra = letra;
+        }
+
+        public int getNumero() {
+            return numero;
+        }
+
+        public void setNumero(int numero) {
+            this.numero = numero;
+        }
+
+        public char getLetra() {
+            return letra;
+        }
+
+        public void setLetra(char letra) {
+            this.letra = letra;
+        }
     }
 
     // =====================================================
@@ -248,10 +283,22 @@ public class JuegoWebSocketController {
 
         // (Opcional a futuro: validar que jugadorId sea el host de la sala)
 
-        // 2) Si todo OK, avisar a todos que la partida inicia
-        SalaEvent evento = SalaEvent.partidaInicia(codigoSala);
+        // 2) Crear e iniciar la primera ronda en el dominio
+        Ronda ronda;
+        try {
+            ronda = servicioLobby.iniciarPrimeraRonda(codigoSala);
+        } catch (IllegalStateException ex) {
+            log.warn("[WS] iniciarSala fallo al iniciar ronda: {}", ex.getMessage());
+            SalaEvent error = SalaEvent.errorInicio("No se pudo iniciar la ronda: " + ex.getMessage());
+            messagingTemplate.convertAndSend(destino, error);
+            return;
+        }
 
-        log.info("[WS] broadcast evento {} a {}", evento.getTipo(), destino);
+        // 3) Notificar a todos que la ronda comienza
+        SalaEvent evento = SalaEvent.rondaInicia(ronda.getNumero(), ronda.getLetra());
+
+        log.info("[WS] broadcast evento {} a {} (ronda={}, letra={})",
+                evento.getTipo(), destino, ronda.getNumero(), ronda.getLetra());
         messagingTemplate.convertAndSend(destino, evento);
     }
 

@@ -2,6 +2,10 @@ package com.obligatorio2025.dominio;
 
 import com.obligatorio2025.dominio.enums.ModoJuego;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class ConfiguracionPartida {
 
     private int duracionSeg;
@@ -14,6 +18,9 @@ public class ConfiguracionPartida {
     // nuevos
     private int puntajeValida;
     private int puntajeDuplicada;
+
+    // NUEVO: categorías elegidas para esta partida (por id)
+    private List<Integer> categoriasSeleccionadas = new ArrayList<>();
 
     public ConfiguracionPartida(int duracionSeg,
                                 int duracionGraciaSeg,
@@ -31,6 +38,7 @@ public class ConfiguracionPartida {
         this.graciaHabilitar = graciaHabilitar;
         this.puntajeValida = puntajeValida;         // ← esto faltaba
         this.puntajeDuplicada = puntajeDuplicada;   // ← y esto también
+        // categoriasSeleccionadas ya se inicializa vacía arriba
     }
 
     public int getDuracionSeg() {
@@ -71,5 +79,44 @@ public class ConfiguracionPartida {
 
     public void setPuntajeDuplicada(int puntajeDuplicada) {
         this.puntajeDuplicada = puntajeDuplicada;
+    }
+
+    // ================= CATEGORÍAS SELECCIONADAS =================
+
+    /**
+     * Devuelve una vista inmodificable para no exponer la lista interna.
+     */
+    public List<Integer> getCategoriasSeleccionadas() {
+        return Collections.unmodifiableList(categoriasSeleccionadas);
+    }
+
+    /**
+     * Reemplaza la lista de categorías seleccionadas.
+     */
+    public void setCategoriasSeleccionadas(List<Integer> categoriasSeleccionadas) {
+        if (categoriasSeleccionadas == null) {
+            this.categoriasSeleccionadas = new ArrayList<>();
+        } else {
+            this.categoriasSeleccionadas = new ArrayList<>(categoriasSeleccionadas);
+        }
+    }
+
+    /**
+     * Agrega una categoría si no estaba ya incluida.
+     */
+    public void agregarCategoriaSeleccionada(int categoriaId) {
+        if (this.categoriasSeleccionadas == null) {
+            this.categoriasSeleccionadas = new ArrayList<>();
+        }
+        if (!this.categoriasSeleccionadas.contains(categoriaId)) {
+            this.categoriasSeleccionadas.add(categoriaId);
+        }
+    }
+
+    /**
+     * Indica si la config tiene por lo menos una categoría elegida.
+     */
+    public boolean tieneCategoriasConfiguradas() {
+        return categoriasSeleccionadas != null && !categoriasSeleccionadas.isEmpty();
     }
 }
