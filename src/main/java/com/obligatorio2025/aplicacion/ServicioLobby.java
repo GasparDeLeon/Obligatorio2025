@@ -2,11 +2,10 @@ package com.obligatorio2025.aplicacion;
 
 import com.obligatorio2025.dominio.*;
 import com.obligatorio2025.dominio.enums.ModoJuego;
+import com.obligatorio2025.dominio.enums.EstadoPartida;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
-import com.obligatorio2025.dominio.enums.EstadoPartida;
 import org.springframework.stereotype.Service;
-
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,12 +17,11 @@ public class ServicioLobby {
     private final SalaRepositorio salaRepositorio;
     private final PartidaRepositorio partidaRepositorio;
 
-    // nuevo: locks por sala
+    // locks por sala
     private final Map<Integer, Object> locksPorSala = new ConcurrentHashMap<>();
 
     private final AtomicInteger secuenciaSala = new AtomicInteger(1);
     private final AtomicInteger secuenciaPartida = new AtomicInteger(1000);
-
 
     public ServicioLobby(SalaRepositorio salaRepositorio,
                          PartidaRepositorio partidaRepositorio) {
@@ -49,7 +47,7 @@ public class ServicioLobby {
         Sala sala = new Sala(idSala, codigo, hostId);
 
         Partida partida = new Partida(idPartida, configuracion);
-        partida.setEstado(EstadoPartida.CREADA); // o el estado inicial que uses
+        partida.setEstado(EstadoPartida.CREADA); // estado inicial
 
         sala.setPartidaActual(partida);
 
@@ -96,7 +94,6 @@ public class ServicioLobby {
         }
     }
 
-
     public void iniciarPartida(String codigo, ConfiguracionPartida configuracion, int partidaId) {
         Sala sala = salaRepositorio.buscarPorCodigo(codigo);
         if (sala == null) {
@@ -105,7 +102,6 @@ public class ServicioLobby {
 
         synchronized (lockForSala(sala.getId())) {
 
-            // opcional pero consistente con la idea del lobby:
             // si no están todos listos, no tendría sentido iniciar
             if (!sala.todosListos()) {
                 throw new IllegalStateException(
@@ -116,7 +112,7 @@ public class ServicioLobby {
 
             Partida partida = new Partida(partidaId, configuracion);
 
-            // 🔴 IMPORTANTE: marcar la partida como EN_CURSO
+            // marcar la partida como EN_CURSO
             partida.setEstado(EstadoPartida.EN_CURSO);
 
             sala.setPartidaActual(partida);
@@ -126,6 +122,7 @@ public class ServicioLobby {
             salaRepositorio.guardar(sala);
         }
     }
+
     public boolean estanTodosListos(String codigoSala) {
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
@@ -137,4 +134,44 @@ public class ServicioLobby {
         }
     }
 
+    // Crea e inicia la primera ronda de la partida asociada a la sala
+    public Ronda iniciarPrimeraRonda(String codigoSala) {
+        Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
+        if (sala == null) {
+            throw new IllegalArgumentException("No existe sala con código " + codigoSala);
+        }
+
+        synchronized (lockForSala(sala.getId())) {
+            Partida partida = sala.getPartidaActual();
+            if (partida == null) {
+                throw new IllegalStateException(
+                        "No hay partida asociada a la sala " + codigoSala
+                );
+            }
+
+            int numeroRonda = (partida.getRondas() == null ? 0 : partida.getRondas().size()) + 1;
+
+            // por ahora: letra aleatoria simple A–Z
+            char letra = generarLetraAleatoria();
+
+            Ronda ronda = new Ronda(numeroRonda, letra);
+            ronda.iniciar();
+
+            partida.agregarRonda(ronda);
+            partida.setEstado(EstadoPartida.EN_CURSO);
+
+            // guardamos cambios
+            partidaRepositorio.guardar(partida);
+            salaRepositorio.guardar(sala);
+
+            return ronda;
+        }
+    }
+
+    // helper interno: elige una letra A–Z
+    private char generarLetraAleatoria() {
+        String letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        int idx = (int) (Math.random() * letras.length());
+        return letras.charAt(idx);
+    }
 }

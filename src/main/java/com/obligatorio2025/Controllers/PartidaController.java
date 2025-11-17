@@ -4,7 +4,6 @@ import com.obligatorio2025.aplicacion.ServicioLobby;
 import com.obligatorio2025.dominio.ConfiguracionPartida;
 import com.obligatorio2025.dominio.Sala;
 import com.obligatorio2025.dominio.enums.ModoJuego;
-import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -169,6 +168,14 @@ public class PartidaController {
                         10,
                         5
                 );
+
+                // NUEVO: copiamos las categorías seleccionadas del form
+                if (config.getCategoriasSeleccionadas() != null &&
+                        !config.getCategoriasSeleccionadas().isEmpty()) {
+                    configuracion.setCategoriasSeleccionadas(
+                            config.getCategoriasSeleccionadas()
+                    );
+                }
 
                 // Por ahora hostId fijo; luego lo sacaremos del login
                 String hostId = "HOST_1";

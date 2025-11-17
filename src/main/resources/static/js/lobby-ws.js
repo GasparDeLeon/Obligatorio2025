@@ -66,28 +66,51 @@ function manejarEventoSala(evento) {
             // más adelante acá podríamos redirigir a la pantalla de juego
             break;
         }
-                case 'ERROR_INICIO': {
-                    const payload = evento.payload || {};
-                    const mensaje = payload.mensaje || 'No se pudo iniciar la partida.';
+        case 'ERROR_INICIO': {
+            const payload = evento.payload || {};
+            const mensaje = payload.mensaje || 'No se pudo iniciar la partida.';
 
-                    // id del jugador actual (el que está viendo esta pestaña)
-                    const jugadorActualId = parseInt(
-                        document.getElementById('jugadorId').value,
-                        10
-                    );
+            // id del jugador actual (el que está viendo esta pestaña)
+            const jugadorActualId = parseInt(
+                document.getElementById('jugadorId').value,
+                10
+            );
 
-                    // Solo el host (jugador 1) ve el alert y el log explícito
-                    if (jugadorActualId === 1) {
-                        appendLog('[ERROR] ' + mensaje);
-                        alert(mensaje);
-                    } else {
-                        // si querés, para los demás no mostramos nada,
-                        // o dejamos un log suave:
-                        // appendLog('[INFO] El host intentó iniciar la partida pero faltan jugadores listos.');
-                    }
+            // Solo el host (jugador 1) ve el alert y el log explícito
+            if (jugadorActualId === 1) {
+                appendLog('[ERROR] ' + mensaje);
+                alert(mensaje);
+            } else {
+                // para los demás no mostramos nada,
+                // o podrías dejar un log suave si querés
+                // appendLog('[INFO] El host intentó iniciar la partida pero faltan jugadores listos.');
+            }
 
-                    break;
-                }
+            break;
+        }
+               case 'RONDA_INICIA': {
+                   const payload = evento.payload || {};
+                   const numero = payload.numero;
+                   const letra = payload.letra;
+
+                   appendLog('Comienza la ronda ' + numero + ' con la letra ' + letra);
+
+                   // Redirigimos a la pantalla de juego multijugador
+                   const codigoSala = document.getElementById('codigoSala').value;
+                   const jugadorId = parseInt(
+                       document.getElementById('jugadorId').value,
+                       10
+                   );
+
+                   const url = '/multi/ronda'
+                       + '?codigoSala=' + encodeURIComponent(codigoSala)
+                       + '&jugadorId=' + encodeURIComponent(jugadorId)
+                       + '&ronda=' + encodeURIComponent(numero);
+
+                   window.location.href = url;
+
+                   break;
+               }
 
         default:
             appendLog('Evento [' + evento.tipo + '] recibido: ' + JSON.stringify(evento.payload));
