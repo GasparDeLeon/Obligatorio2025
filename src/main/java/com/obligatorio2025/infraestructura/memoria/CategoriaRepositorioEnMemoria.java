@@ -12,19 +12,33 @@ public class CategoriaRepositorioEnMemoria implements CategoriaRepositorio {
     private final Map<Integer, List<String>> palabrasPorCategoria = new ConcurrentHashMap<>();
 
     public CategoriaRepositorioEnMemoria() {
-        // Categorías
+        // ===== CATEGORÍAS =====
         categorias.put(1, new Categoria(1, "Países"));
         categorias.put(2, new Categoria(2, "Ciudades"));
         categorias.put(3, new Categoria(3, "Animales"));
         categorias.put(4, new Categoria(4, "Frutas"));
-        categorias.put(5, new Categoria(5, "Colores"));
+        categorias.put(5, new Categoria(5, "Películas"));
+        categorias.put(6, new Categoria(6, "Comidas"));
+        categorias.put(7, new Categoria(7, "Profesiones"));
+        categorias.put(8, new Categoria(8, "Objetos"));
+        categorias.put(9, new Categoria(9, "Marcas"));
+        categorias.put(10, new Categoria(10, "Videojuegos"));
+        categorias.put(11, new Categoria(11, "Series"));
+        categorias.put(12, new Categoria(12, "Cantantes o bandas"));
 
-        // Ejemplos de palabras por categoría (puedes ampliar)
-        palabrasPorCategoria.put(1, Arrays.asList("Argentina","Brasil","Chile","Uruguay","Francia","Finlandia","Fiyi","México","Marruecos"));
-        palabrasPorCategoria.put(2, Arrays.asList("Madrid","Montevideo","Miami","Málaga","Florianópolis"));
-        palabrasPorCategoria.put(3, Arrays.asList("Mono","Murciélago","Foca","Flamenco"));
-        palabrasPorCategoria.put(4, Arrays.asList("Manzana","Mandarina","Frutilla","Frambuesa"));
-        palabrasPorCategoria.put(5, Arrays.asList("Marrón","Magenta","Fucsia"));
+        // ===== PALABRAS (mínimo para que la IA tenga ejemplos) =====
+        palabrasPorCategoria.put(1, List.of("Argentina","Brasil","Chile","Francia"));
+        palabrasPorCategoria.put(2, List.of("Madrid","Montevideo","Miami"));
+        palabrasPorCategoria.put(3, List.of("Mono","Gato","Perro"));
+        palabrasPorCategoria.put(4, List.of("Manzana","Pera","Banana"));
+        palabrasPorCategoria.put(5, List.of("Matrix","Gladiador","Titanic"));
+        palabrasPorCategoria.put(6, List.of("Pizza","Pasta","Hamburguesa"));
+        palabrasPorCategoria.put(7, List.of("Doctor","Ingeniero","Carpintero"));
+        palabrasPorCategoria.put(8, List.of("Mesa","Silla","Tenedor"));
+        palabrasPorCategoria.put(9, List.of("Nike","Adidas","Apple"));
+        palabrasPorCategoria.put(10, List.of("Minecraft","Fortnite","Halo"));
+        palabrasPorCategoria.put(11, List.of("Breaking Bad","Friends","Dark"));
+        palabrasPorCategoria.put(12, List.of("Coldplay","Metallica","Shakira"));
     }
 
     @Override

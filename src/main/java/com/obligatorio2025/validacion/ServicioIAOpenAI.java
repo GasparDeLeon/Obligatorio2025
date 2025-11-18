@@ -11,6 +11,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -24,6 +25,7 @@ public class ServicioIAOpenAI implements ServicioIA {
     private final String model;   // ej: gpt-4o-mini
     private final HttpClient http;
     private final ObjectMapper mapper = new ObjectMapper();
+
 
     public ServicioIAOpenAI(CategoriaRepositorio categoriaRepositorio,
                             String apiKey,
