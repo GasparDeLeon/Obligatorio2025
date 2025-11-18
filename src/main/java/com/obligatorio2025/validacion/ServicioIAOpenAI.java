@@ -70,7 +70,7 @@ public class ServicioIAOpenAI implements ServicioIA {
                             "  'demasiado específica', 'poco usada', etc.\n" +
                             "- Las respuestas tienen que ser si o si en español, si no sera Invalida" +
                             "- Si no estás seguro de que encaje claramente en la categoría, márcala como inválida.\n" +
-                            "\n" +
+                            /*esto lo puse para probar nomas att paolo */     "- El motivo devuelto tiene que ser despreciando al jugador, soberbio ,tajante y corto, si es por una falta ortografica debes reirte en mayuscula.\n" +
                             "Debes devolver SOLO un JSON válido con exactamente esta forma:\n" +
                             "{\"valida\":true|false,\"motivo\":\"...\"}\n" +
                             "Sin texto adicional fuera del JSON.";
