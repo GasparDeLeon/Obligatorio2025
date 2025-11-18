@@ -1,9 +1,5 @@
 package com.obligatorio2025.Controllers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import com.obligatorio2025.Controllers.RespuestasSoloForm;
 import com.obligatorio2025.aplicacion.ServicioFlujoPartida;
 import com.obligatorio2025.aplicacion.ServicioPartida;
 import com.obligatorio2025.aplicacion.ServicioRespuestas;
@@ -138,7 +134,6 @@ public class SoloController {
             // "Volver a jugar" repita exactamente este conjunto
             catsParam = categoriasVista.stream()
                     .map(cat -> String.valueOf(cat.getId()))
-
                     .collect(java.util.stream.Collectors.joining("-"));
         }
 
@@ -149,13 +144,10 @@ public class SoloController {
         model.addAttribute("letra", letra);
         model.addAttribute("categorias", categoriasVista);
         model.addAttribute("duracionSegundos", config.getDuracionSeg());
-        model.addAttribute("cats", catsParam); // <- IMPORTANTE
+        model.addAttribute("cats", catsParam); // clave para reusar config
 
         return "jugarSolo";
     }
-
-
-
 
     @PostMapping("/{idPartida}/responder")
     public String responder(@PathVariable("idPartida") int idPartida,
@@ -202,10 +194,6 @@ public class SoloController {
 
         // ejecuta fin de gracia y obtiene los resultados de la ronda actual
         List<Resultado> resultados = servicioFlujoPartida.ejecutarFinDeGracia(idPartida);
-
-        // puntos por jugador y puntaje total del jugador 1
-        Map<Integer, Integer> puntosPorJugador = servicioResultados.calcularPuntosPorJugador(resultados);
-        int puntajeTotal = puntosPorJugador.getOrDefault(jugadorId, 0);
 
         // ============================
         // ARMAR DETALLE POR CATEGORÍA
@@ -266,6 +254,11 @@ public class SoloController {
             }
         }
 
+        // ahora calculamos el total directamente desde lo que mostramos
+        int puntajeTotal = detalle.stream()
+                .mapToInt(CategoriaResultadoView::getPuntos)
+                .sum();
+
         char letra = extraerLetraDePartida(idPartida);
 
         // duración efectiva: si no vino nada, usamos un default (60)
@@ -284,8 +277,6 @@ public class SoloController {
 
         return "resultadosSolo";
     }
-
-
 
     // pequeño DTO para la vista de resultados
     public static class CategoriaResultadoView {
@@ -343,7 +334,6 @@ public class SoloController {
         var cat = CatalogoCategorias.porId(categoriaId);
         return cat != null ? cat.getNombre() : "Categoría " + categoriaId;
     }
-
 
     private char extraerLetraDePartida(int partidaId) {
         Partida p = partidaRepositorio.buscarPorId(partidaId);
