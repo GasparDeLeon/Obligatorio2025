@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Test WebSocket</title>
+
+    <!-- Librerías SockJS + STOMP desde CDN (para pruebas) -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <style>
+        body { font-family: sans-serif; padding: 1rem; }
+        #log {
+            border: 1px solid #ccc;
+            padding: .5rem;
+            height: 260px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            background: #f9f9f9;
+        }
+        button { margin-right: .5rem; }
+    </style>
+</head>
+<body>
+<h1>Test WebSocket</h1>
+
+<p>
+    <button type="button" onclick="conectar()">Conectar</button>
+    <button type="button" onclick="enviarPing()">Enviar ping</button>
+    <button type="button" onclick="enviarMensajeSala()">Enviar a sala ABCD</button>
+    <button type="button" onclick="unirseSalaABCD()">Unirse sala ABCD</button>
+</p>
+
+<pre id="log"></pre>
+
+<script>
+    let stompClient = null;
+
+    function escribir(linea) {
+        const log = document.getElementById('log');
+        log.textContent += linea + "\n";
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function conectar() {
+        const socket = new SockJS('/ws-tutti');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, (frame) => {
+            escribir("Conectado: " + frame);
+
+            // ping global
+            stompClient.subscribe('/topic/juego.ping', (msg) => {
+                escribir("Ping topic -> " + msg.body);
+            });
+
+            // mensajes de la sala ABCD
+            stompClient.subscribe('/topic/sala.ABCD', (msg) => {
+                escribir("Sala ABCD -> " + msg.body);
+            });
+
+            // topic de desconexiones “genérico” (por si hay sesiones sin sala)
+            stompClient.subscribe('/topic/desconexiones', (msg) => {
+                escribir("⚠ Desconexión -> " + msg.body);
+            });
+        }, (error) => {
+            escribir("Error de conexión: " + error);
+        });
+    }
+
+    function enviarPing() {
+        if (!stompClient || !stompClient.connected) {
+            escribir("No estás conectado aún");
+            return;
+        }
+
+        const texto = "Hola desde el navegador, " + new Date().toLocaleTimeString();
+        escribir("Enviando ping: " + texto);
+        stompClient.send('/app/juego.ping', {}, texto);
+    }
+
+    function enviarMensajeSala() {
+        if (!stompClient || !stompClient.connected) {
+            escribir("No estás conectado aún");
+            return;
+        }
+
+        const texto = "mensaje a sala ABCD, " + new Date().toLocaleTimeString();
+        escribir("Enviando a sala ABCD: " + texto);
+        stompClient.send('/app/sala.ABCD.mensaje', {}, texto);
+    }
+
+    // 🔹 NUEVO: manda un "join" a la sala ABCD con jugadorId = 1
+    function unirseSalaABCD() {
+        if (!stompClient || !stompClient.connected) {
+            escribir("No estás conectado aún");
+            return;
+        }
+
+        const payload = {
+            codigoSala: "ABCD",
+            jugadorId: 1
+        };
+
+        escribir("Enviando JOIN sala ABCD (jugador 1)");
+        stompClient.send('/app/sala.unirse', {}, JSON.stringify(payload));
+    }
+</script>
+</body>
+</html>

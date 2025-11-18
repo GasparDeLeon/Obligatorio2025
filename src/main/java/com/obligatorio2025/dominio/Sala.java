@@ -15,12 +15,20 @@ public class Sala {
     private List<JugadorEnPartida> jugadores = new ArrayList<>();
     private Partida partidaActual;
 
+    // NUEVO: estado de "Tutti Frutti"
+    private boolean tuttiFruttiDeclarado;
+    private Integer jugadorQueCantoTutti;
+
     public Sala(int id, String codigo, String hostId) {
-        this.id = id; // si id es String en tu modelo
+        this.id = id;
         this.codigo = codigo;
         this.hostId = hostId;
         this.estado = EstadoSala.ABIERTA;
         this.jugadores = new ArrayList<>();
+
+        // inicializamos el estado de tutti en falso
+        this.tuttiFruttiDeclarado = false;
+        this.jugadorQueCantoTutti = null;
     }
 
     public boolean puedeIniciar() {
@@ -51,6 +59,7 @@ public class Sala {
         }
         jugadores.add(jugador);
     }
+
     public List<JugadorEnPartida> getJugadores() {
         return jugadores;
     }
@@ -59,15 +68,15 @@ public class Sala {
         this.jugadores = jugadores;
     }
 
-
     public void iniciarPartida() {
         if (!puedeIniciar()) {
             throw new IllegalStateException("La sala no está en condiciones de iniciar.");
         }
         this.estado = EstadoSala.JUGANDO;
-    }
 
-    // getters/setters que necesites
+        // al iniciar una partida/ronda, por las dudas reseteamos el estado de tutti
+        resetTuttiFrutti();
+    }
 
     public Partida getPartidaActual() {
         return partidaActual;
@@ -75,10 +84,15 @@ public class Sala {
 
     public void setPartidaActual(Partida partidaActual) {
         this.partidaActual = partidaActual;
+
+        // cuando asigno una partida nueva, también reseteo el estado de tutti
+        resetTuttiFrutti();
     }
+
     public String getCodigo() {
         return codigo;
     }
+
     public int getId() {
         return id;
     }
@@ -86,6 +100,7 @@ public class Sala {
     public void setId(int id) {
         this.id = id;
     }
+
     public void marcarListo(int jugadorId) {
         for (JugadorEnPartida j : jugadores) {
             if (j.getJugadorId() == jugadorId) {
@@ -95,6 +110,7 @@ public class Sala {
         }
         throw new IllegalArgumentException("No existe jugador con ID " + jugadorId + " en la sala");
     }
+
     public boolean todosListos() {
         if (jugadores == null || jugadores.isEmpty()) return false;
         for (JugadorEnPartida j : jugadores) {
@@ -103,4 +119,41 @@ public class Sala {
         return true;
     }
 
+    // ================
+    // NUEVO: Tutti Frutti
+    // ================
+
+    public void marcarTuttiFrutti(int jugadorId) {
+        this.tuttiFruttiDeclarado = true;
+        this.jugadorQueCantoTutti = jugadorId;
+    }
+
+    public void resetTuttiFrutti() {
+        this.tuttiFruttiDeclarado = false;
+        this.jugadorQueCantoTutti = null;
+    }
+
+    public boolean isTuttiFruttiDeclarado() {
+        return tuttiFruttiDeclarado;
+    }
+
+    public Integer getJugadorQueCantoTutti() {
+        return jugadorQueCantoTutti;
+    }
+
+    public EstadoSala getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoSala estado) {
+        this.estado = estado;
+    }
+
+    public String getHostId() {
+        return hostId;
+    }
+
+    public void setHostId(String hostId) {
+        this.hostId = hostId;
+    }
 }

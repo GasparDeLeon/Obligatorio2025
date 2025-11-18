@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Lobby sala ' + ${codigoSala}">Lobby</title>
+
+    <!-- SockJS + STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <!-- Exponer jugadores actuales como array JS -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var jugadoresIniciales = /*[[${jugadoresActuales}]]*/ [];
+        /*]]>*/
+    </script>
+
+    <!-- Nuestro JS -->
+    <script defer th:src="@{/js/lobby-ws.js}"></script>
+</head>
+<body>
+
+<h1 th:text="'Lobby sala ' + ${codigoSala}">Lobby sala XXXX</h1>
+
+<p><strong>Configuración de la sala</strong></p>
+<p>
+    La configuración detallada de la sala la ajustaremos más adelante.
+</p>
+
+<hr>
+
+<div th:if="${esHost}">
+    <button id="btn-iniciar">Iniciar partida</button>
+</div>
+
+<!-- Botón para marcarse como listo (lo ven todos los jugadores) -->
+<div style="margin-top: 10px;">
+    <button id="btn-listo">Estoy listo</button>
+</div>
+
+<hr>
+
+<h2>Jugadores en la sala</h2>
+<ul id="lista-jugadores">
+    <li>(Todavía no hay jugadores en la lista renderizada)</li>
+</ul>
+
+<hr>
+
+<h2>Mensajes en tiempo real</h2>
+
+<div id="log" style="border: 1px solid #ccc; padding: 8px; height: 200px; overflow-y: auto;">
+    <em>Esperando mensajes...</em>
+</div>
+
+<div style="margin-top: 10px;">
+    <input type="text" id="input-mensaje" placeholder="Escribe un mensaje de prueba">
+    <button id="btn-enviar">Enviar a la sala</button>
+</div>
+
+<!-- Datos que el JS necesita -->
+<input type="hidden" id="codigoSala" th:value="${codigoSala}">
+<input type="hidden" id="jugadorId" th:value="${jugadorId}">
+
+</body>
+</html>

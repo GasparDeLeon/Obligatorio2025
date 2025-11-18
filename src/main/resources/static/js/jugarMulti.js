@@ -7,20 +7,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const form        = document.getElementById('form-jugar-multi');
     const inputAccion = document.getElementById('accion');
 
-    // Letra de la ronda (la leemos del header)
-    const letraSpan   = document.getElementById('letra-actual');
-    const letraRonda  = letraSpan
-        ? letraSpan.textContent.trim().toUpperCase()
-        : null;
-
-    // Datos de sala / jugador para el polling
     const codigoSalaInput = document.getElementById('codigoSala');
     const jugadorIdInput  = document.getElementById('jugadorId');
 
     const codigoSala = codigoSalaInput ? codigoSalaInput.value : null;
-    const jugadorIdActual = jugadorIdInput
-        ? parseInt(jugadorIdInput.value, 10)
+    const jugadorId  = jugadorIdInput ? parseInt(jugadorIdInput.value, 10) : null;
+
+    // Letra de la ronda (la leemos del header)
+    const letraSpan  = document.getElementById('letra-actual');
+    const letraRonda = letraSpan
+        ? letraSpan.textContent.trim().toUpperCase()
         : null;
+
+    // Referencias a intervalos para poder frenarlos
+    let countdownInterval = null;
+    let estadoInterval    = null;
+
+    function detenerTimers() {
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+        if (estadoInterval) {
+            clearInterval(estadoInterval);
+            estadoInterval = null;
+        }
+    }
 
     // ======================
     // RELOJ / COUNTDOWN
@@ -43,17 +55,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
         renderTiempo();
 
-        const intervalo = setInterval(function () {
+        countdownInterval = setInterval(function () {
             restante--;
 
             if (restante <= 0) {
                 restante = 0;
                 renderTiempo();
-                clearInterval(intervalo);
+                clearInterval(countdownInterval);
+                countdownInterval = null;
 
+                // si todavía no se envió el formulario, lo mandamos como timeout
                 if (!form.dataset.enviado) {
                     inputAccion.value = 'timeout';
                     form.dataset.enviado = 'true';
+                    detenerTimers();
                     form.submit();
                 }
                 return;
@@ -70,8 +85,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!texto) return null;
 
         const limpio = texto.trim()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
+            .normalize("NFD")                    // separa acentos
+            .replace(/[\u0300-\u036f]/g, "")     // elimina acentos
             .toUpperCase();
 
         return limpio.length > 0 ? limpio.charAt(0) : null;
@@ -87,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const valor = inp.value.trim();
             if (valor === "") return false;
 
+            // si no tenemos letra de referencia, solo pedimos que estén llenos
             if (!letraRonda) return true;
 
             const primera = normalizarPrimeraLetra(valor);
@@ -102,6 +118,55 @@ document.addEventListener('DOMContentLoaded', function () {
     actualizarEstadoTutti();
 
     // ======================
+    // POLLING: ESTADO DE LA SALA
+    // ======================
+    function chequearEstadoSala() {
+        // si ya se envió el form, frenamos polling
+        if (!form || form.dataset.enviado) {
+            detenerTimers();
+            return;
+        }
+
+        if (!codigoSala || !jugadorId) {
+            return;
+        }
+
+        fetch('/multi/estado?codigoSala=' + encodeURIComponent(codigoSala))
+            .then(function (resp) {
+                if (!resp.ok) {
+                    throw new Error('HTTP ' + resp.status);
+                }
+                return resp.json();
+            })
+            .then(function (data) {
+                if (!data || data.existe === false) {
+                    return;
+                }
+
+                // Si alguien cantó tutti frutti y NO fui yo, me fuerzan a terminar
+                if (data.tuttiFruttiDeclarado &&
+                    data.jugadorQueCantoTutti != null &&
+                    data.jugadorQueCantoTutti !== jugadorId) {
+
+                    if (!form.dataset.enviado) {
+                        inputAccion.value = 'timeout';
+                        form.dataset.enviado = 'true';
+                        detenerTimers();
+                        form.submit();
+                    }
+                }
+            })
+            .catch(function (err) {
+                console.error('Error consultando estado de sala:', err);
+            });
+    }
+
+    if (codigoSala && jugadorId && form && inputAccion) {
+        // cada 1.5 segundos
+        estadoInterval = setInterval(chequearEstadoSala, 1500);
+    }
+
+    // ======================
     // BOTONES
     // ======================
     if (btnRendirse && form && inputAccion) {
@@ -110,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             inputAccion.value = 'rendirse';
             form.dataset.enviado = 'true';
+            detenerTimers();
             form.submit();
         });
     }
@@ -120,52 +186,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             inputAccion.value = 'tutti-frutti';
             form.dataset.enviado = 'true';
+            detenerTimers();
             form.submit();
         });
     }
-
-    // ======================
-    // POLLING: ¿alguien cantó Tutti Frutti?
-    // ======================
-    function chequearEstadoTutti() {
-        if (!codigoSala || !jugadorIdActual || !form || !inputAccion) {
-            return;
-        }
-
-        // si ya mandamos el formulario, no seguimos chequeando
-        if (form.dataset.enviado) {
-            return;
-        }
-
-        fetch(`/multi/estado?codigoSala=${encodeURIComponent(codigoSala)}`)
-            .then(resp => {
-                if (!resp.ok) throw new Error('Error HTTP ' + resp.status);
-                return resp.json();
-            })
-            .then(data => {
-                if (!data) return;
-
-                const declarado = !!data.tuttiFruttiDeclarado;
-                const jugadorQueCanto = data.jugadorQueCantoTutti;
-
-                // si ya se declaró tutti y NO fui yo, cierro mi ronda
-                if (declarado &&
-                    jugadorQueCanto != null &&
-                    jugadorQueCanto !== jugadorIdActual) {
-
-                    if (!form.dataset.enviado) {
-                        inputAccion.value = 'timeout'; // o algún valor tipo "forzado-por-tutti"
-                        form.dataset.enviado = 'true';
-                        form.submit();
-                    }
-                }
-            })
-            .catch(err => {
-                // por ahora solo log en consola
-                console.error('Error consultando estado de sala:', err);
-            });
-    }
-
-    // cada 2 segundos preguntamos si alguien cantó tutti
-    setInterval(chequearEstadoTutti, 2000);
 });

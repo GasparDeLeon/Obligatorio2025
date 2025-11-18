@@ -21,4 +21,8 @@ public class Categoria {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
+    public void setId(int id) {
+        this.id = id;
+    }
+
 }

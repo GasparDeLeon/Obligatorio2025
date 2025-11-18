@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tutti Frutti - Modo multijugador</title>
+
+    <!-- NECESARIO PARA WEBSOCKETS -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <script defer th:src="@{/js/jugarMulti.js}"></script>
+</head>
+<body>
+<div class="page-container">
+    <header class="header">
+        <div class="logo">
+            <img th:src="@{/img/logoMinimalista.png}" alt="Logo Tutti Frutti">
+            <h1>Tutti Frutti</h1>
+        </div>
+        <div class="header-info">
+            <span class="badge-modo">Modo multijugador</span>
+            <span class="badge-letra">
+                Letra:
+                <strong id="letra-actual" th:text="${letra}">A</strong>
+            </span>
+            <span class="badge-tiempo">
+                Tiempo:
+                <span id="timer"
+                      th:attr="data-duracion=${duracionSegundos}">
+                    00:00
+                </span>
+            </span>
+            <span class="badge-jugador">
+                Jugador:
+                <strong th:text="${jugadorId}">1</strong>
+            </span>
+            <span class="badge-ronda">
+                Ronda:
+                <strong th:text="${numeroRonda}">1</strong>
+            </span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="card">
+            <h2>Escribe una palabra por categoría</h2>
+            <p class="descripcion">
+                Todas las palabras deben comenzar con la letra
+                <strong th:text="${letra}">A</strong>.
+            </p>
+
+            <form id="form-jugar-multi"
+                  th:action="@{'/multi/ronda/responder'}"
+                  method="post">
+
+                <!-- Datos de contexto -->
+                <input type="hidden" name="codigoSala" id="codigoSala" th:value="${codigoSala}">
+                <input type="hidden" name="jugadorId" id="jugadorId" th:value="${jugadorId}">
+                <input type="hidden" name="numeroRonda" id="numeroRonda" th:value="${numeroRonda}">
+                <input type="hidden" name="cats" id="cats" th:value="${cats}">
+                <input type="hidden" name="accion" id="accion">
+
+                <table class="tabla-categorias">
+                    <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Respuesta</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="cat : ${categorias}">
+                        <td th:text="${cat.nombre}">Categoría</td>
+                        <td>
+                            <input type="text"
+                                   class="input-respuesta"
+                                   autocomplete="off"
+                                   th:attr="data-categoria-id=${cat.id}"
+                                   th:name="${'respuestas[' + cat.id + ']'}">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <div class="acciones">
+                    <button type="button"
+                            id="btn-rendirse"
+                            class="btn btn-secundario">
+                        Me rindo
+                    </button>
+
+                    <button type="button"
+                            id="btn-tutti"
+                            class="btn btn-primario"
+                            disabled>
+                        Tutti Frutti
+                    </button>
+                </div>
+            </form>
+
+        </section>
+    </main>
+</div>
+</body>
+</html>

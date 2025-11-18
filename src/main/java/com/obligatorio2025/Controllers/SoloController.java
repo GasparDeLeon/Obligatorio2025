@@ -1,6 +1,5 @@
 package com.obligatorio2025.Controllers;
 
-import com.obligatorio2025.Controllers.RespuestasSoloForm;
 import com.obligatorio2025.aplicacion.ServicioFlujoPartida;
 import com.obligatorio2025.aplicacion.ServicioPartida;
 import com.obligatorio2025.aplicacion.ServicioRespuestas;
@@ -104,12 +103,18 @@ public class SoloController {
 
         partidaRepositorio.guardar(partida);
 
-        // Armamos la lista de categorías a mostrar en la vista
-        java.util.List<CatalogoCategorias.CategoriaOpcion> categoriasVista = new java.util.ArrayList<>();
+        // ============================
+        // CATEGORÍAS A USAR EN LA VISTA
+        // ============================
+        List<CatalogoCategorias.CategoriaOpcion> categoriasVista = new ArrayList<>();
 
-        if (cats != null && !cats.isBlank()) {
-            String[] partes = cats.split("-");
+        // string tal cual viene por query (ej: "1-3-4")
+        String catsParam = (cats != null) ? cats.trim() : "";
+
+        if (!catsParam.isEmpty()) {
+            String[] partes = catsParam.split("-");
             for (String p : partes) {
+                if (p.isBlank()) continue;
                 try {
                     int idCat = Integer.parseInt(p.trim());
                     var cat = CatalogoCategorias.porId(idCat);
@@ -121,21 +126,33 @@ public class SoloController {
             }
         }
 
-        // si no seleccionó nada, usamos todas
+        // si no vino nada, usamos TODAS las categorías del catálogo
         if (categoriasVista.isEmpty()) {
-            categoriasVista = CatalogoCategorias.CATEGORIAS;
+            categoriasVista = new ArrayList<>(CatalogoCategorias.CATEGORIAS);
+
+            // también armamos un catsParam con todas las IDs para que
+            // "Volver a jugar" repita exactamente este conjunto
+            catsParam = categoriasVista.stream()
+                    .map(cat -> String.valueOf(cat.getId()))
+                    .collect(java.util.stream.Collectors.joining("-"));
         }
 
+        // ============================
+        // ATRIBUTOS PARA THYMELEAF
+        // ============================
         model.addAttribute("idPartida", partidaId);
         model.addAttribute("letra", letra);
         model.addAttribute("categorias", categoriasVista);
         model.addAttribute("duracionSegundos", config.getDuracionSeg());
+        model.addAttribute("cats", catsParam); // clave para reusar config
 
         return "jugarSolo";
     }
 
     @PostMapping("/{idPartida}/responder")
     public String responder(@PathVariable("idPartida") int idPartida,
+                            @RequestParam(name = "duracionTurnoSeg", required = false) Integer duracionTurnoSeg,
+                            @RequestParam(name = "cats", required = false) String cats,
                             @ModelAttribute RespuestasSoloForm form,
                             Model model) {
 
@@ -171,41 +188,92 @@ public class SoloController {
 
         String accion = form.getAccion();
         if ("tutti-frutti".equalsIgnoreCase(accion)) {
-            // usa el servicio real que ya tenés
             servicioPartida.declararTuttiFrutti(idPartida, jugadorId);
         }
-        // para "rendirse" o "timeout" por ahora no hay métodos específicos,
-        // simplemente seguimos a validar.
+        // rendirse/timeout: por ahora no hay lógica especial
 
         // ejecuta fin de gracia y obtiene los resultados de la ronda actual
         List<Resultado> resultados = servicioFlujoPartida.ejecutarFinDeGracia(idPartida);
 
-        // puntos por jugador y puntaje total del jugador 1
-        Map<Integer, Integer> puntosPorJugador = servicioResultados.calcularPuntosPorJugador(resultados);
-        int puntajeTotal = puntosPorJugador.getOrDefault(jugadorId, 0);
+        // ============================
+        // ARMAR DETALLE POR CATEGORÍA
+        // ============================
 
-        // armamos un modelo de vista por categoría SOLO para este jugador
-        List<CategoriaResultadoView> detalle = new ArrayList<>();
+        // 1) resultados del jugador, indexados por categoriaId
+        Map<Integer, Resultado> resultadosJugadorPorCat = new HashMap<>();
         for (Resultado r : resultados) {
-            if (r.getJugadorId() != jugadorId) {
-                continue;
+            if (r.getJugadorId() == jugadorId) {
+                resultadosJugadorPorCat.put(r.getCategoriaId(), r);
             }
-            String nombreCat = buscarNombreCategoriaPorId(r.getCategoriaId());
-            detalle.add(new CategoriaResultadoView(
-                    nombreCat,
-                    r.getRespuesta(),
-                    r.getVeredicto().name(),
-                    r.getMotivo(),
-                    r.getPuntos()
-            ));
         }
 
+        // 2) reconstruir la lista de categorías esperadas a partir de "cats"
+        List<Integer> categoriasEsperadas = new ArrayList<>();
+        if (cats != null && !cats.isBlank()) {
+            String[] partes = cats.split("-");
+            for (String p : partes) {
+                if (p.isBlank()) continue;
+                try {
+                    categoriasEsperadas.add(Integer.parseInt(p.trim()));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        // si por alguna razón no vino "cats", usamos el catálogo completo
+        if (categoriasEsperadas.isEmpty()) {
+            for (var cat : CatalogoCategorias.CATEGORIAS) {
+                categoriasEsperadas.add(cat.getId());
+            }
+        }
+
+        // 3) construir la lista detalle en el mismo orden de categoriasEsperadas
+        List<CategoriaResultadoView> detalle = new ArrayList<>();
+        for (Integer idCat : categoriasEsperadas) {
+            Resultado r = resultadosJugadorPorCat.get(idCat);
+            String nombreCat = buscarNombreCategoriaPorId(idCat);
+
+            if (r != null) {
+                // hubo respuesta y resultado real
+                detalle.add(new CategoriaResultadoView(
+                        nombreCat,
+                        r.getRespuesta(),
+                        r.getVeredicto().name(),
+                        r.getMotivo(),
+                        r.getPuntos()
+                ));
+            } else {
+                // NO hubo respuesta para esta categoría
+                detalle.add(new CategoriaResultadoView(
+                        nombreCat,
+                        "",
+                        "SIN RESPUESTA",
+                        "No se ingresó respuesta.",
+                        0
+                ));
+            }
+        }
+
+        // ahora calculamos el total directamente desde lo que mostramos
+        int puntajeTotal = detalle.stream()
+                .mapToInt(CategoriaResultadoView::getPuntos)
+                .sum();
+
         char letra = extraerLetraDePartida(idPartida);
+
+        // duración efectiva: si no vino nada, usamos un default (60)
+        int duracionEfectiva = (duracionTurnoSeg != null && duracionTurnoSeg > 0)
+                ? duracionTurnoSeg
+                : 60;
 
         model.addAttribute("idPartida", idPartida);
         model.addAttribute("letra", letra);
         model.addAttribute("detalle", detalle);
         model.addAttribute("puntajeTotal", puntajeTotal);
+
+        // clave para "volver a jugar" con la misma config
+        model.addAttribute("duracionSegundos", duracionEfectiva);
+        model.addAttribute("cats", cats);
 
         return "resultadosSolo";
     }
@@ -266,7 +334,6 @@ public class SoloController {
         var cat = CatalogoCategorias.porId(categoriaId);
         return cat != null ? cat.getNombre() : "Categoría " + categoriaId;
     }
-
 
     private char extraerLetraDePartida(int partidaId) {
         Partida p = partidaRepositorio.buscarPorId(partidaId);

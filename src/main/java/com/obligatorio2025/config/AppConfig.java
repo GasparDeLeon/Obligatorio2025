@@ -1,12 +1,14 @@
 package com.obligatorio2025.config;
 
-import com.obligatorio2025.validacion.ServicioIA;
 import com.obligatorio2025.aplicacion.*;
 import com.obligatorio2025.infraestructura.*;
 import com.obligatorio2025.infraestructura.memoria.*;
-import com.obligatorio2025.validacion.Juez;
+import com.obligatorio2025.infraestructura.memoria.CategoriaRepositorioEnMemoria;
+import com.obligatorio2025.validacion.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
+
 
 @Configuration
 public class AppConfig {
@@ -98,4 +100,31 @@ public class AppConfig {
                                                  PartidaRepositorio partidaRepo) {
         return new ServicioRespuestas(respRepo, partidaRepo);
     }
+    @Bean
+    public ServicioIA servicioIA(
+            CategoriaRepositorio categoriaRepositorio,
+            @Value("${openai.api.key:}") String apiKey,
+            @Value("${openai.base-url:https://api.openai.com/v1}") String baseUrl,
+            @Value("${openai.model:gpt-4o-mini}") String model,
+            @Value("${app.ia.enabled:true}") boolean iaEnabled
+    ) {
+        // Solo para depurar un poco
+        System.out.println("[IA/AppConfig] app.ia.enabled=" + iaEnabled);
+        System.out.println("[IA/AppConfig] apiKey vacía? " + (apiKey == null || apiKey.isBlank()));
+
+        if (!iaEnabled) {
+            System.out.println("[IA/AppConfig] IA deshabilitada por configuración. Usando mock.");
+            return new ServicioIAMock(categoriaRepositorio);
+        }
+
+        if (apiKey == null || apiKey.isBlank()) {
+            System.out.println("[IA/AppConfig] API key no configurada. Usando mock.");
+            return new ServicioIAMock(categoriaRepositorio);
+        }
+
+        System.out.println("[IA/AppConfig] Usando ServicioIAOpenAI");
+        return new ServicioIAOpenAI(categoriaRepositorio, apiKey, baseUrl, model);
+    }
+
+
 }
