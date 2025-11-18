@@ -107,7 +107,9 @@ public class AppConfig {
             @Value("${openai.base-url:https://api.openai.com/v1}") String baseUrl,
             @Value("${openai.model:gpt-4o-mini}") String model,
             @Value("${app.ia.enabled:true}") boolean iaEnabled
+
     ) {
+
         // Solo para depurar un poco
         System.out.println("[IA/AppConfig] app.ia.enabled=" + iaEnabled);
         System.out.println("[IA/AppConfig] apiKey vacía? " + (apiKey == null || apiKey.isBlank()));

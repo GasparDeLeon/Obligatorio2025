@@ -370,6 +370,88 @@
                 padding: 10px 20px;
             }
         }
+       .tutti-loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.tutti-loading-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.tutti-loading-content {
+    text-align: center;
+    animation: scaleIn 0.4s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.tutti-loading-video {
+    max-width: 320px;
+    width: 85vw;
+    border-radius: 24px;
+    border: 4px solid #5a5fff;
+    box-shadow: 0 8px 32px rgba(75, 83, 255, 0.4),
+                0 0 0 8px rgba(90, 95, 255, 0.2),
+                0 0 60px rgba(90, 95, 255, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 8px 32px rgba(75, 83, 255, 0.4),
+                    0 0 0 8px rgba(90, 95, 255, 0.2),
+                    0 0 60px rgba(90, 95, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 8px 40px rgba(75, 83, 255, 0.6),
+                    0 0 0 8px rgba(90, 95, 255, 0.35),
+                    0 0 80px rgba(90, 95, 255, 0.5);
+    }
+}
+
+.tutti-loading-text {
+    margin-top: 24px;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 600px) {
+    .tutti-loading-video {
+        max-width: 280px;
+        border-width: 3px;
+    }
+
+    .tutti-loading-text {
+        font-size: 1.5rem;
+        margin-top: 20px;
+    }
+}
     </style>
 </head>
 <body>
@@ -460,6 +542,21 @@
 
         </section>
     </main>
+
 </div>
+        <div id="tutti-loading-overlay" class="tutti-loading-overlay" style="display: none;">
+            <div class="tutti-loading-content">
+                <!-- Si tenés un video -->
+                <video src="/videos/tutti-loading.mp4"
+                       autoplay
+                       loop
+                       muted
+                       playsinline
+                       class="tutti-loading-video"></video>
+
+                <!-- Texto opcional -->
+                <p class="tutti-loading-text">Tutti… cargando</p>
+            </div>
+        </div>
 </body>
 </html>
