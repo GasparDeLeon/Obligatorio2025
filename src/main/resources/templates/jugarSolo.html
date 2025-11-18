@@ -382,7 +382,7 @@
             <span class="badge-modo">Modo solitario</span>
             <span class="badge-letra">
                 Letra:
-                <strong th:text="${letra}">A</strong>
+                <strong id="letra-actual" th:text="${letra}">A</strong>
             </span>
             <span class="badge-tiempo">
                 Tiempo:
@@ -408,7 +408,7 @@
                   th:action="@{'/solo/' + ${idPartida} + '/responder'}"
                   method="post">
 
-                <!-- acción que vamos a setear desde JS o desde el onClick -->
+                <!-- acción que vamos a setear desde JS -->
                 <input type="hidden" name="accion" id="input-accion" value="">
 
                 <!-- conservar configuración al enviar -->
@@ -443,16 +443,14 @@
                     <button type="submit"
                             id="btn-tutti"
                             class="btn btn-primario"
-                            disabled
-                            onclick="enviarAccion('tutti-frutti')">
+                            disabled>
                         <img th:src="@{/img/iconoTiempo.png}" alt="" class="btn-icon">
                         <span>Tutti Frutti</span>
                     </button>
 
                     <button type="submit"
                             id="btn-rendirse"
-                            class="btn btn-secundario"
-                            onclick="enviarAccion('rendirse')">
+                            class="btn btn-secundario">
                         <img th:src="@{/img/banderaBlanca.png}" alt="" class="btn-icon">
                         <span>Me rindo</span>
                     </button>
@@ -463,15 +461,5 @@
         </section>
     </main>
 </div>
-
-<script>
-    // Si ya tenés algo parecido en jugarSolo.js, podés borrarlo de acá
-    function enviarAccion(valor) {
-        const inputAccion = document.getElementById('input-accion');
-        const form = document.getElementById('form-jugar-solo');
-        inputAccion.value = valor;
-        form.submit();
-    }
-</script>
 </body>
 </html>

@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>Tutti Frutti - Modo multijugador</title>
 
+    <!-- NECESARIO PARA WEBSOCKETS -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <script defer th:src="@{/js/jugarMulti.js}"></script>
 </head>
@@ -18,7 +22,7 @@
             <span class="badge-modo">Modo multijugador</span>
             <span class="badge-letra">
                 Letra:
-                <strong th:text="${letra}">A</strong>
+                <strong id="letra-actual" th:text="${letra}">A</strong>
             </span>
             <span class="badge-tiempo">
                 Tiempo:
@@ -50,14 +54,12 @@
                   th:action="@{'/multi/ronda/responder'}"
                   method="post">
 
-                <!-- Datos de contexto que necesita el backend -->
+                <!-- Datos de contexto -->
                 <input type="hidden" name="codigoSala" id="codigoSala" th:value="${codigoSala}">
                 <input type="hidden" name="jugadorId" id="jugadorId" th:value="${jugadorId}">
                 <input type="hidden" name="numeroRonda" id="numeroRonda" th:value="${numeroRonda}">
                 <input type="hidden" name="cats" id="cats" th:value="${cats}">
                 <input type="hidden" name="accion" id="accion">
-                <!-- Nueva: letra actual para validación en JS -->
-                <input type="hidden" id="letraActual" th:value="${letra}">
 
                 <table class="tabla-categorias">
                     <thead>
