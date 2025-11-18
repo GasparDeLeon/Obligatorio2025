@@ -4,8 +4,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnRendirse = document.getElementById('btn-rendirse');
     const inputs      = document.querySelectorAll('.input-respuesta');
 
-    const form        = document.getElementById('form-jugar-multi');
-    const inputAccion = document.getElementById('accion');
+    const form =
+        document.getElementById('form-jugar-solo');
+    const inputAccion =
+        document.getElementById('accion') ||
+        document.getElementById('input-accion');
+
 
     // Letra de la ronda (la leemos del header)
     const letraSpan   = document.getElementById('letra-actual');
