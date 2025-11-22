@@ -15,16 +15,16 @@ public class Obligatorio2025Application {
 
         }
 
-        @Bean
-        CommandLineRunner init(ServicioAutenticacion servicioAutenticacion) {
-            return args -> {
-                try {
-                    servicioAutenticacion.registrarUsuario("admin", "1234", Rol.ADMINISTRADOR);
-                    System.out.println("Usuario admin creado");
-                } catch (RuntimeException e) {
-                    System.out.println("Usuario admin ya existe");
-                }
-            };
-        }
+//        @Bean
+//        CommandLineRunner init(ServicioAutenticacion servicioAutenticacion) {
+//            return args -> {
+//                try {
+//                    servicioAutenticacion.registrarUsuario("admin", "1234", Rol.ADMINISTRADOR);
+//                    System.out.println("Usuario admin creado");
+//                } catch (RuntimeException e) {
+//                    System.out.println("Usuario admin ya existe");
+//                }
+//            };
+
     }
 
