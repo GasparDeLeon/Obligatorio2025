@@ -4,16 +4,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnRendirse = document.getElementById('btn-rendirse');
     const inputs      = document.querySelectorAll('.input-respuesta');
 
-    // 🔹 Soportar ambas pantallas: solo y multi
-    const formMulti   = document.getElementById('form-jugar-multi');
-    const formSolo    = document.getElementById('form-jugar-solo');
-    const form        = formMulti || formSolo;
+    const form =
+        document.getElementById('form-jugar-solo');
+    const inputAccion =
+        document.getElementById('accion') ||
+        document.getElementById('input-accion');
 
-    // En solo el input se llama "input-accion"
-    const inputAccion = document.getElementById('accion') || document.getElementById('input-accion');
-
-    // 🔹 Overlay de Tutti
-    const overlay     = document.getElementById('tutti-loading-overlay');
 
     // Letra de la ronda (la leemos del header)
     const letraSpan   = document.getElementById('letra-actual');
@@ -21,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ? letraSpan.textContent.trim().toUpperCase()
         : null;
 
-    // Datos de sala / jugador para el polling (solo multi)
+    // Datos de sala / jugador para el polling
     const codigoSalaInput = document.getElementById('codigoSala');
     const jugadorIdInput  = document.getElementById('jugadorId');
 
@@ -62,8 +58,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!form.dataset.enviado) {
                     inputAccion.value = 'timeout';
                     form.dataset.enviado = 'true';
-                    // Si quisieras, acá también podrías mostrar el overlay
-                    // if (overlay) overlay.style.display = 'flex';
                     form.submit();
                 }
                 return;
@@ -115,46 +109,27 @@ document.addEventListener('DOMContentLoaded', function () {
     // BOTONES
     // ======================
     if (btnRendirse && form && inputAccion) {
-        btnRendirse.addEventListener('click', function (e) {
-            e.preventDefault(); // evitamos doble submit
-
+        btnRendirse.addEventListener('click', function () {
             if (form.dataset.enviado) return;
 
             inputAccion.value = 'rendirse';
             form.dataset.enviado = 'true';
-
-            // Acá NO mostramos overlay, porque no hay llamada pesada de IA
-            btnRendirse.disabled = true;
-            if (btnTutti) btnTutti.disabled = true;
-
             form.submit();
         });
     }
 
     if (btnTutti && form && inputAccion) {
-        btnTutti.addEventListener('click', function (e) {
-            e.preventDefault(); // evitamos doble submit
-
+        btnTutti.addEventListener('click', function () {
             if (form.dataset.enviado) return;
 
             inputAccion.value = 'tutti-frutti';
             form.dataset.enviado = 'true';
-
-            // 🔥 MOSTRAR OVERLAY "Tutti… cargando"
-            if (overlay) {
-                overlay.style.display = 'flex';  // usa flex para centrar
-            }
-
-            // Deshabilitar botones para que no spameen
-            btnTutti.disabled = true;
-            if (btnRendirse) btnRendirse.disabled = true;
-
             form.submit();
         });
     }
 
     // ======================
-    // POLLING: ¿alguien cantó Tutti Frutti? (solo multi)
+    // POLLING: ¿alguien cantó Tutti Frutti?
     // ======================
     function chequearEstadoTutti() {
         if (!codigoSala || !jugadorIdActual || !form || !inputAccion) {
@@ -183,19 +158,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     jugadorQueCanto !== jugadorIdActual) {
 
                     if (!form.dataset.enviado) {
-                        inputAccion.value = 'timeout'; // o "forzado-por-tutti"
+                        inputAccion.value = 'timeout'; // o algún valor tipo "forzado-por-tutti"
                         form.dataset.enviado = 'true';
                         form.submit();
                     }
                 }
             })
             .catch(err => {
+                // por ahora solo log en consola
                 console.error('Error consultando estado de sala:', err);
             });
     }
 
-    // Solo arrancamos el polling si estamos en una sala (multi)
-    if (codigoSala && jugadorIdActual) {
-        setInterval(chequearEstadoTutti, 2000);
-    }
+    // cada 2 segundos preguntamos si alguien cantó tutti
+    setInterval(chequearEstadoTutti, 2000);
 });

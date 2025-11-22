@@ -25,6 +25,7 @@ public class ServicioIAOpenAI implements ServicioIA {
     private final HttpClient http;
     private final ObjectMapper mapper = new ObjectMapper();
 
+
     public ServicioIAOpenAI(CategoriaRepositorio categoriaRepositorio,
                             String apiKey,
                             String baseUrl,
