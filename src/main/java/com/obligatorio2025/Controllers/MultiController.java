@@ -78,9 +78,22 @@ public class MultiController {
                 () -> partida.getRondas().get(partida.getRondas().size() - 1)
         );
 
+        // tiempo base del turno
         int duracionSegundos = 60;
-        if (partida.getConfiguracion() != null && partida.getConfiguracion().getDuracionSeg() > 0) {
-            duracionSegundos = partida.getConfiguracion().getDuracionSeg();
+        // tiempo de gracia
+        int duracionGraciaSegundos = 0;
+        boolean graciaHabilitada = false;
+
+        if (partida.getConfiguracion() != null) {
+            if (partida.getConfiguracion().getDuracionSeg() > 0) {
+                duracionSegundos = partida.getConfiguracion().getDuracionSeg();
+            }
+
+            // Para multi: si hay segundos de gracia > 0, consideramos que la gracia está habilitada
+            if (partida.getConfiguracion().getDuracionGraciaSeg() > 0) {
+                duracionGraciaSegundos = partida.getConfiguracion().getDuracionGraciaSeg();
+                graciaHabilitada = true;
+            }
         }
 
         // Categorías según configuración
@@ -114,12 +127,17 @@ public class MultiController {
         model.addAttribute("jugadorId", jugadorId);
         model.addAttribute("numeroRonda", rondaActual.getNumero());
         model.addAttribute("letra", rondaActual.getLetra());
+
         model.addAttribute("duracionSegundos", duracionSegundos);
+        model.addAttribute("duracionGraciaSegundos", duracionGraciaSegundos);
+        model.addAttribute("graciaHabilitada", graciaHabilitada);
+
         model.addAttribute("categorias", categoriasVista);
         model.addAttribute("cats", catsParam);
 
         return "jugarMulti";
     }
+
 
     // =========================================================
     //  POST DE RESPUESTAS MULTI
@@ -462,8 +480,8 @@ public class MultiController {
     }
 
     // =========================================================
-//  MARCAR LISTO PARA SIGUIENTE RONDA
-// =========================================================
+    //  MARCAR LISTO PARA SIGUIENTE RONDA
+    // =========================================================
     @GetMapping("/listo-siguiente")
     public String marcarListoSiguienteRonda(@RequestParam("codigoSala") String codigoSala,
                                             @RequestParam("jugadorId") int jugadorId,
