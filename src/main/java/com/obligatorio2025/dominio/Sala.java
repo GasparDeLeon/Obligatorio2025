@@ -4,7 +4,9 @@ import com.obligatorio2025.dominio.enums.EstadoSala;
 import com.obligatorio2025.dominio.enums.ModoJuego;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Sala {
 
@@ -15,9 +17,13 @@ public class Sala {
     private List<JugadorEnPartida> jugadores = new ArrayList<>();
     private Partida partidaActual;
 
-    // NUEVO: estado de "Tutti Frutti"
+    // Estado de "Tutti Frutti"
     private boolean tuttiFruttiDeclarado;
     private Integer jugadorQueCantoTutti;
+
+    // Nuevo: estado de "listos para la siguiente ronda"
+    private Set<Integer> jugadoresListosSiguienteRonda = new HashSet<>();
+    private int rondaListosSiguiente = 0;
 
     public Sala(int id, String codigo, String hostId) {
         this.id = id;
@@ -74,8 +80,9 @@ public class Sala {
         }
         this.estado = EstadoSala.JUGANDO;
 
-        // al iniciar una partida/ronda, por las dudas reseteamos el estado de tutti
+        // al iniciar una partida/ronda, reseteamos estados
         resetTuttiFrutti();
+        limpiarListosSiguienteRonda();
     }
 
     public Partida getPartidaActual() {
@@ -85,8 +92,9 @@ public class Sala {
     public void setPartidaActual(Partida partidaActual) {
         this.partidaActual = partidaActual;
 
-        // cuando asigno una partida nueva, también reseteo el estado de tutti
+        // cuando asigno una partida nueva, también reseteo los estados
         resetTuttiFrutti();
+        limpiarListosSiguienteRonda();
     }
 
     public String getCodigo() {
@@ -120,7 +128,7 @@ public class Sala {
     }
 
     // ================
-    // NUEVO: Tutti Frutti
+    // Tutti Frutti
     // ================
 
     public void marcarTuttiFrutti(int jugadorId) {
@@ -155,5 +163,36 @@ public class Sala {
 
     public void setHostId(String hostId) {
         this.hostId = hostId;
+    }
+
+    // ================
+    // Nuevo: listos para siguiente ronda
+    // ================
+
+    public void marcarListoSiguienteRonda(int jugadorId, int numeroRonda) {
+        if (this.rondaListosSiguiente != numeroRonda) {
+            this.rondaListosSiguiente = numeroRonda;
+            this.jugadoresListosSiguienteRonda.clear();
+        }
+        this.jugadoresListosSiguienteRonda.add(jugadorId);
+    }
+
+    public int getCantidadListosSiguienteRonda(int numeroRonda) {
+        if (this.rondaListosSiguiente != numeroRonda) {
+            return 0;
+        }
+        return this.jugadoresListosSiguienteRonda.size();
+    }
+
+    public boolean todosListosSiguienteRonda(int numeroRonda) {
+        if (this.rondaListosSiguiente != numeroRonda) {
+            return false;
+        }
+        return this.jugadoresListosSiguienteRonda.size() == this.jugadores.size();
+    }
+
+    public void limpiarListosSiguienteRonda() {
+        this.jugadoresListosSiguienteRonda.clear();
+        this.rondaListosSiguiente = 0;
     }
 }

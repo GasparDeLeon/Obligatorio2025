@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tutti Frutti - Esperando fin de ronda</title>
+
+    <!-- WebSockets -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="page-container">
+    <header class="header">
+        <div class="logo">
+            <img th:src="@{/img/logoMinimalista.png}" alt="Logo Tutti Frutti">
+            <h1>Tutti Frutti</h1>
+        </div>
+        <div class="header-info">
+            <span class="badge-modo">Modo multijugador</span>
+            <span class="badge-ronda">
+                Ronda:
+                <strong th:text="${numeroRonda}">1</strong>
+            </span>
+            <span class="badge-sala">
+                Sala:
+                <strong th:text="${codigoSala}">0001</strong>
+            </span>
+            <span class="badge-jugador">
+                Jugador:
+                <strong th:text="${jugadorId}">1</strong>
+            </span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="card">
+            <h2>Esperando a que termine la ronda</h2>
+            <p class="descripcion">
+                Tus respuestas ya fueron enviadas. Ahora estamos esperando a que
+                todos los jugadores terminen o que finalice el tiempo de gracia.
+            </p>
+
+            <p class="descripcion">
+                Jugadores que ya enviaron sus respuestas:
+                <span id="lbl-entregados" th:text="${entregados}">0</span>
+                /
+                <span id="lbl-total" th:text="${totalJugadores}">0</span>
+            </p>
+
+            <p class="descripcion">
+                Cuando la ronda finalice, vas a ser redirigido automáticamente
+                a la pantalla de resultados.
+            </p>
+
+            <div class="acciones">
+                <a class="btn btn-secundario"
+                   th:href="@{/lobby/{codigo}(codigo=${codigoSala}, jugadorId=${jugadorId})}">
+                    Volver al lobby
+                </a>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Inputs ocultos para que el JS externo pueda leer los valores -->
+<input type="hidden" id="codigoSala" th:value="${codigoSala}">
+<input type="hidden" id="numeroRonda" th:value="${numeroRonda}">
+<input type="hidden" id="jugadorId" th:value="${jugadorId}">
+
+<!-- JS específico de esta pantalla -->
+<script th:src="@{/js/esperandoRondaMulti.js}"></script>
+
+</body>
+</html>
