@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnTutti    = document.getElementById('btn-tutti');
     const btnRendirse = document.getElementById('btn-rendirse');
     const inputs      = document.querySelectorAll('.input-respuesta');
+    const overlay = document.getElementById('tutti-loading-overlay');
 
     const form =
         document.getElementById('form-jugar-solo');
@@ -118,15 +119,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (btnTutti && form && inputAccion) {
-        btnTutti.addEventListener('click', function () {
-            if (form.dataset.enviado) return;
+if (btnTutti && form && inputAccion) {
+    btnTutti.addEventListener('click', function () {
+        if (form.dataset.enviado) return;
 
-            inputAccion.value = 'tutti-frutti';
-            form.dataset.enviado = 'true';
-            form.submit();
-        });
-    }
+        inputAccion.value = 'tutti-frutti';
+        form.dataset.enviado = 'true';
+
+        // Mostrar overlay
+        if (overlay) {
+            overlay.style.display = 'flex';
+        }
+
+        form.submit();
+    });
+}
 
     // ======================
     // POLLING: ¿alguien cantó Tutti Frutti?
