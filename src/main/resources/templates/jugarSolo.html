@@ -452,9 +452,143 @@
         margin-top: 20px;
     }
 }
+
+
+  .intro-cuenta {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #4b53ffab 0%, #6b73ffdd 50%, #5a5fff 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .intro-cuenta::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 212, 59, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            top: -150px;
+            left: -100px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .intro-cuenta::after {
+            content: '';
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            bottom: -100px;
+            right: -80px;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        .intro-cuenta-container {
+            position: relative;
+            z-index: 2;
+            animation: scaleIn 0.6s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .intro-cuenta video {
+            max-width: 500px;
+            width: 85vw;
+            border-radius: 30px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            box-shadow:
+                0 0 0 12px rgba(90, 95, 255, 0.4),
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                0 0 100px rgba(90, 95, 255, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow:
+                    0 0 0 12px rgba(90, 95, 255, 0.4),
+                    0 20px 60px rgba(0, 0, 0, 0.4),
+                    0 0 100px rgba(90, 95, 255, 0.3);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow:
+                    0 0 0 12px rgba(90, 95, 255, 0.6),
+                    0 25px 70px rgba(0, 0, 0, 0.5),
+                    0 0 120px rgba(90, 95, 255, 0.5);
+                transform: scale(1.02);
+            }
+        }
+
+        .intro-cuenta.fade-out {
+            opacity: 0;
+            transform: scale(1.1);
+        }
+
+        .intro-cuenta.fade-out .intro-cuenta-container {
+            animation: zoomOut 0.8s ease-out forwards;
+        }
+
+        @keyframes zoomOut {
+            0% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.7) rotate(5deg);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .intro-cuenta video {
+                max-width: 380px;
+                border-width: 4px;
+                border-radius: 24px;
+            }
+
+            .intro-cuenta::before,
+            .intro-cuenta::after {
+                width: 350px;
+                height: 350px;
+            }
+        }
     </style>
 </head>
 <body>
+
+<div id="intro-cuenta" class="intro-cuenta">
+    <div class="intro-cuenta-container">
+        <video id="video-cuenta"
+               src="/videos/cuentaRegresiva.mp4"
+               playsinline
+               >
+        </video>
+    </div>
+</div>
 <div class="page-container">
     <header class="header">
         <div class="logo">
@@ -499,6 +633,10 @@
 
                 <input type="hidden" name="cats"
                        th:value="${cats}" />
+
+                <input type="hidden" name="modoJuez"
+                       th:value="${modoJuez}" />
+
 
                 <table class="tabla-categorias">
                     <thead>

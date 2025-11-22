@@ -1,5 +1,7 @@
 package com.obligatorio2025.validacion;
 
+import com.obligatorio2025.dominio.enums.ModoJuez;
+
 public interface ServicioIA {
 
     /**
@@ -11,6 +13,13 @@ public interface ServicioIA {
      * @param textoRespuesta texto ingresado por el jugador
      */
     VeredictoIA validar(int categoriaId, char letraRonda, String textoRespuesta);
+
+    default VeredictoIA validar(int categoriaId,
+                                char letraRonda,
+                                String textoRespuesta,
+                                ModoJuez modoJuez) {
+        return validar(categoriaId, letraRonda, textoRespuesta);
+    }
 
     class VeredictoIA {
         private final boolean valida;

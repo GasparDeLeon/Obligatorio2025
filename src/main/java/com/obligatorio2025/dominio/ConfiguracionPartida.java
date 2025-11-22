@@ -1,6 +1,7 @@
 package com.obligatorio2025.dominio;
 
 import com.obligatorio2025.dominio.enums.ModoJuego;
+import com.obligatorio2025.dominio.enums.ModoJuez;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,6 +15,7 @@ public class ConfiguracionPartida {
     private int pausaEntreRondasSeg;
     private ModoJuego modo;
     private boolean graciaHabilitar;
+    private ModoJuez modoJuez = ModoJuez.NORMAL;
 
     // nuevos
     private int puntajeValida;
@@ -119,4 +121,12 @@ public class ConfiguracionPartida {
     public boolean tieneCategoriasConfiguradas() {
         return categoriasSeleccionadas != null && !categoriasSeleccionadas.isEmpty();
     }
+    public ModoJuez getModoJuez() {
+        return modoJuez;
+    }
+
+    public void setModoJuez(ModoJuez modoJuez) {
+        this.modoJuez = (modoJuez != null) ? modoJuez : ModoJuez.NORMAL;
+    }
+
 }

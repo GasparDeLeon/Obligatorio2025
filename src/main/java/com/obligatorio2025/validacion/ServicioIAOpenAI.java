@@ -3,6 +3,7 @@ package com.obligatorio2025.validacion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.obligatorio2025.dominio.Categoria;
+import com.obligatorio2025.dominio.enums.ModoJuez;
 import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 
 import java.net.URI;
@@ -15,6 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.obligatorio2025.dominio.enums.ModoJuez.*;
 
 public class ServicioIAOpenAI implements ServicioIA {
 
@@ -42,6 +45,16 @@ public class ServicioIAOpenAI implements ServicioIA {
 
     @Override
     public VeredictoIA validar(int categoriaId, char letraRonda, String textoRespuesta) {
+        // Por compatibilidad: si nadie pasa el modo, asumimos NORMAL
+        return validar(categoriaId, letraRonda, textoRespuesta, ModoJuez.NORMAL);
+    }
+
+
+    @Override
+    public VeredictoIA validar(int categoriaId,
+                               char letraRonda,
+                               String textoRespuesta,
+                               ModoJuez modoJuez) {
         try {
             if (textoRespuesta == null || textoRespuesta.trim().isEmpty()) {
                 return new VeredictoIA(false, "Vacío");
@@ -53,34 +66,19 @@ public class ServicioIAOpenAI implements ServicioIA {
                     ? categoria.getNombre()
                     : ("categoría " + categoriaId);
 
-            // IMPORTANTE: la IA SOLO decide si encaja en la CATEGORÍA.
-            // La letra se valida en ServicioValidacionPorRonda.coincideConLetra(...)
-            String systemPrompt =
-                    "Eres un juez estricto del juego Tutti Frutti.\n" +
-                            "Tu única tarea es decidir si una palabra pertenece razonablemente " +
-                            "a la categoría dada.\n" +
-                            "\n" +
-                            "NO debes verificar con qué letra comienza la palabra; " +
-                            "eso ya lo controla el sistema por separado.\n" +
-                            "Ignora completamente cualquier letra inicial.\n" +
-                            "\n" +
-                            "Reglas importantes:\n" +
-                            "- Considera válida cualquier palabra que entre de forma razonable en la categoría.\n" +
-                            "- No inventes criterios extra como 'moderna', 'antigua', 'muy genérica', " +
-                            "  'demasiado específica', 'poco usada', etc.\n" +
-                            "- Las respuestas tienen que ser si o si en español, si no sera Invalida" +
-                            "- Si no estás seguro de que encaje claramente en la categoría, márcala como inválida.\n" +
-                            /*esto lo puse para probar nomas att paolo */     "- El motivo devuelto tiene que ser despreciando al jugador, soberbio ,tajante y corto, si es por una falta ortografica debes reirte en mayuscula.\n" +
-                            "Debes devolver SOLO un JSON válido con exactamente esta forma:\n" +
-                            "{\"valida\":true|false,\"motivo\":\"...\"}\n" +
-                            "Sin texto adicional fuera del JSON.";
+            if (modoJuez == null) {
+                modoJuez = ModoJuez.NORMAL;
+            }
 
-            // Ya NO le mandamos la letra. Solo categoría + texto.
+            // Prompt adaptado según el modo del juez
+            String systemPrompt = construirSystemPrompt(modoJuez);
+
+            // El modelo no necesita la letra, solo la categoría y el texto
             String userPrompt =
                     "Categoría: " + nombreCategoria + "\n" +
                             "Texto: " + texto + "\n";
 
-            // Schema JSON para response_format
+            // ==== Schema JSON para response_format ====
             Map<String, Object> schema = new HashMap<>();
             schema.put("type", "object");
             Map<String, Object> props = new HashMap<>();
@@ -159,6 +157,67 @@ public class ServicioIAOpenAI implements ServicioIA {
             return new VeredictoIA(false, "IA no disponible: " + e.getClass().getSimpleName());
         }
     }
+
+    private String construirSystemPrompt(ModoJuez modoJuez) {
+        // Parte común para todos los modos
+        String base =
+                "Eres un juez del juego Tutti Frutti.\n" +
+                        "Tu única tarea es decidir si una palabra pertenece razonablemente a la categoría dada.\n" +
+                        "\n" +
+                        "NO debes verificar con qué letra comienza la palabra; " +
+                        "eso ya lo controla el sistema por separado. Ignora completamente cualquier letra inicial.\n" +
+                        "\n" +
+                        "Reglas generales:\n" +
+                        "- Considera válida cualquier palabra que entre de forma razonable en la categoría.\n" +
+                        "- No inventes criterios extra como 'moderna', 'antigua', 'muy genérica', " +
+                        "  'demasiado específica', 'poco usada', etc.\n";
+
+        String reglasIdioma;
+        String reglasTono;
+
+        switch (modoJuez) {
+            case SOBERBIO -> {
+                reglasIdioma =
+                        "- Las respuestas deben estar en español. Si la palabra está claramente en otro idioma, márcala como inválida.\n";
+                reglasTono =
+                        "- El motivo devuelto tiene que ser despreciando al jugador, soberbio ,tajante y corto, si es por una falta ortografica debes reirte en mayuscula.\n" ;
+            }
+            case BRITANICO_CERRADO -> {
+                reglasIdioma =
+                        "- Solo aceptas palabras que estén claramente en inglés. " +
+                                "Si la palabra parece estar en español u otro idioma, márcala como inválida.\n";
+                reglasTono =
+                        "- El motivo puede estar en español, pero debe dejar claro si la palabra no está en inglés y por eso la rechazas.\n";
+            }
+            case POLIGLOTA -> {
+                reglasIdioma =
+                        "- Puedes aceptar palabras en cualquier idioma (español, inglés u otros) siempre que encajen en la categoría.\n";
+                reglasTono =
+                        "- El motivo debe ser breve y claro en español.\n";
+            }
+
+                default -> {
+                    reglasIdioma =
+                            "- Las respuestas deben estar en español. Si la palabra está claramente en otro idioma, márcala como inválida.\n";
+                    reglasTono =
+                            "- El motivo debe ser breve y neutro en español.\n";
+                }
+        }
+
+        String cierre =
+                "- Si no estás seguro de que encaje claramente en la categoría, márcala como inválida.\n" +
+                        "\n" +
+                        "Debes devolver SOLO un JSON válido con exactamente esta forma:\n" +
+                        "{\"valida\":true|false,\"motivo\":\"...\"}\n" +
+                        "Sin texto adicional fuera del JSON.";
+
+        return base + reglasIdioma + reglasTono + cierre;
+    }
+
+
+
+
+
 
     // Igual que antes: heurística para encontrar el primer objeto JSON {...}
     private static String tryExtractFirstJsonObject(String text) {

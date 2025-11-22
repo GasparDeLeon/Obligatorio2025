@@ -423,16 +423,7 @@
             }
         }
     </style>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Resultados - Tutti Frutti</title>
-        <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
-        <style>
-            /* todo tu CSS tal cual lo tenías */
-            /* ... (lo dejo igual para no hacerlo eterno) ... */
-        </style>
-    </head>
+
 <body>
 <div class="bg-shape bg-shape-1"></div>
 <div class="bg-shape bg-shape-2"></div>
@@ -441,7 +432,7 @@
 <div class="page-container">
     <header class="header">
         <div class="logo">
-            <img th:src="@{/img/logoMinimalista.png}" alt="Logo Tutti Frutti">
+            <img th:src="@{/img/logoCaricatura.png}" alt="Logo Tutti Frutti">
             <h1>Resultados</h1>
         </div>
         <div class="header-info">
@@ -483,10 +474,14 @@
 
             <div class="acciones">
                 <!-- AQUÍ ESTÁ EL CAMBIO IMPORTANTE -->
-                <a th:href="@{|/solo/nueva?duracionTurnoSeg=${duracionSegundos}&cats=${cats == null ? '' : cats}|}"
+                <a th:href="@{|/solo/nueva?duracionTurnoSeg=${duracionSegundos}
+                 &cats=${cats == null ? '' : cats}
+                 &modoJuez=${modoJuez}|}"
                    class="btn btn-principal">
                     Jugar otra vez
                 </a>
+
+
 
                 <a th:href="@{/}" class="btn btn-secundario">Volver al inicio</a>
             </div>

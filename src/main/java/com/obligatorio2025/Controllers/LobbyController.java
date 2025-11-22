@@ -3,6 +3,7 @@ package com.obligatorio2025.Controllers;
 import com.obligatorio2025.dominio.Sala;
 import com.obligatorio2025.dominio.JugadorEnPartida;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,8 @@ public class LobbyController {
     @GetMapping("/{codigoSala}")
     public String verLobby(@PathVariable String codigoSala,
                            @RequestParam(name = "jugadorId", required = false) Integer jugadorIdParam,
-                           Model model) {
+                           Model model,
+                           HttpSession session) {
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {

@@ -156,6 +156,27 @@
                       th:if="${#fields.hasErrors('duracionTurnoSeg')}"
                       th:errors="*{duracionTurnoSeg}"></span>
             </div>
+            <div class="field-group">
+                <label for="modoJuez">Modo del juez</label>
+                <select id="modoJuez" th:field="*{modoJuez}">
+                    <option th:value="${T(com.obligatorio2025.dominio.enums.ModoJuez).NORMAL}">
+                        Normal
+                    </option>
+                    <option th:value="${T(com.obligatorio2025.dominio.enums.ModoJuez).SOBERBIO}">
+                        Soberbio
+                    </option>
+                    <option th:value="${T(com.obligatorio2025.dominio.enums.ModoJuez).BRITANICO_CERRADO}">
+                        Británico cerrado
+                    </option>
+                    <option th:value="${T(com.obligatorio2025.dominio.enums.ModoJuez).POLIGLOTA}">
+                        Políglota
+                    </option>
+                </select>
+                <span class="error"
+                      th:if="${#fields.hasErrors('modoJuez')}"
+                      th:errors="*{modoJuez}"></span>
+            </div>
+
 
             <div class="field-group">
                 <label>Categorías a utilizar</label>

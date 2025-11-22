@@ -3,6 +3,7 @@ package com.obligatorio2025.validacion;
 import com.obligatorio2025.dominio.Partida;
 import com.obligatorio2025.dominio.Respuesta;
 import com.obligatorio2025.dominio.Ronda;
+import com.obligatorio2025.dominio.enums.ModoJuez;
 import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 
 import java.text.Normalizer;
@@ -53,7 +54,7 @@ public class ValidadorRespuesta {
                 );
             }
         }
-
+        ModoJuez modo = partida.getConfiguracion().getModoJuez();
         // 3. verificar que la categoría exista en el catálogo
         List<String> permitidas = categoriaRepositorio.obtenerPalabrasDe(respuesta.getCategoriaId());
         if (permitidas == null || permitidas.isEmpty()) {
@@ -71,7 +72,8 @@ public class ValidadorRespuesta {
         ServicioIA.VeredictoIA veredictoIA = servicioIA.validar(
                 respuesta.getCategoriaId(),
                 letraRonda,
-                respuesta.getTexto()
+                respuesta.getTexto(),
+                modo
         );
 
         if (!veredictoIA.isValida()) {
