@@ -125,12 +125,12 @@ public class JuegoWebSocketController {
             return new SalaEvent("JUGADOR_ENTRA", new JugadorPayload(jugadorId));
         }
 
-        // jugador marca "listo"
+        // jugador marca "listo" (en lobby)
         public static SalaEvent jugadorListo(int jugadorId) {
             return new SalaEvent("JUGADOR_LISTO", new JugadorPayload(jugadorId));
         }
 
-        // partida inicia (si querés seguir usando este evento más adelante)
+        // partida inicia
         public static SalaEvent partidaInicia(String codigoSala) {
             return new SalaEvent("PARTIDA_INICIA", new PartidaPayload(codigoSala));
         }
@@ -140,9 +140,35 @@ public class JuegoWebSocketController {
             return new SalaEvent("ERROR_INICIO", new ErrorPayload(mensaje));
         }
 
-        // NUEVO: inicio de ronda
+        // inicio de ronda
         public static SalaEvent rondaInicia(int numeroRonda, char letra) {
             return new SalaEvent("RONDA_INICIA", new RondaIniciaPayload(numeroRonda, letra));
+        }
+
+        // alguien cantó Tutti Frutti
+        public static SalaEvent tuttiFruttiDeclarado(int jugadorId) {
+            return new SalaEvent(
+                    "TUTTI_FRUTTI_DECLARADO",
+                    new JugadorPayload(jugadorId)
+            );
+        }
+
+        // ronda finalizada (para la pantalla de "esperando")
+        public static SalaEvent rondaFinalizada(int numeroRonda,
+                                                int entregados,
+                                                int totalJugadores) {
+            return new SalaEvent(
+                    "RONDA_FINALIZADA",
+                    new RondaFinalizadaPayload(numeroRonda, entregados, totalJugadores)
+            );
+        }
+
+        // estado de "listos para la siguiente ronda" en resultadosMulti
+        public static SalaEvent siguienteRondaEstado(int listos, int totalJugadores) {
+            return new SalaEvent(
+                    "SIGUIENTE_RONDA_ESTADO",
+                    new SiguienteRondaEstadoPayload(listos, totalJugadores)
+            );
         }
     }
 
@@ -185,7 +211,7 @@ public class JuegoWebSocketController {
         public void setMensaje(String mensaje) { this.mensaje = mensaje; }
     }
 
-    // NUEVO: payload para inicio de ronda
+    // payload para inicio de ronda
     public static class RondaIniciaPayload {
         private int numero;
         private char letra;
@@ -211,6 +237,74 @@ public class JuegoWebSocketController {
 
         public void setLetra(char letra) {
             this.letra = letra;
+        }
+    }
+
+    // payload para fin de ronda
+    public static class RondaFinalizadaPayload {
+        private int numeroRonda;
+        private int entregados;
+        private int totalJugadores;
+
+        public RondaFinalizadaPayload() {}
+
+        public RondaFinalizadaPayload(int numeroRonda, int entregados, int totalJugadores) {
+            this.numeroRonda = numeroRonda;
+            this.entregados = entregados;
+            this.totalJugadores = totalJugadores;
+        }
+
+        public int getNumeroRonda() {
+            return numeroRonda;
+        }
+
+        public void setNumeroRonda(int numeroRonda) {
+            this.numeroRonda = numeroRonda;
+        }
+
+        public int getEntregados() {
+            return entregados;
+        }
+
+        public void setEntregados(int entregados) {
+            this.entregados = entregados;
+        }
+
+        public int getTotalJugadores() {
+            return totalJugadores;
+        }
+
+        public void setTotalJugadores(int totalJugadores) {
+            this.totalJugadores = totalJugadores;
+        }
+    }
+
+    // payload para estado "listos para la siguiente ronda"
+    public static class SiguienteRondaEstadoPayload {
+        private int listos;
+        private int totalJugadores;
+
+        public SiguienteRondaEstadoPayload() {}
+
+        public SiguienteRondaEstadoPayload(int listos, int totalJugadores) {
+            this.listos = listos;
+            this.totalJugadores = totalJugadores;
+        }
+
+        public int getListos() {
+            return listos;
+        }
+
+        public void setListos(int listos) {
+            this.listos = listos;
+        }
+
+        public int getTotalJugadores() {
+            return totalJugadores;
+        }
+
+        public void setTotalJugadores(int totalJugadores) {
+            this.totalJugadores = totalJugadores;
         }
     }
 
@@ -262,7 +356,6 @@ public class JuegoWebSocketController {
 
         String destino = "/topic/sala." + codigoSala;
 
-        // 1) Validar con el dominio: no iniciar si no están todos listos
         boolean todosListos;
         try {
             todosListos = servicioLobby.estanTodosListos(codigoSala);
@@ -281,9 +374,6 @@ public class JuegoWebSocketController {
             return;
         }
 
-        // (Opcional a futuro: validar que jugadorId sea el host de la sala)
-
-        // 2) Crear e iniciar la primera ronda en el dominio
         Ronda ronda;
         try {
             ronda = servicioLobby.iniciarPrimeraRonda(codigoSala);
@@ -294,7 +384,6 @@ public class JuegoWebSocketController {
             return;
         }
 
-        // 3) Notificar a todos que la ronda comienza
         SalaEvent evento = SalaEvent.rondaInicia(ronda.getNumero(), ronda.getLetra());
 
         log.info("[WS] broadcast evento {} a {} (ronda={}, letra={})",
@@ -302,7 +391,6 @@ public class JuegoWebSocketController {
         messagingTemplate.convertAndSend(destino, evento);
     }
 
-    // marcar jugador como listo y notificar
     @MessageMapping("/sala.listo")
     public void jugadorListo(JugadorListoMessage msg) {
 

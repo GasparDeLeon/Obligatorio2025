@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tutti Frutti - Resultados multijugador</title>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+
+    <!-- WebSockets -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<div class="page-container">
+    <header class="header">
+        <div class="logo">
+            <img th:src="@{/img/logoMinimalista.png}" alt="Logo Tutti Frutti">
+            <h1>Tutti Frutti</h1>
+        </div>
+        <div class="header-info">
+            <span class="badge-modo">Modo multijugador</span>
+            <span class="badge-ronda">
+                Ronda:
+                <strong th:text="${numeroRonda}">1</strong>
+            </span>
+            <span class="badge-sala">
+                Sala:
+                <strong th:text="${codigoSala}">0001</strong>
+            </span>
+            <span class="badge-jugador">
+                Jugador:
+                <strong th:text="${jugadorId}">1</strong>
+            </span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="card">
+            <h2>Ranking de la ronda</h2>
+
+            <div th:if="${hayResultados}">
+                <table class="tabla-ranking">
+                    <thead>
+                    <tr>
+                        <th>Posición</th>
+                        <th>Jugador</th>
+                        <th>Puntos</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="fila : ${ranking}">
+                        <td th:text="${fila.posicion}">1</td>
+                        <td th:text="${fila.jugadorId}">1</td>
+                        <td th:text="${fila.puntos}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:if="${!hayResultados}">
+                <p>Todavía no hay resultados para esta ronda.</p>
+            </div>
+
+            <!-- Info de estado para la siguiente ronda -->
+            <div class="descripcion" th:if="${!ultimaRonda}">
+                <p>
+                    <span th:if="${!esperando}">
+                        Cuando estés listo para la siguiente ronda, pulsa
+                        <strong>"Siguiente ronda"</strong>.
+                    </span>
+
+                    <span th:if="${esperando}">
+                        Ya marcaste que estás listo. Faltan
+                        <span th:text="${faltan}">0</span>
+                        de
+                        <span th:text="${totalJugadores}">0</span>
+                        jugadores.
+                    </span>
+                </p>
+
+                <p th:if="${esperando}">
+                    Puedes volver a pulsar <strong>"Siguiente ronda"</strong> cuando creas que todos ya están listos.
+                </p>
+            </div>
+
+            <div class="descripcion" th:if="${ultimaRonda}">
+                <p>Esta fue la última ronda de la partida.</p>
+            </div>
+
+            <div class="acciones">
+                <!-- Botón siguiente ronda si no es la última -->
+                <a th:if="${!ultimaRonda}"
+                   class="btn btn-primario"
+                   th:href="@{/multi/listo-siguiente(
+                        codigoSala=${codigoSala},
+                        jugadorId=${jugadorId},
+                        rondaActual=${numeroRonda}
+                   )}">
+                    Siguiente ronda
+                </a>
+
+                <!-- Ir al ranking final si es la última ronda -->
+                <a th:if="${ultimaRonda}"
+                   class="btn btn-primario"
+                   th:href="@{/multi/final(codigoSala=${codigoSala}, jugadorId=${jugadorId})}">
+                    Ver ranking final
+                </a>
+
+                <a class="btn btn-secundario"
+                   th:href="@{/lobby/{codigo}(codigo=${codigoSala}, jugadorId=${jugadorId})}">
+                    Volver al lobby
+                </a>
+            </div>
+
+            <!-- Info de jugadores listos (solo si no es última) -->
+            <div class="descripcion" th:if="${!ultimaRonda}">
+                <p>
+                    Jugadores listos para la siguiente ronda:
+                    <span id="lbl-listos" th:text="${listos}">0</span>
+                    /
+                    <span id="lbl-total" th:text="${totalJugadores}">0</span>
+                </p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- JS de WebSocket SOLO cuando estamos esperando y NO es la última ronda -->
+<!-- JS de WebSocket para coordinar la siguiente ronda (mientras NO sea la última) -->
+<script th:if="${!ultimaRonda}" th:inline="javascript">
+    /*<![CDATA[*/
+    const codigoSala = /*[[${codigoSala}]]*/ "";
+    const numeroRondaActual = /*[[${numeroRonda}]]*/ 1;
+    const jugadorId = /*[[${jugadorId}]]*/ 1;
+
+    // Estado inicial que viene del servidor
+    const listosInicial = /*[[${listos}]]*/ 0;
+    const totalInicial  = /*[[${totalJugadores}]]*/ 0;
+
+    // URL para pedir "siguiente ronda" por HTTP
+    const urlSiguiente = /*[[@{/multi/siguiente(
+                                codigoSala=${codigoSala},
+                                jugadorId=${jugadorId},
+                                rondaActual=${numeroRonda}
+                             )}]]*/ "";
+
+    function irASiguienteRonda() {
+        if (!urlSiguiente) return;
+        window.location.href = urlSiguiente;
+    }
+
+    // Caso especial: si al cargar la página ya están TODOS listos (listosInicial == totalInicial),
+    // esto significa que esta pestaña pertenece al último jugador que marcó "Siguiente ronda".
+    // En ese caso vamos directo a la siguiente ronda sin esperar eventos WS.
+    if (totalInicial > 0 && listosInicial === totalInicial) {
+        irASiguienteRonda();
+    }
+
+    // Conectamos al WebSocket para ir actualizando el contador de listos y
+    // disparar la siguiente ronda cuando el último se marque listo.
+    try {
+        const socket = new SockJS("/ws-tutti"); // asegurate que este path coincida con tu config
+        const stompClient = Stomp.over(socket);
+        stompClient.debug = null; // silenciar logs
+
+        stompClient.connect({}, function () {
+            const topic = "/topic/sala." + codigoSala;
+
+            stompClient.subscribe(topic, function (message) {
+                try {
+                    const evento = JSON.parse(message.body);
+
+                    if (evento.tipo === "SIGUIENTE_RONDA_ESTADO") {
+                        const datos = evento.payload || {};
+                        const lblListos = document.getElementById("lbl-listos");
+                        const lblTotal  = document.getElementById("lbl-total");
+
+                        if (lblListos && typeof datos.listos === "number") {
+                            lblListos.textContent = datos.listos;
+                        }
+                        if (lblTotal && typeof datos.totalJugadores === "number") {
+                            lblTotal.textContent = datos.totalJugadores;
+                        }
+
+                        // Cuando el servidor dice que listos == total, cada cliente
+                        // entra por HTTP a /multi/siguiente, que se encarga de crear
+                        // o reutilizar la ronda y redirigir a /multi/ronda.
+                        if (typeof datos.listos === "number"
+                            && typeof datos.totalJugadores === "number"
+                            && datos.listos === datos.totalJugadores
+                            && datos.totalJugadores > 0) {
+
+                            irASiguienteRonda();
+                        }
+                    }
+
+                    // Ya no usamos RONDA_INICIA aquí
+
+                } catch (e) {
+                    console.error("Error procesando mensaje de sala en resultadosMulti:", e);
+                }
+            });
+        }, function (error) {
+            console.error("Error conectando STOMP en resultadosMulti:", error);
+            // como fallback extremo podrías hacer aquí un setTimeout hacia urlSiguiente
+        });
+    } catch (e) {
+        console.error("No se pudo inicializar STOMP en resultadosMulti:", e);
+    }
+    /*]]>*/
+</script>
+
+
+</body>
+</html>

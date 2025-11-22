@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Referencias a intervalos para poder frenarlos
     let countdownInterval = null;
-    let estadoInterval    = null;
+    let estadoInterval    = null; // ya no lo usaremos, pero lo dejamos por compatibilidad
 
     function detenerTimers() {
         if (countdownInterval) {
@@ -118,52 +118,67 @@ document.addEventListener('DOMContentLoaded', function () {
     actualizarEstadoTutti();
 
     // ======================
-    // POLLING: ESTADO DE LA SALA
+    // WebSocket / STOMP
     // ======================
-    function chequearEstadoSala() {
-        // si ya se envió el form, frenamos polling
-        if (!form || form.dataset.enviado) {
+    let stompClient = null;
+
+    function manejarTuttiFruttiDeclarado(payload) {
+        if (!payload || typeof payload.jugadorId === 'undefined') {
+            return;
+        }
+
+        const jugadorQueCanto = payload.jugadorId;
+
+        // Si fui yo, ya estoy enviando el formulario; no hago nada más
+        if (jugadorQueCanto === jugadorId) {
+            return;
+        }
+
+        // Si fue otro jugador y yo todavía no mandé el formulario, me fuerzan a terminar
+        if (form && !form.dataset.enviado) {
+            inputAccion.value = 'timeout';
+            form.dataset.enviado = 'true';
             detenerTimers();
-            return;
+            form.submit();
         }
-
-        if (!codigoSala || !jugadorId) {
-            return;
-        }
-
-        fetch('/multi/estado?codigoSala=' + encodeURIComponent(codigoSala))
-            .then(function (resp) {
-                if (!resp.ok) {
-                    throw new Error('HTTP ' + resp.status);
-                }
-                return resp.json();
-            })
-            .then(function (data) {
-                if (!data || data.existe === false) {
-                    return;
-                }
-
-                // Si alguien cantó tutti frutti y NO fui yo, me fuerzan a terminar
-                if (data.tuttiFruttiDeclarado &&
-                    data.jugadorQueCantoTutti != null &&
-                    data.jugadorQueCantoTutti !== jugadorId) {
-
-                    if (!form.dataset.enviado) {
-                        inputAccion.value = 'timeout';
-                        form.dataset.enviado = 'true';
-                        detenerTimers();
-                        form.submit();
-                    }
-                }
-            })
-            .catch(function (err) {
-                console.error('Error consultando estado de sala:', err);
-            });
     }
 
-    if (codigoSala && jugadorId && form && inputAccion) {
-        // cada 1.5 segundos
-        estadoInterval = setInterval(chequearEstadoSala, 1500);
+    function manejarEventoSala(evento) {
+        if (!evento || !evento.tipo) return;
+
+        switch (evento.tipo) {
+            case 'TUTTI_FRUTTI_DECLARADO':
+                manejarTuttiFruttiDeclarado(evento.payload);
+                break;
+            // A futuro:
+            // case 'RESULTADOS_RONDA_LISTOS':
+            // case 'RONDA_INICIA':
+            // case 'PARTIDA_FINALIZADA':
+            //   ...
+        }
+    }
+
+    function conectarWS() {
+        if (!codigoSala) return;
+
+        // Asumimos que SockJS y Stomp ya están incluidos en la página
+        const socket = new SockJS('/ws-tutti');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function () {
+            const destino = '/topic/sala.' + codigoSala;
+
+            stompClient.subscribe(destino, function (message) {
+                try {
+                    const evento = JSON.parse(message.body);
+                    manejarEventoSala(evento);
+                } catch (e) {
+                    console.error('Error parseando evento de sala (jugarMulti):', e, message.body);
+                }
+            });
+        }, function (error) {
+            console.error('Error de conexión STOMP en jugarMulti:', error);
+        });
     }
 
     // ======================
@@ -189,5 +204,12 @@ document.addEventListener('DOMContentLoaded', function () {
             detenerTimers();
             form.submit();
         });
+    }
+
+    // ======================
+    // Inicio: conectar WS si tengo sala y jugador
+    // ======================
+    if (codigoSala && jugadorId) {
+        conectarWS();
     }
 });

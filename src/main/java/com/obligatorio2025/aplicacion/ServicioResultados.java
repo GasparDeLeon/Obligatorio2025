@@ -26,34 +26,88 @@ public class ServicioResultados {
                 .collect(Collectors.toList());
     }
 
-    // NUEVO: ranking con posición, manejando empates
+    // NUEVO: ranking con posición, manejando empates (solo jugadores que tengan resultados)
     public List<EntradaRankingConPosicion> armarRankingConPosiciones(List<Resultado> resultados) {
-        // primero usamos el ranking normal
-        List<EntradaRanking> base = armarRanking(resultados);
+        Map<Integer, Integer> puntos = calcularPuntosPorJugador(resultados);
+
+        // armamos una lista ordenada por puntos desc
+        List<Map.Entry<Integer, Integer>> ordenados = new ArrayList<>(puntos.entrySet());
+        ordenados.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
 
         List<EntradaRankingConPosicion> salida = new ArrayList<>();
         int posicionActual = 0;
-        int ultimoPuntaje = -1;
+        Integer ultimoPuntaje = null;
         int indice = 0;
 
-        for (EntradaRanking entrada : base) {
+        for (Map.Entry<Integer, Integer> e : ordenados) {
             indice++;
 
-            if (entrada.getPuntos() != ultimoPuntaje) {
+            if (ultimoPuntaje == null || !ultimoPuntaje.equals(e.getValue())) {
                 // nuevo puntaje → nueva posición
                 posicionActual = indice;
-                ultimoPuntaje = entrada.getPuntos();
+                ultimoPuntaje = e.getValue();
             }
 
             salida.add(new EntradaRankingConPosicion(
                     posicionActual,
-                    entrada.getJugadorId(),
-                    entrada.getPuntos()
+                    e.getKey(),
+                    e.getValue()
             ));
         }
 
         return salida;
     }
+
+    // NUEVO: ranking con posición, incluyendo jugadores sin resultados (0 puntos)
+    public List<EntradaRankingConPosicion> armarRankingConPosicionesIncluyendoJugadores(
+            List<Resultado> resultados,
+            List<Integer> idsJugadores) {
+
+        Map<Integer, Integer> puntos = new HashMap<>();
+
+        // 1) sumar puntos de resultados
+        if (resultados != null) {
+            for (Resultado r : resultados) {
+                puntos.merge(r.getJugadorId(), r.getPuntos(), Integer::sum);
+            }
+        }
+
+        // 2) asegurar que todos los jugadores aparezcan aunque tengan 0
+        if (idsJugadores != null) {
+            for (Integer id : idsJugadores) {
+                puntos.putIfAbsent(id, 0);
+            }
+        }
+
+        // 3) ordenar de mayor a menor puntaje
+        List<Map.Entry<Integer, Integer>> lista = new ArrayList<>(puntos.entrySet());
+        lista.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+
+        // 4) asignar posiciones con empates
+        List<EntradaRankingConPosicion> salida = new ArrayList<>();
+        int posicionActual = 0;
+        int ultimoPuntaje = Integer.MIN_VALUE;
+        int indice = 0;
+
+        for (Map.Entry<Integer, Integer> e : lista) {
+            indice++;
+            int puntaje = e.getValue();
+
+            if (puntaje != ultimoPuntaje) {
+                posicionActual = indice;
+                ultimoPuntaje = puntaje;
+            }
+
+            salida.add(new EntradaRankingConPosicion(
+                    posicionActual,
+                    e.getKey(),
+                    puntaje
+            ));
+        }
+
+        return salida;
+    }
+
 
     // clase de siempre
     public static class EntradaRanking {
@@ -79,7 +133,7 @@ public class ServicioResultados {
         }
     }
 
-    // nueva clase para mostrar posición
+    // clase para mostrar posición
     public static class EntradaRankingConPosicion {
         private final int posicion;
         private final int jugadorId;

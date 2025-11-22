@@ -40,16 +40,18 @@ public class ServicioFlujoPartida {
                 ? p.getConfiguracion().getDuracionGraciaSeg() * 1000
                 : 10_000;
 
+        // ojo: el planificador sigue llamando a la versión "sin número de ronda"
         planificador.programar(partidaId, ms, () -> ejecutarFinDeGracia(partidaId));
     }
 
-    // lo llama el planificador (o el main)
+    // Versión original: usa siempre la última ronda de la partida
+    // (la dejamos para el planificador y para compatibilidad)
     public List<Resultado> ejecutarFinDeGracia(int partidaId) {
-        // cancelar tarea pendiente
+        // cancelar tarea pendiente (si la hay)
         planificador.cancelar(partidaId);
 
         Partida p = partidaRepo.buscarPorId(partidaId);
-        if (p == null) {
+        if (p == null || p.getRondas() == null || p.getRondas().isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -59,19 +61,40 @@ public class ServicioFlujoPartida {
                 .max(Comparator.comparingInt(Ronda::getNumero))
                 .orElse(null);
 
+        int numeroRonda = (ultimaRonda != null) ? ultimaRonda.getNumero() : -1;
+
+        return ejecutarFinDeGracia(partidaId, numeroRonda);
+    }
+
+    // NUEVO: fin de gracia indicando explícitamente la ronda
+    // lo vamos a usar desde el controlador de resultados
+    public List<Resultado> ejecutarFinDeGracia(int partidaId, int numeroRonda) {
+        // también cancelamos el planificador acá, por si se llama antes de que dispare
+        planificador.cancelar(partidaId);
+
+        Partida p = partidaRepo.buscarPorId(partidaId);
+        if (p == null) {
+            return Collections.emptyList();
+        }
+
         List<Resultado> resultados;
 
-        if (ultimaRonda != null && servicioValidacionPorRonda != null) {
+        if (numeroRonda > 0 && servicioValidacionPorRonda != null) {
+            System.out.println("[ServicioFlujoPartida] Ejecutando fin de gracia para partida "
+                    + partidaId + " ronda " + numeroRonda);
+
             // validamos SOLO esa ronda
-            resultados = servicioValidacionPorRonda.validarRonda(partidaId, ultimaRonda.getNumero());
+            resultados = servicioValidacionPorRonda.validarRonda(partidaId, numeroRonda);
             // acá podríamos marcar la ronda como cerrada si tu modelo lo soportara
         } else {
             // fallback al viejo flujo (toda la partida)
+            System.out.println("[ServicioFlujoPartida] Ejecutando fin de gracia (fallback, partida completa) para "
+                    + partidaId);
             resultados = servicioValidacion.validarRespuestas(partidaId);
         }
 
         // ¿terminó la partida o sigue?
-        int totalRondasJugadas = p.getRondas().size();
+        int totalRondasJugadas = (p.getRondas() != null) ? p.getRondas().size() : 0;
         int totalRondasConfig = (p.getConfiguracion() != null)
                 ? p.getConfiguracion().getRondasTotales()
                 : 1;

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tutti Frutti - Ranking final</title>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="page-container">
+
+    <header class="header">
+        <div class="logo">
+            <img th:src="@{/img/logoMinimalista.png}" alt="Logo Tutti Frutti">
+            <h1>Tutti Frutti</h1>
+        </div>
+        <div class="header-info">
+            <span class="badge-modo">Modo multijugador</span>
+            <span class="badge-sala">
+                Sala:
+                <strong th:text="${codigoSala}">0001</strong>
+            </span>
+            <span class="badge-ronda">
+                Rondas jugadas:
+                <strong th:text="${totalRondas}">3</strong>
+            </span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="card">
+            <h2>Ranking final de la partida</h2>
+
+            <table class="tabla-categorias">
+                <thead>
+                <tr>
+                    <th>Posición</th>
+                    <th>Jugador</th>
+                    <th>Puntos totales</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fila : ${ranking}">
+                    <td th:text="${fila.posicion}">1</td>
+                    <td th:text="${fila.jugadorId}">1</td>
+                    <td th:text="${fila.puntos}">50</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div class="acciones">
+                <!-- Volver a la misma sala para jugar otra vez -->
+                <a class="btn btn-primario"
+                   th:href="@{/lobby/{codigo}(codigo=${codigoSala}, jugadorId=${jugadorId})}">
+                    Volver a la sala
+                </a>
+
+                <!-- Ir al inicio -->
+                <a class="btn btn-secundario" th:href="@{/}">
+                    Volver al inicio
+                </a>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
