@@ -27,7 +27,9 @@
             <span class="badge-tiempo">
                 Tiempo:
                 <span id="timer"
-                      th:attr="data-duracion=${duracionSegundos}">
+                      th:attr="data-duracion=${duracionSegundos},
+                               data-duracion-gracia=${duracionGraciaSegundos},
+                               data-gracia-habilitada=${graciaHabilitada}">
                     00:00
                 </span>
             </span>
