@@ -75,6 +75,29 @@ public class ServicioLobby {
         }
     }
 
+    public int registrarNuevoJugador(String codigoSala) {
+        Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
+        if (sala == null) {
+            throw new IllegalArgumentException("No existe la sala con código " + codigoSala);
+        }
+
+        // Opción simple: siguiente número = cantidad de jugadores actuales + 1
+        // (adaptalo a cómo tengas modelados los jugadores en Sala)
+        int siguienteId = sala.getJugadores().size() + 1;
+
+        // Si ya tenés una lógica de “agregar jugador al lobby”, podés llamarla acá.
+        // Ejemplo, si tenés algo como:
+        // sala.agregarJugador(new JugadorEnSala(siguienteId));
+        // salaRepositorio.guardar(sala);
+
+        return siguienteId;
+    } 
+
+
+
+
+
+
     public void marcarListo(String codigo, int jugadorId) {
         Sala sala = salaRepositorio.buscarPorCodigo(codigo);
         if (sala == null) {

@@ -8,6 +8,7 @@ import com.obligatorio2025.dominio.ConfiguracionPartida;
 import com.obligatorio2025.dominio.Partida;
 import com.obligatorio2025.dominio.Ronda;
 import com.obligatorio2025.dominio.enums.ModoJuego;
+import com.obligatorio2025.dominio.enums.ModoJuez;
 import com.obligatorio2025.infraestructura.PartidaRepositorio;
 import com.obligatorio2025.validacion.Resultado;
 import org.springframework.stereotype.Controller;
@@ -73,6 +74,8 @@ public class SoloController {
     public String nuevaPartidaSolo(
             @RequestParam(name = "duracionTurnoSeg", required = false) Integer duracionTurnoSeg,
             @RequestParam(name = "cats", required = false) String cats,
+            @RequestParam(name = "modoJuez", required = false, defaultValue = "NORMAL")
+            com.obligatorio2025.dominio.enums.ModoJuez modoJuez,
             Model model) {
 
         int rondasTotales = 1; // por ahora 1 ronda en modo solo
@@ -89,6 +92,7 @@ public class SoloController {
                 10,
                 5
         );
+        config.setModoJuez(modoJuez);
 
         int partidaId = generarIdPartida();
 
@@ -145,6 +149,8 @@ public class SoloController {
         model.addAttribute("categorias", categoriasVista);
         model.addAttribute("duracionSegundos", config.getDuracionSeg());
         model.addAttribute("cats", catsParam); // clave para reusar config
+        model.addAttribute("modoJuez", modoJuez); // 👈 para usar en la vista
+
 
         return "jugarSolo";
     }
@@ -154,6 +160,8 @@ public class SoloController {
                             @RequestParam(name = "duracionTurnoSeg", required = false) Integer duracionTurnoSeg,
                             @RequestParam(name = "cats", required = false) String cats,
                             @ModelAttribute RespuestasSoloForm form,
+                            @RequestParam(name = "modoJuez", required = false) ModoJuez modoJuez,
+
                             Model model) {
 
         int numeroRonda = 1;   // por ahora solo una ronda
@@ -274,6 +282,8 @@ public class SoloController {
         // clave para "volver a jugar" con la misma config
         model.addAttribute("duracionSegundos", duracionEfectiva);
         model.addAttribute("cats", cats);
+        model.addAttribute("modoJuez", modoJuez); // 👈 clave
+
 
         return "resultadosSolo";
     }

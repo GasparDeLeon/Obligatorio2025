@@ -153,6 +153,9 @@ public class PartidaController {
                 if (!catsParam.isEmpty()) {
                     url.append("&cats=").append(catsParam);
                 }
+                if (config.getModoJuez() != null) {
+                    url.append("&modoJuez=").append(config.getModoJuez().name());
+                }
 
                 redirect = url.toString();
             }

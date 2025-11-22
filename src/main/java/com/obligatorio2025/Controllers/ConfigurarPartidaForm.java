@@ -1,5 +1,6 @@
 package com.obligatorio2025.Controllers;
 
+import com.obligatorio2025.dominio.enums.ModoJuez;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -23,6 +24,16 @@ public class ConfigurarPartidaForm {
 
     private String codigoSala;
     private Integer numeroJugadores;
+    @NotNull(message = "Debe elegir un modo de juez.")
+    private ModoJuez modoJuez;
+
+    public ModoJuez getModoJuez() {
+        return modoJuez;
+    }
+
+    public void setModoJuez(ModoJuez modoJuez) {
+        this.modoJuez = modoJuez;
+    }
 
     // IDs de categorías elegidas
     private List<Integer> categoriasSeleccionadas = new ArrayList<>();
