@@ -641,22 +641,18 @@
             </div>
         </section>
 
-        <!-- Detalle de respuestas por jugador -->
-        <section class="card" th:if="${hayResultados}">
-            <h2>📋 Detalle de respuestas por jugador</h2>
+        <!-- Detalle por Categorías -->
+        <section class="card" th:if="${detallesPorCategoria != null}">
+            <h2>📋 Detalle por Categorías</h2>
 
-            <div th:each="jug : ${respuestasPorJugador}" class="categoria-section">
+            <div th:each="cat : ${detallesPorCategoria}" class="categoria-section">
 
-                <!-- Nombre del jugador (resalta al que está mirando la pantalla) -->
-                <h3 th:text="${jug.nombreJugador}"
-                    th:classappend="${jug.jugadorId} == ${jugadorId} ? 'text-primary fw-bold' : ''">
-                </h3>
+                <h3 th:text="${cat.nombreCategoria}">Categoría</h3>
 
-                <!-- Tabla de respuestas -->
                 <table class="tabla-resultados">
                     <thead>
                     <tr>
-                        <th>Categoría</th>
+                        <th>Jugador</th>
                         <th>Respuesta</th>
                         <th>Veredicto</th>
                         <th>Motivo</th>
@@ -665,28 +661,25 @@
                     </thead>
 
                     <tbody>
-                    <tr th:each="res : ${jug.respuestas}">
-                        <td th:text="${res.categoria}">País</td>
+                    <tr th:each="res : ${cat.respuestas}">
+                        <td th:text="${res.jugadorNombre}">Jugador</td>
 
-                        <td th:text="${res.respuesta != null ? res.respuesta : '(Sin respuesta)'}">
-                            Argentina
-                        </td>
+                        <td th:text="${res.respuesta != null ? res.respuesta : '(Sin respuesta)'}">resp</td>
 
-                        <!-- veredicto con colores -->
                         <td th:text="${res.veredicto}"
-                            th:classappend="${res.veredicto == 'VÁLIDA' || res.veredicto == 'VALIDA'} ? 'veredicto-valida' :
-                                        (${res.veredicto == 'INVÁLIDA' || res.veredicto == 'INVALIDA'} ? 'veredicto-invalida' : 'veredicto-parcial')">
+                            th:classappend="${res.veredicto == 'VÁLIDA'} ? 'veredicto-valida' :
+                                    (${res.veredicto == 'INVÁLIDA'} ? 'veredicto-invalida' : 'veredicto-parcial')">
                         </td>
 
-                        <td th:text="${res.motivo}">Correcto</td>
+                        <td th:text="${res.motivo}">motivo</td>
 
                         <td th:text="${res.puntos}">10</td>
                     </tr>
                     </tbody>
                 </table>
-
             </div>
         </section>
+
 
 
         <!-- Controles de navegación -->

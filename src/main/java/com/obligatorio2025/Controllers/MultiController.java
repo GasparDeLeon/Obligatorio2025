@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.obligatorio2025.Controllers.JuegoWebSocketController.SalaEvent;
@@ -746,41 +747,38 @@ public class MultiController {
                         j -> j.getNombreVisible()   // <-- ajusta al nombre real del método
                 ));
 
-        // Mapa idJugador -> lista de RespuestaDTO
-        Map<Integer, List<RespuestaDTO>> respuestasTemp = new LinkedHashMap<>();
+        Function<Integer, String> nombreCat = this::buscarNombreCategoriaPorId;
+
+// categoriaId -> lista de respuestas de jugadores
+        Map<Integer, List<CategoriaRespuestaDTO>> mapa = new LinkedHashMap<>();
 
         if (resultados != null) {
             for (Resultado r : resultados) {
-                int jId = r.getJugadorId();                  // <-- usa tus getters reales
-                int catId = r.getCategoriaId();              // idem
-                String categoriaNombre = buscarNombreCategoriaPorId(catId);
-                String texto = r.getRespuesta();        // o r.getRespuesta()
-                String veredicto = r.getVeredicto().name();  // o toString()
-                String motivo = r.getMotivo();
-                int puntos = r.getPuntos();
+                int catId = r.getCategoriaId();
+                String categoriaNombre = nombreCat.apply(catId);
 
-                RespuestaDTO dto = new RespuestaDTO(
+                CategoriaRespuestaDTO dto = new CategoriaRespuestaDTO(
+                        r.getJugadorId(),
+                        nombresPorJugador.get(r.getJugadorId()),
                         categoriaNombre,
-                        texto,
-                        veredicto,
-                        motivo,
-                        puntos
+                        r.getRespuesta(),
+                        r.getVeredicto().name(),
+                        r.getMotivo(),
+                        r.getPuntos()
                 );
 
-                respuestasTemp
-                        .computeIfAbsent(jId, k -> new ArrayList<>())
-                        .add(dto);
+                mapa.computeIfAbsent(catId, k -> new ArrayList<>()).add(dto);
             }
         }
 
         // Convertir el mapa a lista de DTOs por jugador para la vista
-        List<RespuestasPorJugadorDTO> respuestasPorJugador = respuestasTemp.entrySet().stream()
-                .map(e -> new RespuestasPorJugadorDTO(
-                        e.getKey(),
-                        nombresPorJugador.getOrDefault(e.getKey(), "Jugador " + e.getKey()),
+        List<CategoriaDTO> detallesPorCategoria = mapa.entrySet().stream()
+                .map(e -> new CategoriaDTO(
+                        nombreCat.apply(e.getKey()),
                         e.getValue()
                 ))
                 .collect(Collectors.toList());
+
 
         // =============================
         // FIN NUEVO
@@ -801,10 +799,51 @@ public class MultiController {
         model.addAttribute("hayResultados", hayResultados);
 
         // NUEVO: pasamos las respuestas a la vista
-        model.addAttribute("respuestasPorJugador", respuestasPorJugador);
+        model.addAttribute("detallesPorCategoria", detallesPorCategoria);
 
         return "resultadosMulti";
     }
 
+    public static class CategoriaDTO {
+        private String nombreCategoria;
+        private List<CategoriaRespuestaDTO> respuestas;
+
+        public CategoriaDTO(String nombreCategoria, List<CategoriaRespuestaDTO> respuestas) {
+            this.nombreCategoria = nombreCategoria;
+            this.respuestas = respuestas;
+        }
+
+        public String getNombreCategoria() { return nombreCategoria; }
+        public List<CategoriaRespuestaDTO> getRespuestas() { return respuestas; }
+    }
+
+    public static class CategoriaRespuestaDTO {
+        private int jugadorId;
+        private String jugadorNombre;
+        private String categoria;
+        private String respuesta;
+        private String veredicto;
+        private String motivo;
+        private int puntos;
+
+        public CategoriaRespuestaDTO(int jugadorId, String jugadorNombre, String categoria,
+                                     String respuesta, String veredicto, String motivo, int puntos) {
+            this.jugadorId = jugadorId;
+            this.jugadorNombre = jugadorNombre;
+            this.categoria = categoria;
+            this.respuesta = respuesta;
+            this.veredicto = veredicto;
+            this.motivo = motivo;
+            this.puntos = puntos;
+        }
+
+        public int getJugadorId() { return jugadorId; }
+        public String getJugadorNombre() { return jugadorNombre; }
+        public String getCategoria() { return categoria; }
+        public String getRespuesta() { return respuesta; }
+        public String getVeredicto() { return veredicto; }
+        public String getMotivo() { return motivo; }
+        public int getPuntos() { return puntos; }
+    }
 
 }
