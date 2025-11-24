@@ -335,84 +335,7 @@ public class MultiController {
         return new EstadoRondaDTO(finalizada, entregados, totalJugadores);
     }
 
-    @GetMapping("/resultados")
-    public String verResultadosRondaMulti(@RequestParam("codigoSala") String codigoSala,
-                                          @RequestParam("ronda") int numeroRonda,
-                                          @RequestParam("jugadorId") int jugadorId,
-                                          Model model) {
 
-        Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
-        if (sala == null) {
-            model.addAttribute("error", "No existe sala con código " + codigoSala);
-            return "error";
-        }
-
-        Partida partida = sala.getPartidaActual();
-        if (partida == null) {
-            model.addAttribute("error", "No hay partida activa para la sala " + codigoSala);
-            return "error";
-        }
-
-        int partidaId = partida.getId();
-        String keyCache = partidaId + "#" + numeroRonda;
-
-        System.out.println("== VER RESULTADOS MULTI ==");
-        System.out.println("Sala: " + codigoSala);
-        System.out.println("Partida: " + partidaId);
-        System.out.println("Ronda: " + numeroRonda);
-        System.out.println("Jugador que mira: " + jugadorId);
-
-        int rondasTotales = (partida.getConfiguracion() != null)
-                ? partida.getConfiguracion().getRondasTotales()
-                : 1;
-        boolean ultimaRonda = (numeroRonda >= rondasTotales);
-
-        List<Resultado> resultados = cacheResultadosPorPartidaYRonda.computeIfAbsent(
-                keyCache,
-                k -> {
-                    System.out.println("[MultiController] Ejecutando fin de gracia para partida "
-                            + partidaId + " ronda " + numeroRonda);
-                    return servicioFlujoPartida.ejecutarFinDeGracia(partidaId, numeroRonda);
-                }
-        );
-
-        System.out.println("Resultados obtenidos: " + (resultados != null ? resultados.size() : 0));
-
-        List<Integer> idsJugadores = sala.getJugadores()
-                .stream()
-                .map(JugadorEnPartida::getJugadorId)
-                .collect(Collectors.toList());
-
-        System.out.println("Ids de jugadores en sala: " + idsJugadores);
-
-        List<ServicioResultados.EntradaRankingConPosicion> ranking =
-                servicioResultados.armarRankingConPosicionesIncluyendoJugadores(resultados, idsJugadores);
-
-        System.out.println("Ranking armado, filas: " + ranking.size());
-        for (ServicioResultados.EntradaRankingConPosicion fila : ranking) {
-            System.out.println("  " + fila.getPosicion() + "° Jugador " +
-                    fila.getJugadorId() + " -> " + fila.getPuntos() + " pts");
-        }
-
-        int totalJugadores = sala.getJugadores().size();
-
-        model.addAttribute("codigoSala", codigoSala);
-        model.addAttribute("numeroRonda", numeroRonda);
-        model.addAttribute("jugadorId", jugadorId);
-        model.addAttribute("ranking", ranking);
-
-        model.addAttribute("ultimaRonda", ultimaRonda);
-
-        model.addAttribute("esperando", false);
-        model.addAttribute("totalJugadores", totalJugadores);
-        model.addAttribute("listos", 0);
-        model.addAttribute("faltan", totalJugadores);
-
-        boolean hayResultados = resultados != null && !resultados.isEmpty();
-        model.addAttribute("hayResultados", hayResultados);
-
-        return "resultadosMulti";
-    }
 
     // =========================================================
     //  RANKING FINAL DE LA PARTIDA MULTI
@@ -742,4 +665,146 @@ public class MultiController {
                 sala.getJugadorQueCantoTutti()
         );
     }
+
+    private String buscarNombreCategoriaPorId(int categoriaId) {
+        var cat = CatalogoCategorias.porId(categoriaId);
+        return cat != null ? cat.getNombre() : "Categoría " + categoriaId;
+    }
+
+
+
+
+    @GetMapping("/resultados")
+    public String verResultadosRondaMulti(@RequestParam("codigoSala") String codigoSala,
+                                          @RequestParam("ronda") int numeroRonda,
+                                          @RequestParam("jugadorId") int jugadorId,
+                                          Model model) {
+
+        Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
+        if (sala == null) {
+            model.addAttribute("error", "No existe sala con código " + codigoSala);
+            return "error";
+        }
+
+        Partida partida = sala.getPartidaActual();
+        if (partida == null) {
+            model.addAttribute("error", "No hay partida activa para la sala " + codigoSala);
+            return "error";
+        }
+
+        int partidaId = partida.getId();
+        String keyCache = partidaId + "#" + numeroRonda;
+
+        System.out.println("== VER RESULTADOS MULTI ==");
+        System.out.println("Sala: " + codigoSala);
+        System.out.println("Partida: " + partidaId);
+        System.out.println("Ronda: " + numeroRonda);
+        System.out.println("Jugador que mira: " + jugadorId);
+
+        int rondasTotales = (partida.getConfiguracion() != null)
+                ? partida.getConfiguracion().getRondasTotales()
+                : 1;
+        boolean ultimaRonda = (numeroRonda >= rondasTotales);
+
+        List<Resultado> resultados = cacheResultadosPorPartidaYRonda.computeIfAbsent(
+                keyCache,
+                k -> {
+                    System.out.println("[MultiController] Ejecutando fin de gracia para partida "
+                            + partidaId + " ronda " + numeroRonda);
+                    return servicioFlujoPartida.ejecutarFinDeGracia(partidaId, numeroRonda);
+                }
+        );
+
+        System.out.println("Resultados obtenidos: " + (resultados != null ? resultados.size() : 0));
+
+        List<Integer> idsJugadores = sala.getJugadores()
+                .stream()
+                .map(JugadorEnPartida::getJugadorId)
+                .collect(Collectors.toList());
+
+        System.out.println("Ids de jugadores en sala: " + idsJugadores);
+
+        List<ServicioResultados.EntradaRankingConPosicion> ranking =
+                servicioResultados.armarRankingConPosicionesIncluyendoJugadores(resultados, idsJugadores);
+
+        System.out.println("Ranking armado, filas: " + ranking.size());
+        for (ServicioResultados.EntradaRankingConPosicion fila : ranking) {
+            System.out.println("  " + fila.getPosicion() + "° Jugador " +
+                    fila.getJugadorId() + " -> " + fila.getPuntos() + " pts");
+        }
+
+        int totalJugadores = sala.getJugadores().size();
+
+        // =============================
+        // NUEVO: mapear resultados a DTOs por jugador
+        // =============================
+
+        // Mapa idJugador -> nombre
+        Map<Integer, String> nombresPorJugador = sala.getJugadores().stream()
+                .collect(Collectors.toMap(
+                        JugadorEnPartida::getJugadorId,
+                        j -> j.getNombreVisible()   // <-- ajusta al nombre real del método
+                ));
+
+        // Mapa idJugador -> lista de RespuestaDTO
+        Map<Integer, List<RespuestaDTO>> respuestasTemp = new LinkedHashMap<>();
+
+        if (resultados != null) {
+            for (Resultado r : resultados) {
+                int jId = r.getJugadorId();                  // <-- usa tus getters reales
+                int catId = r.getCategoriaId();              // idem
+                String categoriaNombre = buscarNombreCategoriaPorId(catId);
+                String texto = r.getRespuesta();        // o r.getRespuesta()
+                String veredicto = r.getVeredicto().name();  // o toString()
+                String motivo = r.getMotivo();
+                int puntos = r.getPuntos();
+
+                RespuestaDTO dto = new RespuestaDTO(
+                        categoriaNombre,
+                        texto,
+                        veredicto,
+                        motivo,
+                        puntos
+                );
+
+                respuestasTemp
+                        .computeIfAbsent(jId, k -> new ArrayList<>())
+                        .add(dto);
+            }
+        }
+
+        // Convertir el mapa a lista de DTOs por jugador para la vista
+        List<RespuestasPorJugadorDTO> respuestasPorJugador = respuestasTemp.entrySet().stream()
+                .map(e -> new RespuestasPorJugadorDTO(
+                        e.getKey(),
+                        nombresPorJugador.getOrDefault(e.getKey(), "Jugador " + e.getKey()),
+                        e.getValue()
+                ))
+                .collect(Collectors.toList());
+
+        // =============================
+        // FIN NUEVO
+        // =============================
+
+        model.addAttribute("codigoSala", codigoSala);
+        model.addAttribute("numeroRonda", numeroRonda);
+        model.addAttribute("jugadorId", jugadorId);
+        model.addAttribute("ranking", ranking);
+        model.addAttribute("ultimaRonda", ultimaRonda);
+
+        model.addAttribute("esperando", false);
+        model.addAttribute("totalJugadores", totalJugadores);
+        model.addAttribute("listos", 0);
+        model.addAttribute("faltan", totalJugadores);
+
+        boolean hayResultados = resultados != null && !resultados.isEmpty();
+        model.addAttribute("hayResultados", hayResultados);
+
+        // NUEVO: pasamos las respuestas a la vista
+        model.addAttribute("respuestasPorJugador", respuestasPorJugador);
+
+        return "resultadosMulti";
+    }
+
+
 }

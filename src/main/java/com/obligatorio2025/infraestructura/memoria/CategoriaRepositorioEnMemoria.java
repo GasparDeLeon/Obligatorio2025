@@ -1,5 +1,6 @@
 package com.obligatorio2025.infraestructura.memoria;
 
+import com.obligatorio2025.Controllers.CatalogoCategorias;
 import com.obligatorio2025.dominio.Categoria;
 import com.obligatorio2025.infraestructura.CategoriaRepositorio;
 
@@ -41,4 +42,9 @@ public class CategoriaRepositorioEnMemoria implements CategoriaRepositorio {
     public List<String> obtenerPalabrasDe(int categoriaId) {
         return palabrasPorCategoria.getOrDefault(categoriaId, Collections.emptyList());
     }
+    private String buscarNombreCategoriaPorId(int categoriaId) {
+        var cat = CatalogoCategorias.porId(categoriaId);
+        return cat != null ? cat.getNombre() : "Categoría " + categoriaId;
+    }
+
 }

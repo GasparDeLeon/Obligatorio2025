@@ -20,8 +20,12 @@ public class ServicioLobby {
     // locks por sala
     private final Map<Integer, Object> locksPorSala = new ConcurrentHashMap<>();
 
+
     private final AtomicInteger secuenciaSala = new AtomicInteger(1);
     private final AtomicInteger secuenciaPartida = new AtomicInteger(1000);
+
+    private final Map<String, AtomicInteger> secuenciaJugadoresPorSala = new ConcurrentHashMap<>();
+
 
     public ServicioLobby(SalaRepositorio salaRepositorio,
                          PartidaRepositorio partidaRepositorio) {
@@ -75,23 +79,23 @@ public class ServicioLobby {
         }
     }
 
+    // Dentro de ServicioLobby
+
+    // Dentro de ServicioLobby
+
     public int registrarNuevoJugador(String codigoSala) {
+        // Validamos que la sala exista
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
             throw new IllegalArgumentException("No existe la sala con código " + codigoSala);
         }
-
         // Opción simple: siguiente número = cantidad de jugadores actuales + 1
-        // (adaptalo a cómo tengas modelados los jugadores en Sala)
         int siguienteId = sala.getJugadores().size() + 1;
 
-        // Si ya tenés una lógica de “agregar jugador al lobby”, podés llamarla acá.
-        // Ejemplo, si tenés algo como:
-        // sala.agregarJugador(new JugadorEnSala(siguienteId));
-        // salaRepositorio.guardar(sala);
-
         return siguienteId;
-    } 
+    }
+
+
 
 
 

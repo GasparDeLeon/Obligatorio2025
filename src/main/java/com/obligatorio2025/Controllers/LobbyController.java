@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import com.obligatorio2025.aplicacion.ServicioLobby;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +19,14 @@ import java.util.stream.Collectors;
 public class LobbyController {
 
     private final SalaRepositorio salaRepositorio;
+    private final ServicioLobby servicioLobby;
 
-    public LobbyController(SalaRepositorio salaRepositorio) {
+
+
+    public LobbyController(SalaRepositorio salaRepositorio,
+                           ServicioLobby servicioLobby) {
         this.salaRepositorio = salaRepositorio;
+        this.servicioLobby = servicioLobby;
     }
 
     @GetMapping("/{codigoSala}")
@@ -34,23 +41,36 @@ public class LobbyController {
             return "error";
         }
 
-        // Si no viene el jugadorId por querystring, asumimos host = 1
-        int jugadorId = (jugadorIdParam != null) ? jugadorIdParam : 1;
+        Integer jugadorId = jugadorIdParam;
 
-        // Leemos los jugadores que la sala ya conoce
+        // 1) Si no vino en querystring, probamos la sesión
+        if (jugadorId == null) {
+            String sessionKey = "jugadorId_" + codigoSala;
+            Integer jugadorEnSesion = (Integer) session.getAttribute(sessionKey);
+            if (jugadorEnSesion != null) {
+                jugadorId = jugadorEnSesion;
+            }
+        }
+
+        // 2) Si sigue siendo null, es un jugador nuevo → pedimos ID al servicio
+        if (jugadorId == null) {
+            int nuevoId = servicioLobby.registrarNuevoJugador(codigoSala);
+            jugadorId = nuevoId;
+
+            String sessionKey = "jugadorId_" + codigoSala;
+            session.setAttribute(sessionKey, nuevoId);
+        }
+
+        // 3) Jugadores actuales según la Sala (poblada vía WebSocket/unirseSala)
         List<Integer> jugadoresActuales = sala.getJugadores()
                 .stream()
                 .map(JugadorEnPartida::getJugadorId)
-                .collect(Collectors.toCollection(ArrayList::new)); // lista mutable
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        // Nos aseguramos de que el jugador actual figure en la lista
+        // 4) Por si todavía no se conectó el WS de este jugador,
+        // lo agregamos al array para que el front lo vea
         if (!jugadoresActuales.contains(jugadorId)) {
             jugadoresActuales.add(jugadorId);
-        }
-
-        // Nos aseguramos de que el host (jugador 1) también figure siempre
-        if (!jugadoresActuales.contains(1)) {
-            jugadoresActuales.add(1);
         }
 
         model.addAttribute("sala", sala);
@@ -58,10 +78,10 @@ public class LobbyController {
         model.addAttribute("codigoSala", sala.getCodigo());
         model.addAttribute("jugadorId", jugadorId);
         model.addAttribute("esHost", jugadorId == 1);
-
-        // Lista de IDs de jugadores que el front usará como estado inicial
         model.addAttribute("jugadoresActuales", jugadoresActuales);
 
         return "lobby";
     }
+
+
 }

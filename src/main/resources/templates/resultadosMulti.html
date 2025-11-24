@@ -300,7 +300,7 @@
 
         /* Sección de detalle por categorías */
         .categoria-section {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .categoria-titulo {
@@ -316,83 +316,90 @@
             font-size: 22px;
             font-weight: 700;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin: 0;
         }
 
-        .jugador-respuesta {
+        /* Tabla de resultados por categoría */
+        .tabla-resultados {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 12px;
+            margin-bottom: 20px;
+        }
+
+        .tabla-resultados thead tr {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+        }
+
+        .tabla-resultados thead th {
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 16px 20px;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tabla-resultados thead th:first-child {
+            border-top-left-radius: 15px;
+            border-bottom-left-radius: 15px;
+        }
+
+        .tabla-resultados thead th:last-child {
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+
+        .tabla-resultados tbody tr {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(5px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 12px;
             transition: all 0.3s ease;
-            border-left: 4px solid transparent;
         }
 
-        .jugador-respuesta:hover {
-            background: rgba(255, 255, 255, 0.15);
+        .tabla-resultados tbody tr:hover {
+            background: rgba(255, 255, 255, 0.2);
             transform: translateX(5px);
-            border-left-color: #FFD43B;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .jugador-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 10px;
+        .tabla-resultados tbody td {
+            color: white;
+            font-size: 15px;
+            padding: 18px 20px;
+            font-weight: 500;
         }
 
-        .jugador-nombre {
+        .tabla-resultados tbody td:first-child {
+            border-top-left-radius: 15px;
+            border-bottom-left-radius: 15px;
+            font-weight: 700;
             color: #FFD43B;
-            font-size: 18px;
-            font-weight: 700;
         }
 
-        .puntos-jugador {
-            background: rgba(255, 212, 59, 0.3);
-            padding: 8px 18px;
-            border-radius: 20px;
-            color: white;
+        .tabla-resultados tbody td:last-child {
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
             font-weight: 700;
             font-size: 18px;
+            color: #FFD43B;
         }
 
-        .respuesta-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            color: white;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .info-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            opacity: 0.8;
-            font-weight: 600;
-        }
-
-        .info-value {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
+        /* Colores de veredicto */
         .veredicto-valida {
-            color: #4ade80;
+            color: #4ade80 !important;
+            font-weight: 700;
         }
 
         .veredicto-invalida {
-            color: #f87171;
+            color: #f87171 !important;
+            font-weight: 700;
         }
 
         .veredicto-parcial {
-            color: #fbbf24;
+            color: #fbbf24 !important;
+            font-weight: 700;
         }
 
         /* Descripción y acciones */
@@ -539,13 +546,17 @@
                 padding: 25px 15px;
             }
 
-            .jugador-header {
-                flex-direction: column;
-                align-items: flex-start;
+            .tabla-ranking,
+            .tabla-resultados {
+                font-size: 14px;
             }
 
-            .respuesta-info {
-                grid-template-columns: 1fr;
+            .tabla-ranking thead th,
+            .tabla-ranking tbody td,
+            .tabla-resultados thead th,
+            .tabla-resultados tbody td {
+                padding: 12px 10px;
+                font-size: 13px;
             }
 
             .acciones {
@@ -556,6 +567,15 @@
                 width: 100%;
                 padding: 16px 30px;
                 font-size: 16px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .tabla-ranking,
+            .tabla-resultados {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
             }
         }
     </style>
@@ -621,43 +641,53 @@
             </div>
         </section>
 
-        <!-- Detalle por categorías -->
-        <section class="card" th:if="${detallesPorCategoria != null and !detallesPorCategoria.isEmpty()}">
-            <h2>📋 Detalle por Categorías</h2>
+        <!-- Detalle de respuestas por jugador -->
+        <section class="card" th:if="${hayResultados}">
+            <h2>📋 Detalle de respuestas por jugador</h2>
 
-            <div th:each="categoria : ${detallesPorCategoria}" class="categoria-section">
-                <div class="categoria-titulo">
-                    <h3 th:text="${categoria.nombreCategoria}">País</h3>
-                </div>
+            <div th:each="jug : ${respuestasPorJugador}" class="categoria-section">
 
-                <div th:each="respuesta : ${categoria.respuestas}" class="jugador-respuesta">
-                    <div class="jugador-header">
-                        <span class="jugador-nombre" th:text="'Jugador ' + ${respuesta.jugadorId}">Jugador 1</span>
-                        <span class="puntos-jugador" th:text="${respuesta.puntos} + ' pts'">10 pts</span>
-                    </div>
+                <!-- Nombre del jugador (resalta al que está mirando la pantalla) -->
+                <h3 th:text="${jug.nombreJugador}"
+                    th:classappend="${jug.jugadorId} == ${jugadorId} ? 'text-primary fw-bold' : ''">
+                </h3>
 
-                    <div class="respuesta-info">
-                        <div class="info-item">
-                            <span class="info-label">Respuesta</span>
-                            <span class="info-value" th:text="${respuesta.respuesta ?: '(Sin respuesta)'}">Argentina</span>
-                        </div>
+                <!-- Tabla de respuestas -->
+                <table class="tabla-resultados">
+                    <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Respuesta</th>
+                        <th>Veredicto</th>
+                        <th>Motivo</th>
+                        <th>Puntos</th>
+                    </tr>
+                    </thead>
 
-                        <div class="info-item">
-                            <span class="info-label">Veredicto</span>
-                            <span class="info-value"
-                                  th:classappend="${respuesta.veredicto == 'VÁLIDA' or respuesta.veredicto == 'VALIDA'} ? 'veredicto-valida' :
-                                                  (${respuesta.veredicto == 'INVÁLIDA' or respuesta.veredicto == 'INVALIDA'} ? 'veredicto-invalida' : 'veredicto-parcial')"
-                                  th:text="${respuesta.veredicto}">VÁLIDA</span>
-                        </div>
+                    <tbody>
+                    <tr th:each="res : ${jug.respuestas}">
+                        <td th:text="${res.categoria}">País</td>
 
-                        <div class="info-item">
-                            <span class="info-label">Motivo</span>
-                            <span class="info-value" th:text="${respuesta.motivo}">Palabra reconocida correctamente</span>
-                        </div>
-                    </div>
-                </div>
+                        <td th:text="${res.respuesta != null ? res.respuesta : '(Sin respuesta)'}">
+                            Argentina
+                        </td>
+
+                        <!-- veredicto con colores -->
+                        <td th:text="${res.veredicto}"
+                            th:classappend="${res.veredicto == 'VÁLIDA' || res.veredicto == 'VALIDA'} ? 'veredicto-valida' :
+                                        (${res.veredicto == 'INVÁLIDA' || res.veredicto == 'INVALIDA'} ? 'veredicto-invalida' : 'veredicto-parcial')">
+                        </td>
+
+                        <td th:text="${res.motivo}">Correcto</td>
+
+                        <td th:text="${res.puntos}">10</td>
+                    </tr>
+                    </tbody>
+                </table>
+
             </div>
         </section>
+
 
         <!-- Controles de navegación -->
         <section class="card">
