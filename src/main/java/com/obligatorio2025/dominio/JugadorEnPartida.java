@@ -59,4 +59,8 @@ public class JugadorEnPartida {
     public void setListo(boolean listo) {
         this.listo = listo;
     }
+
+    public String getNombreVisible() {
+        return "Jugador " + getJugadorId();
+    }
 }
