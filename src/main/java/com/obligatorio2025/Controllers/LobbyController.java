@@ -2,13 +2,13 @@ package com.obligatorio2025.Controllers;
 
 import com.obligatorio2025.dominio.Sala;
 import com.obligatorio2025.dominio.JugadorEnPartida;
+import com.obligatorio2025.dominio.enums.EstadoPartida;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.obligatorio2025.aplicacion.ServicioLobby;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +20,6 @@ public class LobbyController {
 
     private final SalaRepositorio salaRepositorio;
     private final ServicioLobby servicioLobby;
-
-
 
     public LobbyController(SalaRepositorio salaRepositorio,
                            ServicioLobby servicioLobby) {
@@ -39,6 +37,14 @@ public class LobbyController {
         if (sala == null) {
             model.addAttribute("error", "No existe la sala con código " + codigoSala);
             return "error";
+        }
+
+        // Si la partida actual ya terminó, reseteamos el "listo" de todos los jugadores
+        if (sala.getPartidaActual() != null
+                && sala.getPartidaActual().getEstado() == EstadoPartida.FINALIZADA) {
+
+            sala.resetearListosJugadores();
+            salaRepositorio.guardar(sala);
         }
 
         Integer jugadorId = jugadorIdParam;
@@ -82,6 +88,4 @@ public class LobbyController {
 
         return "lobby";
     }
-
-
 }

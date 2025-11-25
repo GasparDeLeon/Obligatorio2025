@@ -176,24 +176,51 @@ public class ServicioLobby {
                 );
             }
 
+            // NUEVO: si la partida ya terminó, creamos una nueva partida
+            if (partida.getEstado() == EstadoPartida.FINALIZADA) {
+                int nuevoIdPartida = secuenciaPartida.getAndIncrement();
+
+                // reutilizamos la misma configuración
+                ConfiguracionPartida config = partida.getConfiguracion();
+                Partida nuevaPartida = new Partida(nuevoIdPartida, config);
+                nuevaPartida.setEstado(EstadoPartida.CREADA);
+
+                // asociamos la nueva partida a la sala
+                sala.setPartidaActual(nuevaPartida);
+
+                // guardamos y seguimos trabajando con la nueva
+                partidaRepositorio.guardar(nuevaPartida);
+                salaRepositorio.guardar(sala);
+
+                partida = nuevaPartida;
+            }
+
+            // A partir de acá, partida es siempre una partida "vigente"
             int numeroRonda = (partida.getRondas() == null ? 0 : partida.getRondas().size()) + 1;
 
-            // por ahora: letra aleatoria simple A–Z
-            char letra = generarLetraAleatoria();
+            // Validamos que no nos pasemos de las rondas configuradas
+            int rondasTotales = (partida.getConfiguracion() != null)
+                    ? partida.getConfiguracion().getRondasTotales()
+                    : 1;
 
+            if (numeroRonda > rondasTotales) {
+                throw new IllegalStateException(
+                        "Se alcanzó el máximo de rondas configuradas (" + rondasTotales + ")."
+                );
+            }
+
+            char letra = generarLetraAleatoria();
             Ronda ronda = new Ronda(numeroRonda, letra);
             ronda.iniciar();
-
             partida.agregarRonda(ronda);
-            partida.setEstado(EstadoPartida.EN_CURSO);
 
-            // guardamos cambios
             partidaRepositorio.guardar(partida);
             salaRepositorio.guardar(sala);
 
             return ronda;
         }
     }
+
 
     // helper interno: elige una letra A–Z
     private char generarLetraAleatoria() {

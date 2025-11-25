@@ -38,12 +38,10 @@ public class Sala {
     }
 
     public boolean puedeIniciar() {
-        // 1. estado válido
         if (this.estado != EstadoSala.ABIERTA && this.estado != EstadoSala.PREPARADA) {
             return false;
         }
 
-        // 2. partida + config
         if (this.partidaActual == null || this.partidaActual.getConfiguracion() == null) {
             return false;
         }
@@ -51,7 +49,6 @@ public class Sala {
         ModoJuego modo = this.partidaActual.getConfiguracion().getModo();
         int cantidad = (jugadores == null) ? 0 : jugadores.size();
 
-        // 3. según modo
         if (modo == ModoJuego.SINGLE) {
             return cantidad >= 1;
         } else {
@@ -63,6 +60,13 @@ public class Sala {
         if (jugadores == null) {
             jugadores = new ArrayList<>();
         }
+
+        for (JugadorEnPartida existente : jugadores) {
+            if (existente.getJugadorId() == jugador.getJugadorId()) {
+                return;
+            }
+        }
+
         jugadores.add(jugador);
     }
 
@@ -80,7 +84,6 @@ public class Sala {
         }
         this.estado = EstadoSala.JUGANDO;
 
-        // al iniciar una partida/ronda, reseteamos estados
         resetTuttiFrutti();
         limpiarListosSiguienteRonda();
     }
@@ -92,7 +95,6 @@ public class Sala {
     public void setPartidaActual(Partida partidaActual) {
         this.partidaActual = partidaActual;
 
-        // cuando asigno una partida nueva, también reseteo los estados
         resetTuttiFrutti();
         limpiarListosSiguienteRonda();
     }
@@ -166,7 +168,7 @@ public class Sala {
     }
 
     // ================
-    // Nuevo: listos para siguiente ronda
+    // Listos siguiente ronda
     // ================
 
     public void marcarListoSiguienteRonda(int jugadorId, int numeroRonda) {
@@ -194,5 +196,15 @@ public class Sala {
     public void limpiarListosSiguienteRonda() {
         this.jugadoresListosSiguienteRonda.clear();
         this.rondaListosSiguiente = 0;
+    }
+
+    // ================
+    // NUEVO → resetear listos para siguiente partida
+    // ================
+    public void resetearListosJugadores() {
+        if (jugadores == null) return;
+        for (JugadorEnPartida j : jugadores) {
+            j.setListo(false);
+        }
     }
 }
