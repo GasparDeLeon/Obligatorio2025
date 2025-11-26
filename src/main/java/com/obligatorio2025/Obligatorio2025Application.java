@@ -2,7 +2,6 @@ package com.obligatorio2025;
 
 
 import com.obligatorio2025.aplicacion.ServicioAutenticacion;
-import com.obligatorio2025.autenticacion.Rol;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

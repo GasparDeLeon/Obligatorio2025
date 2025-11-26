@@ -1,7 +1,6 @@
 package com.obligatorio2025.Controllers;
 
 import com.obligatorio2025.aplicacion.ServicioAutenticacion;
-import com.obligatorio2025.autenticacion.Rol;
 import com.obligatorio2025.autenticacion.Sesion;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -47,6 +46,16 @@ public class LoginController {
         if (session.getAttribute("sesionId") != null) {
             System.out.println("Intento de login con sesión activa. Redirigiendo a /index");
             return "redirect:/index";
+        }
+        // VALIDACIONES NUEVAS (sin tocar tu lógica existente)
+        if (usuario == null || usuario.isBlank()) {
+            model.addAttribute("error", "El usuario no puede estar vacío");
+            return "login";
+        }
+
+        if (password == null || password.isBlank()) {
+            model.addAttribute("error", "La contraseña no puede estar vacía");
+            return "login";
         }
 
         System.out.println("Intentando iniciar sesión con: " + usuario);
@@ -94,18 +103,17 @@ public class LoginController {
     @PostMapping("/register")
     public String procesarRegistro(@RequestParam String usuario,
                                    @RequestParam String password,
-                                   @RequestParam String rol,
                                    Model model) {
-
         try {
-            Rol rolEnum = Rol.valueOf(rol.toUpperCase());
-            servicioAutenticacion.registrarUsuario(usuario, password, rolEnum);
+            servicioAutenticacion.registrarUsuario(usuario, password);
             model.addAttribute("mensaje", "Usuario registrado con éxito. Ya podés iniciar sesión.");
-            return "login";
+            return "redirect:/login";
         } catch (Exception e) {
-            model.addAttribute("error", "Error al registrar el usuario. Verificá los datos.");
-            return "register";
+            model.addAttribute("error", "Error al registrar el usuario.");
+            return "redirect:/register";
         }
     }
+
+
 }
 

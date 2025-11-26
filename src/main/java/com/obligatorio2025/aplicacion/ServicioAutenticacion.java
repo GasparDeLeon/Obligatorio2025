@@ -1,7 +1,6 @@
 package com.obligatorio2025.aplicacion;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import com.obligatorio2025.autenticacion.Rol;
 import com.obligatorio2025.autenticacion.Sesion;
 import com.obligatorio2025.autenticacion.Usuario;
 import com.obligatorio2025.infraestructura.UsuarioRepositorio;
@@ -37,7 +36,7 @@ public class ServicioAutenticacion {
         return null;
     }
 
-    public void registrarUsuario(String nombreUsuario, String password, Rol rol) {
+    public void registrarUsuario(String nombreUsuario, String password) {
         // Verificamos si el usuario ya existe
         if (usuarioRepositorio.findByNombreUsuario(nombreUsuario).isPresent()) {
             throw new RuntimeException("El usuario ya existe");
@@ -47,7 +46,7 @@ public class ServicioAutenticacion {
         String hash = passwordEncoder.encode(password);
         System.out.println("Contraseña hasheada: " + hash);
 
-        Usuario nuevo = new Usuario(nombreUsuario, hash, rol);
+        Usuario nuevo = new Usuario(nombreUsuario, hash);
         usuarioRepositorio.save(nuevo);
     }
 

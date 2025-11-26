@@ -1,7 +1,6 @@
 package com.obligatorio2025.config;
 
 import com.obligatorio2025.autenticacion.Usuario;
-import com.obligatorio2025.autenticacion.Rol;
 import com.obligatorio2025.infraestructura.UsuarioRepositorio;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;

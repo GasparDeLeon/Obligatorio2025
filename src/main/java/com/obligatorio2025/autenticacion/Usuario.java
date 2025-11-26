@@ -19,13 +19,12 @@ public class Usuario {
     @Column(name = "hash_password")
     private String hashPassword;
 
-    @Enumerated(EnumType.STRING)
-    private Rol rol;
+//    @Enumerated(EnumType.STRING)
+//    private Rol rol;
 
-    public Usuario(String nombreUsuario, String hashPassword, Rol rol) {
+    public Usuario(String nombreUsuario, String hashPassword) {
         this.nombreUsuario = nombreUsuario;
         this.hashPassword = hashPassword;
-        this.rol = rol;
     }
 
 }
