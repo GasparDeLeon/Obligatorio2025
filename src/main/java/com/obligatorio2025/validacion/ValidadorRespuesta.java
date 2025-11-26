@@ -54,10 +54,11 @@ public class ValidadorRespuesta {
                 );
             }
         }
+
         ModoJuez modo = partida.getConfiguracion().getModoJuez();
+
         // 3. verificar que la categoría exista en el catálogo
-        List<String> permitidas = categoriaRepositorio.obtenerPalabrasDe(respuesta.getCategoriaId());
-        if (permitidas == null || permitidas.isEmpty()) {
+        if (categoriaRepositorio.buscarPorId(respuesta.getCategoriaId()) == null) {
             return new Resultado(
                     respuesta.getTexto(),
                     respuesta.getJugadorId(),

@@ -162,17 +162,25 @@ public class PartidaController {
             case "crear-sala" -> {
                 // Construimos la configuración MULTI
                 ConfiguracionPartida configuracion = new ConfiguracionPartida(
-                        config.getDuracionTurnoSeg(),
-                        config.getTiempoGraciaSeg(),
-                        config.getCantidadRondas(),
-                        config.getNumeroJugadores(),
+                        config.getDuracionTurnoSeg(),      // duración turno
+                        config.getTiempoGraciaSeg(),       // duración gracia
+                        config.getCantidadRondas(),        // rondas totales
+                        5,                                 // pausaEntreRondasSeg (ej: 5 seg)
                         ModoJuego.MULTI,
-                        false,
-                        10,
-                        5
+                        false,                             // graciaHabilitar (por ahora false)
+                        10,                                // puntaje válida
+                        5                                  // puntaje duplicada
                 );
 
-                // NUEVO: copiamos las categorías seleccionadas del form
+                // Máximo de jugadores para la sala (entre 2 y 6)
+                configuracion.setMaxJugadores(config.getNumeroJugadores());
+
+                // Modo de juez elegido en el formulario
+                if (config.getModoJuez() != null) {
+                    configuracion.setModoJuez(config.getModoJuez());
+                }
+
+                // Copiamos las categorías seleccionadas del form
                 if (config.getCategoriasSeleccionadas() != null &&
                         !config.getCategoriasSeleccionadas().isEmpty()) {
                     configuracion.setCategoriasSeleccionadas(

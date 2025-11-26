@@ -4,6 +4,7 @@ import com.obligatorio2025.dominio.enums.ModoJuez;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +24,18 @@ public class ConfigurarPartidaForm {
     private Integer tiempoGraciaSeg;
 
     private String codigoSala;
+
+    // Este es el máximo de jugadores para la sala (solo multi)
+    @NotNull(message = "Debe indicar la cantidad de jugadores.")
+    @Min(value = 2, message = "Debe haber al menos 2 jugadores.")
+    @Max(value = 6, message = "No puede haber más de 6 jugadores.")
     private Integer numeroJugadores;
+
     @NotNull(message = "Debe elegir un modo de juez.")
     private ModoJuez modoJuez;
+
+    // IDs de categorías elegidas
+    private List<Integer> categoriasSeleccionadas = new ArrayList<>();
 
     public ModoJuez getModoJuez() {
         return modoJuez;
@@ -34,9 +44,6 @@ public class ConfigurarPartidaForm {
     public void setModoJuez(ModoJuez modoJuez) {
         this.modoJuez = modoJuez;
     }
-
-    // IDs de categorías elegidas
-    private List<Integer> categoriasSeleccionadas = new ArrayList<>();
 
     public Integer getNumeroJugadores() {
         return numeroJugadores;

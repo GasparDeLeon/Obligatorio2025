@@ -32,16 +32,17 @@ public class Sala {
         this.estado = EstadoSala.ABIERTA;
         this.jugadores = new ArrayList<>();
 
-        // inicializamos el estado de tutti en falso
         this.tuttiFruttiDeclarado = false;
         this.jugadorQueCantoTutti = null;
     }
 
     public boolean puedeIniciar() {
+        // 1. estado válido
         if (this.estado != EstadoSala.ABIERTA && this.estado != EstadoSala.PREPARADA) {
             return false;
         }
 
+        // 2. partida + config
         if (this.partidaActual == null || this.partidaActual.getConfiguracion() == null) {
             return false;
         }
@@ -49,10 +50,13 @@ public class Sala {
         ModoJuego modo = this.partidaActual.getConfiguracion().getModo();
         int cantidad = (jugadores == null) ? 0 : jugadores.size();
 
+        // 3. según modo
         if (modo == ModoJuego.SINGLE) {
             return cantidad >= 1;
         } else {
-            return cantidad >= 2 && cantidad <= 6;
+            int max = obtenerMaxJugadoresConfigurado();
+            // mínimo siempre 2, máximo el configurado
+            return cantidad >= 2 && cantidad <= max;
         }
     }
 
@@ -61,10 +65,18 @@ public class Sala {
             jugadores = new ArrayList<>();
         }
 
+        // Evitar duplicar jugadores cuando vuelven a conectar al lobby
         for (JugadorEnPartida existente : jugadores) {
             if (existente.getJugadorId() == jugador.getJugadorId()) {
                 return;
             }
+        }
+
+        // Limitar capacidad según configuración (por defecto 6)
+        int max = obtenerMaxJugadoresConfigurado();
+        if (jugadores.size() >= max) {
+            // Sala llena: no agregamos más jugadores
+            return;
         }
 
         jugadores.add(jugador);
@@ -129,9 +141,7 @@ public class Sala {
         return true;
     }
 
-    // ================
     // Tutti Frutti
-    // ================
 
     public void marcarTuttiFrutti(int jugadorId) {
         this.tuttiFruttiDeclarado = true;
@@ -167,9 +177,7 @@ public class Sala {
         this.hostId = hostId;
     }
 
-    // ================
     // Listos siguiente ronda
-    // ================
 
     public void marcarListoSiguienteRonda(int jugadorId, int numeroRonda) {
         if (this.rondaListosSiguiente != numeroRonda) {
@@ -198,13 +206,19 @@ public class Sala {
         this.rondaListosSiguiente = 0;
     }
 
-    // ================
-    // NUEVO → resetear listos para siguiente partida
-    // ================
     public void resetearListosJugadores() {
         if (jugadores == null) return;
         for (JugadorEnPartida j : jugadores) {
             j.setListo(false);
         }
+    }
+
+    // Helper: máximo de jugadores según configuración de la partida
+    private int obtenerMaxJugadoresConfigurado() {
+        if (partidaActual != null && partidaActual.getConfiguracion() != null) {
+            return partidaActual.getConfiguracion().getMaxJugadoresEfectivo();
+        }
+        // valor por defecto global
+        return 6;
     }
 }

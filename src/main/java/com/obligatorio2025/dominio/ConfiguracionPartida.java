@@ -21,6 +21,10 @@ public class ConfiguracionPartida {
     private int puntajeValida;
     private int puntajeDuplicada;
 
+    // NUEVO: máximo de jugadores para esta partida (solo multi)
+    // null = usar valor por defecto (6)
+    private Integer maxJugadores;
+
     // NUEVO: categorías elegidas para esta partida (por id)
     private List<Integer> categoriasSeleccionadas = new ArrayList<>();
 
@@ -38,9 +42,9 @@ public class ConfiguracionPartida {
         this.pausaEntreRondasSeg = pausaEntreRondasSeg;
         this.modo = modo;
         this.graciaHabilitar = graciaHabilitar;
-        this.puntajeValida = puntajeValida;         // ← esto faltaba
-        this.puntajeDuplicada = puntajeDuplicada;   // ← y esto también
-        // categoriasSeleccionadas ya se inicializa vacía arriba
+        this.puntajeValida = puntajeValida;
+        this.puntajeDuplicada = puntajeDuplicada;
+        // maxJugadores queda null por defecto → 6 efectivo
     }
 
     public int getDuracionSeg() {
@@ -85,16 +89,10 @@ public class ConfiguracionPartida {
 
     // ================= CATEGORÍAS SELECCIONADAS =================
 
-    /**
-     * Devuelve una vista inmodificable para no exponer la lista interna.
-     */
     public List<Integer> getCategoriasSeleccionadas() {
         return Collections.unmodifiableList(categoriasSeleccionadas);
     }
 
-    /**
-     * Reemplaza la lista de categorías seleccionadas.
-     */
     public void setCategoriasSeleccionadas(List<Integer> categoriasSeleccionadas) {
         if (categoriasSeleccionadas == null) {
             this.categoriasSeleccionadas = new ArrayList<>();
@@ -103,9 +101,6 @@ public class ConfiguracionPartida {
         }
     }
 
-    /**
-     * Agrega una categoría si no estaba ya incluida.
-     */
     public void agregarCategoriaSeleccionada(int categoriaId) {
         if (this.categoriasSeleccionadas == null) {
             this.categoriasSeleccionadas = new ArrayList<>();
@@ -115,12 +110,10 @@ public class ConfiguracionPartida {
         }
     }
 
-    /**
-     * Indica si la config tiene por lo menos una categoría elegida.
-     */
     public boolean tieneCategoriasConfiguradas() {
         return categoriasSeleccionadas != null && !categoriasSeleccionadas.isEmpty();
     }
+
     public ModoJuez getModoJuez() {
         return modoJuez;
     }
@@ -129,4 +122,21 @@ public class ConfiguracionPartida {
         this.modoJuez = (modoJuez != null) ? modoJuez : ModoJuez.NORMAL;
     }
 
+    // ================= JUGADORES =================
+
+    public Integer getMaxJugadores() {
+        return maxJugadores;
+    }
+
+    public void setMaxJugadores(Integer maxJugadores) {
+        this.maxJugadores = maxJugadores;
+    }
+
+    // Regla general: mínimo 2, máximo 6
+    public int getMaxJugadoresEfectivo() {
+        int valor = (maxJugadores == null ? 6 : maxJugadores);
+        if (valor < 2) valor = 2;
+        if (valor > 6) valor = 6;
+        return valor;
+    }
 }
