@@ -95,21 +95,37 @@ public class ConfiguracionPartida {
 
     public void setCategoriasSeleccionadas(List<Integer> categoriasSeleccionadas) {
         if (categoriasSeleccionadas == null) {
-            this.categoriasSeleccionadas = new ArrayList<>();
-        } else {
-            this.categoriasSeleccionadas = new ArrayList<>(categoriasSeleccionadas);
+            throw new IllegalArgumentException("La lista de categorías no puede ser null.");
         }
+
+        if (categoriasSeleccionadas.size() < 4) {
+            throw new IllegalArgumentException("Debe seleccionar al menos 4 categorías.");
+        }
+
+        if (categoriasSeleccionadas.size() > 8) {
+            throw new IllegalArgumentException("No puede seleccionar más de 8 categorías.");
+        }
+
+        this.categoriasSeleccionadas = new ArrayList<>(categoriasSeleccionadas);
     }
 
     public void agregarCategoriaSeleccionada(int categoriaId) {
         if (this.categoriasSeleccionadas == null) {
             this.categoriasSeleccionadas = new ArrayList<>();
         }
+
+        if (this.categoriasSeleccionadas.size() >= 8) {
+            throw new IllegalStateException("No puede agregar más de 8 categorías.");
+        }
+
         if (!this.categoriasSeleccionadas.contains(categoriaId)) {
             this.categoriasSeleccionadas.add(categoriaId);
         }
     }
 
+    /**
+     * Indica si la config tiene por lo menos una categoría elegida.
+     */
     public boolean tieneCategoriasConfiguradas() {
         return categoriasSeleccionadas != null && !categoriasSeleccionadas.isEmpty();
     }
