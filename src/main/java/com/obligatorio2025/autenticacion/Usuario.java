@@ -1,32 +1,30 @@
 package com.obligatorio2025.autenticacion;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Getter @Setter @NoArgsConstructor
 public class Usuario {
 
-    private String id;
-    private String nombreUsuario;
-    private String hashPassword;
-    private Rol rol;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    public Usuario(String id, String nombreUsuario, String hashPassword, Rol rol) {
-        this.id = id;
+    @Column(name = "nombre_usuario")
+    private String nombreUsuario;
+
+    @Column(name = "hash_password")
+    private String hashPassword;
+
+//    @Enumerated(EnumType.STRING)
+//    private Rol rol;
+
+    public Usuario(String nombreUsuario, String hashPassword) {
         this.nombreUsuario = nombreUsuario;
         this.hashPassword = hashPassword;
-        this.rol = rol;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getNombreUsuario() {
-        return nombreUsuario;
-    }
-
-    public String getHashPassword() {
-        return hashPassword;
-    }
-
-    public Rol getRol() {
-        return rol;
-    }
 }
