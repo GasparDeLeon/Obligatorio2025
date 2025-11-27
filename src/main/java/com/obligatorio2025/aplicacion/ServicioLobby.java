@@ -214,6 +214,11 @@ public class ServicioLobby {
             ronda.iniciar();
             partida.agregarRonda(ronda);
 
+            // 👇 NUEVO: pasar de CREADA a EN_CURSO al iniciar la primera ronda
+            if (partida.getEstado() == EstadoPartida.CREADA) {
+                partida.setEstado(EstadoPartida.EN_CURSO);
+            }
+
             partidaRepositorio.guardar(partida);
             salaRepositorio.guardar(sala);
 

@@ -613,33 +613,6 @@
     </header>
 
     <main class="main-content">
-        <!-- Ranking de la ronda -->
-        <section class="card">
-            <h2>🏆 Ranking de la Ronda</h2>
-
-            <div th:if="${hayResultados}">
-                <table class="tabla-ranking">
-                    <thead>
-                    <tr>
-                        <th>Posición</th>
-                        <th>Jugador</th>
-                        <th>Puntos</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="fila : ${ranking}">
-                        <td th:text="${fila.posicion}">1</td>
-                        <td th:text="${fila.jugadorId}">Jugador 1</td>
-                        <td th:text="${fila.puntos}">0</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div th:if="${!hayResultados}" class="sin-resultados">
-                <p>Todavía no hay resultados para esta ronda.</p>
-            </div>
-        </section>
 
         <!-- Detalle por Categorías -->
         <section class="card" th:if="${detallesPorCategoria != null}">
@@ -681,6 +654,33 @@
         </section>
 
 
+        <!-- Ranking de la ronda -->
+        <section class="card">
+            <h2>🏆 Ranking de la Ronda</h2>
+
+            <div th:if="${hayResultados}">
+                <table class="tabla-ranking">
+                    <thead>
+                    <tr>
+                        <th>Posición</th>
+                        <th>Jugador</th>
+                        <th>Puntos</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="fila : ${ranking}">
+                        <td th:text="${fila.posicion}">1</td>
+                        <td th:text="${fila.jugadorId}">Jugador 1</td>
+                        <td th:text="${fila.puntos}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:if="${!hayResultados}" class="sin-resultados">
+                <p>Todavía no hay resultados para esta ronda.</p>
+            </div>
+        </section>
 
         <!-- Controles de navegación -->
         <section class="card">
