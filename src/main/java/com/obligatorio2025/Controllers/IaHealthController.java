@@ -1,4 +1,4 @@
-package com.obligatorio2025.config.Controllers;
+package com.obligatorio2025.Controllers;
 
 import com.obligatorio2025.validacion.ServicioIA;
 import com.obligatorio2025.validacion.ServicioIAOpenAI;
