@@ -11,23 +11,33 @@ function appendLog(texto) {
 }
 
 function renderJugadores() {
-    const ul = document.getElementById('lista-jugadores');
-    ul.innerHTML = '';
+    const contenedor = document.getElementById('lista-jugadores');
+    contenedor.innerHTML = '';
 
     if (jugadoresEnSala.size === 0) {
-        const li = document.createElement('li');
-        li.textContent = '(Todavía no hay jugadores en la sala)';
-        ul.appendChild(li);
+        const div = document.createElement('div');
+        div.className = 'jugador-item';
+        div.textContent = '(Todavía no hay jugadores en la sala)';
+        contenedor.appendChild(div);
         return;
     }
 
     Array.from(jugadoresEnSala)
         .sort((a, b) => a - b)
         .forEach(id => {
-            const li = document.createElement('li');
+            const div = document.createElement('div');
+            div.className = 'jugador-item';
             const estaListo = jugadoresListos.has(id);
-            li.textContent = 'Jugador ' + id + (estaListo ? ' (Listo)' : '');
-            ul.appendChild(li);
+
+            if (id === 1) {
+                div.classList.add('host');
+            }
+            if (estaListo) {
+                div.classList.add('listo');
+            }
+
+            div.textContent = 'Jugador ' + id + (estaListo ? ' ✓' : '');
+            contenedor.appendChild(div);
         });
 }
 

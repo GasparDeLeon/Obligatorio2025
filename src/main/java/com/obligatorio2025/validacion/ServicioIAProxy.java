@@ -19,6 +19,8 @@ public class ServicioIAProxy implements ServicioIA {
         this.cache = cache;
     }
 
+
+
     // Compatibilidad: si alguien llama sin modo, asumimos NORMAL
     @Override
     public VeredictoIA validar(int categoriaId,

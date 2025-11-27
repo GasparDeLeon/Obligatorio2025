@@ -40,7 +40,8 @@ public class ServicioRespuestas {
         if (partida == null) {
             throw new IllegalArgumentException("No existe la partida " + partidaId);
         }
-
+        System.out.println("[ServicioRespuestas] Partida " + partidaId +
+                " estado=" + partida.getEstado());
         // validación de estado de partida
         if (partida.getEstado() == EstadoPartida.CREADA) {
             throw new IllegalStateException("La partida " + partidaId + " todavía no comenzó");

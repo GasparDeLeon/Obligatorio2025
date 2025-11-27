@@ -28,13 +28,13 @@
         body {
             font-family: 'Fredoka', sans-serif;
             background: linear-gradient(135deg, #4b53ffab 0%, #6b73ffdd 50%, #5a5fff 100%);
+            height: 100vh;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
         }
 
         body::before {
@@ -47,6 +47,7 @@
             top: -150px;
             left: -100px;
             animation: float 8s ease-in-out infinite;
+            z-index: 0;
         }
 
         body::after {
@@ -59,6 +60,7 @@
             bottom: -100px;
             right: -80px;
             animation: float 10s ease-in-out infinite reverse;
+            z-index: 0;
         }
 
         @keyframes float {
@@ -71,12 +73,17 @@
             position: relative;
             background: rgba(90, 95, 255, 0.9);
             backdrop-filter: blur(10px);
-            border-radius: 40px;
-            padding: 50px 40px;
+            border-radius: 30px;
+            padding: 15px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 1000px;
             width: 100%;
-            animation: slideIn 0.6s ease-out;
+            height: 100%;
+            max-height: calc(100vh - 30px);
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+            margin: 0 auto;
         }
 
         @keyframes slideIn {
@@ -92,25 +99,26 @@
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 15px;
+            flex-shrink: 0;
         }
 
         .logo {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
         }
 
         .logo img {
-            width: 250px;
+            width: 160px;
             max-width: 100%;
             filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
         }
 
         .logo h1 {
             color: white;
-            font-size: 36px;
+            font-size: 24px;
             font-weight: 700;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
@@ -118,18 +126,18 @@
         .header-info {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
         .badge-sala {
             background: rgba(255, 255, 255, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 30px;
-            padding: 12px 25px;
+            border-radius: 25px;
+            padding: 6px 16px;
             color: white;
             font-weight: 600;
-            font-size: 18px;
+            font-size: 14px;
             letter-spacing: 0.5px;
         }
 
@@ -137,63 +145,105 @@
             color: #FFD43B;
         }
 
+        /* Layout de dos columnas */
         .main-content {
-            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Columna izquierda - Jugadores */
+        .columna-jugadores {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Columna derecha - Acciones y Chat */
+        .columna-acciones {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+            min-height: 0;
         }
 
         .card {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            padding: 30px;
-            margin-bottom: 20px;
+            border-radius: 25px;
+            padding: 15px;
         }
 
         .card h2 {
             color: white;
-            font-size: 24px;
-            margin-bottom: 15px;
+            font-size: 18px;
+            margin-bottom: 10px;
             text-align: center;
+            text-transform: uppercase;
         }
 
-        .descripcion {
+        .card p {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 16px;
+            font-size: 14px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             line-height: 1.6;
         }
 
-        .descripcion strong {
+        .card p strong {
             color: #FFD43B;
         }
 
-        /* Jugadores */
-        .jugadores-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
+        /* Contenedor de jugadores con scroll */
+        .jugadores-scroll-container {
+            height: 400px;
+            overflow-y: auto;
+            padding-right: 5px;
         }
 
-        .jugadores-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            width: 100%;
+        .jugadores-scroll-container::-webkit-scrollbar {
+            width: 6px;
         }
+
+        .jugadores-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .jugadores-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+
 
         .jugador-item {
             background: rgba(255, 255, 255, 0.15);
-            border-radius: 30px;
-            padding: 15px 25px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 12px 20px;
+            color: white;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
             text-align: center;
+            width: 100%;
             transition: all 0.3s ease;
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            width: auto;
+            margin-bottom: 8px;
+        }
+
+        .jugador-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .jugador-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
         }
 
         .jugador-item:hover {
@@ -202,48 +252,35 @@
         }
 
         .jugador-item.listo {
-            border-color: #4ade80;
+            border: 2px solid #4ade80;
             background: rgba(74, 222, 128, 0.2);
         }
 
         .jugador-item.host {
-            border-color: #FFD43B;
+            border: 2px solid #FFD43B;
             background: rgba(255, 212, 59, 0.2);
         }
 
-        .jugador-nombre {
-            color: white;
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 5px;
+        /* Chat */
+        .card-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        .jugador-estado {
-            color: white;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .jugador-item.listo .jugador-estado {
-            color: #4ade80;
-        }
-
-        .jugador-item.host .jugador-estado {
-            color: #FFD43B;
-        }
-
-        /* Chat/Log */
         .chat-container {
             background: rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 15px;
-            height: 200px;
+            border-radius: 15px;
+            padding: 12px;
+            flex: 1;
             overflow-y: auto;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            border: none;
         }
 
         .chat-container::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         .chat-container::-webkit-scrollbar-track {
@@ -258,30 +295,30 @@
 
         .chat-container em {
             color: rgba(255, 255, 255, 0.5);
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .mensaje {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            margin-bottom: 8px;
+            font-size: 13px;
+            margin-bottom: 6px;
             line-height: 1.4;
         }
 
         .chat-input-container {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .input-mensaje {
             flex: 1;
             background: rgba(255, 255, 255, 0.15);
             border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            padding: 12px 20px;
+            border-radius: 20px;
+            padding: 8px 12px;
             color: white;
             font-family: 'Fredoka', sans-serif;
-            font-size: 16px;
+            font-size: 13px;
         }
 
         .input-mensaje::placeholder {
@@ -298,14 +335,13 @@
         .acciones {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            margin-top: 20px;
+            align-items: stretch;
+            gap: 8px;
         }
 
         .btn {
-            padding: 18px 40px;
-            font-size: 22px;
+            padding: 12px 25px;
+            font-size: 16px;
             font-weight: 600;
             font-family: 'Fredoka', sans-serif;
             border: none;
@@ -316,11 +352,8 @@
             letter-spacing: 1px;
             position: relative;
             overflow: hidden;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            text-decoration: none;
+            text-align: center;
+            width: 100%;
         }
 
         .btn::before {
@@ -350,6 +383,8 @@
             background: #FFD43B;
             color: #2d2d2d;
             box-shadow: 0 6px 0 #d4a800, 0 8px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
         }
 
         .btn-primary:hover {
@@ -365,57 +400,60 @@
         .btn-secondary {
             background: transparent;
             color: white;
-            border: 4px solid white;
+            border: 3px solid white;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            font-size: 13px;
+            position: relative;
+            z-index: 1;
         }
 
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
         }
 
-        .btn-icon {
-            width: 24px;
-            height: 24px;
-            vertical-align: middle;
-            margin-right: 8px;
-            filter: brightness(0);
-        }
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
 
-        .btn-secondary .btn-icon {
-            filter: brightness(0) invert(1);
+            .columna-jugadores,
+            .columna-acciones {
+                overflow: visible;
+            }
+
+            .jugadores-scroll-container {
+                max-height: 300px;
+            }
         }
 
         @media (max-width: 600px) {
             .page-container {
-                padding: 30px 20px;
+                padding: 15px;
+            }
+
+            .logo img {
+                width: 150px;
+            }
+
+            .logo h1 {
+                font-size: 22px;
             }
 
             .card {
-                padding: 20px 15px;
+                padding: 15px;
             }
 
             .card h2 {
-                font-size: 20px;
+                font-size: 18px;
             }
 
-            .descripcion {
-                font-size: 15px;
-            }
-
-            .jugadores-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 10px;
-            }
-
-            .badge-sala {
+            .btn {
                 font-size: 16px;
-                padding: 10px 20px;
-            }
-
-            .chat-input-container {
-                flex-direction: column;
+                padding: 12px 25px;
             }
         }
     </style>
@@ -439,54 +477,47 @@
     </header>
 
     <main class="main-content">
-        <!-- Sección de jugadores -->
-        <section class="card">
-            <h2>Jugadores en la sala</h2>
-            <div class="jugadores-container">
-                <div class="jugadores-grid" id="lista-jugadores">
+        <!-- Columna izquierda: Jugadores -->
+        <div class="columna-jugadores">
+            <section class="card" style="display: flex; flex-direction: column;">
+                <h2>Jugadores en la sala</h2>
+
+                <div class="jugadores-scroll-container" id="lista-jugadores">
                     <div class="jugador-item">
-                        <div class="jugador-nombre">Cargando...</div>
-                        <div class="jugador-estado">Esperando</div>
+                        <span>Cargando...</span>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
 
-        <!-- Sección de configuración (solo para host) -->
-        <section class="card" th:if="${esHost}">
-            <h2>Configuración de la sala</h2>
-            <p class="descripcion">
-                La configuración detallada de la sala la ajustaremos más adelante.
-            </p>
-            <div class="acciones">
-                <button class="btn btn-primary" id="btn-iniciar">
-                    <span>Iniciar partida</span>
-                </button>
-            </div>
-        </section>
+        <!-- Columna derecha: Acciones y Chat -->
+        <div class="columna-acciones">
+            <!-- Botones de acción -->
+            <section class="card" style="flex-shrink: 0;">
+                <div class="acciones">
+                    <button class="btn btn-primary" id="btn-iniciar" th:if="${esHost}">
+                        <span>Iniciar partida</span>
+                    </button>
+                    <button class="btn btn-primary" id="btn-listo">
+                        <span>Estoy listo</span>
+                    </button>
+                </div>
+            </section>
 
-        <!-- Botón de listo -->
-        <section class="card">
-            <div class="acciones">
-                <button class="btn btn-primary" id="btn-listo">
-                    <span>Estoy listo</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- Chat en tiempo real -->
-        <section class="card">
-            <h2>Chat de la sala</h2>
-            <div class="chat-container" id="log">
-                <em>Esperando mensajes...</em>
-            </div>
-            <div class="chat-input-container">
-                <input type="text" class="input-mensaje" id="input-mensaje" placeholder="Escribe un mensaje...">
-                <button class="btn btn-secondary" id="btn-enviar">
-                    <span>Enviar</span>
-                </button>
-            </div>
-        </section>
+            <!-- Chat -->
+            <section class="card card-chat">
+                <h2>Chat de la sala</h2>
+                <div class="chat-container" id="log">
+                    <em>Esperando mensajes...</em>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="input-mensaje" id="input-mensaje" placeholder="Escribe un mensaje...">
+                    <button class="btn btn-secondary" id="btn-enviar">
+                        <span>Enviar</span>
+                    </button>
+                </div>
+            </section>
+        </div>
     </main>
 </div>
 
