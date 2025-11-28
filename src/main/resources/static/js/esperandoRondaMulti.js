@@ -28,9 +28,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "jugador =", jugadorId);
 
     function irAResultados() {
+        // El jugadorId se obtiene de la sesión, no se envía en la URL
         const url = `/multi/resultados?codigoSala=${encodeURIComponent(codigoSala)}`
-            + `&ronda=${encodeURIComponent(numeroRonda)}`
-            + `&jugadorId=${encodeURIComponent(jugadorId)}`;
+            + `&ronda=${encodeURIComponent(numeroRonda)}`;
 
         console.log("[esperando] Redirigiendo a", url);
         window.location.href = url;

@@ -9,9 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.obligatorio2025.aplicacion.ServicioLobby;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/lobby")
@@ -28,7 +26,6 @@ public class LobbyController {
 
     @GetMapping("/{codigoSala}")
     public String verLobby(@PathVariable String codigoSala,
-                           @RequestParam(name = "jugadorId", required = false) Integer jugadorIdParam,
                            Model model,
                            HttpSession session) {
 
@@ -38,24 +35,14 @@ public class LobbyController {
             return "error";
         }
 
-        Integer jugadorId = jugadorIdParam;
+        // Obtener jugadorId de la sesión (único por sesión del navegador)
+        Integer jugadorId = (Integer) session.getAttribute("jugadorId");
 
-        // 1) Si no vino en querystring, probamos la sesión
-        if (jugadorId == null) {
-            String sessionKey = "jugadorId_" + codigoSala;
-            Integer jugadorEnSesion = (Integer) session.getAttribute(sessionKey);
-            if (jugadorEnSesion != null) {
-                jugadorId = jugadorEnSesion;
-            }
-        }
-
-        // 2) Si sigue siendo null, es un jugador nuevo → pedimos ID al servicio
+        // Si no existe en sesión, es un jugador nuevo → generar ID y guardarlo
         if (jugadorId == null) {
             int nuevoId = servicioLobby.registrarNuevoJugador(codigoSala);
             jugadorId = nuevoId;
-
-            String sessionKey = "jugadorId_" + codigoSala;
-            session.setAttribute(sessionKey, nuevoId);
+            session.setAttribute("jugadorId", nuevoId);
         }
 
         // 3) Regla de sala llena:
@@ -78,11 +65,10 @@ public class LobbyController {
 
             // Solo bloqueamos si está LLENA y el jugador no es de la sala
             if (salaLlena && !pertenece) {
-                String sessionKey = "jugadorId_" + codigoSala;
-                session.removeAttribute(sessionKey);
-
+                // No removemos el jugadorId de la sesión porque es único por sesión
+                // Solo mostramos el error
                 model.addAttribute("error", "La sala " + codigoSala + " ya está completa.");
-                return "error";
+                return "salaLlena";
             }
         }
 

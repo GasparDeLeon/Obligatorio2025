@@ -29,7 +29,6 @@ public class SoloController {
     private final ServicioPartida servicioPartida;
 
     // contador simple para ids de partidas en memoria
-// ids para partidas SOLO: arrancan en 1 para no chocar con las multi (que arrancan en 1000)
     private final AtomicInteger secuenciaPartida = new AtomicInteger(1);
     private final Random random = new Random();
 

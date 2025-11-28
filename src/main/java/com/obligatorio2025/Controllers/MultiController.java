@@ -9,6 +9,7 @@ import com.obligatorio2025.dominio.Ronda;
 import com.obligatorio2025.dominio.Sala;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
 import com.obligatorio2025.validacion.Resultado;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -54,9 +55,17 @@ public class MultiController {
     // =========================================================
     @GetMapping("/ronda")
     public String verRondaMulti(@RequestParam("codigoSala") String codigoSala,
-                                @RequestParam("jugadorId") int jugadorId,
                                 @RequestParam(name = "ronda", required = false, defaultValue = "1") int numeroRonda,
-                                Model model) {
+                                Model model,
+                                HttpSession session) {
+        
+        // Obtener jugadorId de la sesión
+        Integer jugadorIdObj = (Integer) session.getAttribute("jugadorId");
+        if (jugadorIdObj == null) {
+            model.addAttribute("error", "No se encontró el jugador en la sesión. Por favor, vuelve a entrar a la sala.");
+            return "error";
+        }
+        int jugadorId = jugadorIdObj;
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
@@ -145,10 +154,17 @@ public class MultiController {
     // =========================================================
     @PostMapping("/ronda/responder")
     public String responderRondaMulti(@RequestParam("codigoSala") String codigoSala,
-                                      @RequestParam("jugadorId") int jugadorId,
                                       @RequestParam("numeroRonda") int numeroRonda,
                                       @RequestParam("accion") String accion,
-                                      @RequestParam Map<String, String> params) {
+                                      @RequestParam Map<String, String> params,
+                                      HttpSession session) {
+        
+        // Obtener jugadorId de la sesión
+        Integer jugadorIdObj = (Integer) session.getAttribute("jugadorId");
+        if (jugadorIdObj == null) {
+            return "redirect:/";
+        }
+        int jugadorId = jugadorIdObj;
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
@@ -158,7 +174,7 @@ public class MultiController {
         Partida partida = sala.getPartidaActual();
         if (partida == null) {
             System.out.println("[MultiController] Partida nula en sala " + codigoSala);
-            return "redirect:/lobby/" + codigoSala + "?jugadorId=" + jugadorId;
+            return "redirect:/lobby/" + codigoSala;
         }
         int partidaId = partida.getId();
 
@@ -252,8 +268,7 @@ public class MultiController {
 
         // Después de responder, siempre vamos a la pantalla de "esperando"
         return "redirect:/multi/esperando?codigoSala=" + codigoSala
-                + "&ronda=" + numeroRonda
-                + "&jugadorId=" + jugadorId;
+                + "&ronda=" + numeroRonda;
     }
 
     // =========================================================
@@ -262,8 +277,16 @@ public class MultiController {
     @GetMapping("/esperando")
     public String verEsperandoRonda(@RequestParam("codigoSala") String codigoSala,
                                     @RequestParam("ronda") int numeroRonda,
-                                    @RequestParam("jugadorId") int jugadorId,
-                                    Model model) {
+                                    Model model,
+                                    HttpSession session) {
+        
+        // Obtener jugadorId de la sesión
+        Integer jugadorIdObj = (Integer) session.getAttribute("jugadorId");
+        if (jugadorIdObj == null) {
+            model.addAttribute("error", "No se encontró el jugador en la sesión. Por favor, vuelve a entrar a la sala.");
+            return "error";
+        }
+        int jugadorId = jugadorIdObj;
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null || sala.getPartidaActual() == null) {
@@ -343,8 +366,16 @@ public class MultiController {
     // =========================================================
     @GetMapping("/final")
     public String verRankingFinalMulti(@RequestParam("codigoSala") String codigoSala,
-                                       @RequestParam("jugadorId") int jugadorId,
-                                       Model model) {
+                                       Model model,
+                                       HttpSession session) {
+        
+        // Obtener jugadorId de la sesión
+        Integer jugadorIdObj = (Integer) session.getAttribute("jugadorId");
+        if (jugadorIdObj == null) {
+            model.addAttribute("error", "No se encontró el jugador en la sesión. Por favor, vuelve a entrar a la sala.");
+            return "error";
+        }
+        int jugadorId = jugadorIdObj;
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
@@ -408,9 +439,16 @@ public class MultiController {
     // =========================================================
     @GetMapping("/listo-siguiente")
     public String marcarListoSiguienteRonda(@RequestParam("codigoSala") String codigoSala,
-                                            @RequestParam("jugadorId") int jugadorId,
                                             @RequestParam("rondaActual") int rondaActual,
-                                            Model model) {
+                                            Model model,
+                                            HttpSession session) {
+        
+        // Obtener jugadorId de la sesión
+        Integer jugadorIdObj = (Integer) session.getAttribute("jugadorId");
+        if (jugadorIdObj == null) {
+            return "redirect:/";
+        }
+        int jugadorId = jugadorIdObj;
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
@@ -419,13 +457,13 @@ public class MultiController {
 
         Partida partida = sala.getPartidaActual();
         if (partida == null || partida.getConfiguracion() == null) {
-            return "redirect:/lobby/" + codigoSala + "?jugadorId=" + jugadorId;
+            return "redirect:/lobby/" + codigoSala;
         }
 
         int rondasTotales = partida.getConfiguracion().getRondasTotales();
         if (rondaActual >= rondasTotales) {
             // Ya no hay más rondas, ir al ranking final
-            return "redirect:/multi/final?codigoSala=" + codigoSala + "&jugadorId=" + jugadorId;
+            return "redirect:/multi/final?codigoSala=" + codigoSala;
         }
 
         int numeroNuevaRonda = rondaActual + 1;
@@ -437,7 +475,6 @@ public class MultiController {
 
         if (nuevaYaExiste) {
             return "redirect:/multi/ronda?codigoSala=" + codigoSala
-                    + "&jugadorId=" + jugadorId
                     + "&ronda=" + numeroNuevaRonda;
         }
 
@@ -522,8 +559,14 @@ public class MultiController {
     // =========================================================
     @GetMapping("/siguiente")
     public String siguienteRonda(@RequestParam("codigoSala") String codigoSala,
-                                 @RequestParam("jugadorId") int jugadorId,
-                                 @RequestParam(name = "rondaActual", required = false) Integer rondaActual) {
+                                 @RequestParam(name = "rondaActual", required = false) Integer rondaActual,
+                                 HttpSession session) {
+        
+        // Validar que existe sesión (aunque no usemos jugadorId aquí)
+        Integer jugadorIdObj = (Integer) session.getAttribute("jugadorId");
+        if (jugadorIdObj == null) {
+            return "redirect:/";
+        }
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
@@ -532,7 +575,7 @@ public class MultiController {
 
         Partida partida = sala.getPartidaActual();
         if (partida == null || partida.getConfiguracion() == null) {
-            return "redirect:/lobby/" + codigoSala + "?jugadorId=" + jugadorId;
+            return "redirect:/lobby/" + codigoSala;
         }
 
         int rondasTotales = partida.getConfiguracion().getRondasTotales();
@@ -543,10 +586,10 @@ public class MultiController {
             System.out.println("Ronda actual (pantalla): " + rondaActual +
                     " / Rondas totales: " + rondasTotales);
 
-            if (rondaActual >= rondasTotales) {
-                System.out.println("Ya no quedan rondas -> fin de partida");
-                return "redirect:/lobby/" + codigoSala + "?jugadorId=" + jugadorId;
-            }
+        if (rondaActual >= rondasTotales) {
+            System.out.println("Ya no quedan rondas -> fin de partida");
+            return "redirect:/lobby/" + codigoSala;
+        }
 
             int numeroNuevaRonda = rondaActual + 1;
 
@@ -568,7 +611,6 @@ public class MultiController {
             }
 
             return "redirect:/multi/ronda?codigoSala=" + codigoSala
-                    + "&jugadorId=" + jugadorId
                     + "&ronda=" + numeroNuevaRonda;
         }
 
@@ -580,7 +622,7 @@ public class MultiController {
 
         if (rondasJugadas >= rondasTotales) {
             System.out.println("Ya no quedan rondas -> fin de partida (flujo legado)");
-            return "redirect:/lobby/" + codigoSala + "?jugadorId=" + jugadorId;
+            return "redirect:/lobby/" + codigoSala;
         }
 
         int numeroNuevaRonda = rondasJugadas + 1;
@@ -603,7 +645,6 @@ public class MultiController {
         }
 
         return "redirect:/multi/ronda?codigoSala=" + codigoSala
-                + "&jugadorId=" + jugadorId
                 + "&ronda=" + numeroNuevaRonda;
     }
 
@@ -678,8 +719,16 @@ public class MultiController {
     @GetMapping("/resultados")
     public String verResultadosRondaMulti(@RequestParam("codigoSala") String codigoSala,
                                           @RequestParam("ronda") int numeroRonda,
-                                          @RequestParam("jugadorId") int jugadorId,
-                                          Model model) {
+                                          Model model,
+                                          HttpSession session) {
+        
+        // Obtener jugadorId de la sesión
+        Integer jugadorIdObj = (Integer) session.getAttribute("jugadorId");
+        if (jugadorIdObj == null) {
+            model.addAttribute("error", "No se encontró el jugador en la sesión. Por favor, vuelve a entrar a la sala.");
+            return "error";
+        }
+        int jugadorId = jugadorIdObj;
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {

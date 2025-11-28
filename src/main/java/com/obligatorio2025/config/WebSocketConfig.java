@@ -5,6 +5,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
 
 @Configuration
@@ -28,6 +29,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // URL: ws://localhost:8080/ws-tutti (o con SockJS: http://.../ws-tutti)
         registry.addEndpoint("/ws-tutti")
                 .setAllowedOriginPatterns("*")   // para desarrollo, después se puede restringir
+                .addInterceptors(new HttpSessionHandshakeInterceptor())  // permite acceso a HttpSession
                 .withSockJS();                   // permite fallback SockJS
     }
 }

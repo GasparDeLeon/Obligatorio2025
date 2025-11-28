@@ -12,6 +12,8 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
+import java.util.Map;
+
 @Controller
 public class JuegoWebSocketController {
 
@@ -61,42 +63,43 @@ public class JuegoWebSocketController {
 
     public static class JoinSalaMessage {
         private String codigoSala;
-        private int jugadorId;
 
         public JoinSalaMessage() {}
 
         public String getCodigoSala() { return codigoSala; }
         public void setCodigoSala(String codigoSala) { this.codigoSala = codigoSala; }
-
-        public int getJugadorId() { return jugadorId; }
-        public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
     }
 
     public static class IniciarSalaMessage {
         private String codigoSala;
-        private int jugadorId;
 
         public IniciarSalaMessage() {}
 
         public String getCodigoSala() { return codigoSala; }
         public void setCodigoSala(String codigoSala) { this.codigoSala = codigoSala; }
-
-        public int getJugadorId() { return jugadorId; }
-        public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
     }
 
     // mensaje para marcar jugador listo
     public static class JugadorListoMessage {
         private String codigoSala;
-        private int jugadorId;
 
         public JugadorListoMessage() {}
 
         public String getCodigoSala() { return codigoSala; }
         public void setCodigoSala(String codigoSala) { this.codigoSala = codigoSala; }
-
-        public int getJugadorId() { return jugadorId; }
-        public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
+    }
+    
+    // Helper para obtener jugadorId de la sesión HTTP desde WebSocket
+    private Integer obtenerJugadorIdDeSesion(SimpMessageHeaderAccessor headers) {
+        // Los atributos de HttpSession se copian a los atributos de sesión de STOMP
+        Map<String, Object> sessionAttributes = headers.getSessionAttributes();
+        if (sessionAttributes != null) {
+            Object jugadorIdObj = sessionAttributes.get("jugadorId");
+            if (jugadorIdObj instanceof Integer) {
+                return (Integer) jugadorIdObj;
+            }
+        }
+        return null;
     }
 
     // =====================================================
@@ -318,7 +321,14 @@ public class JuegoWebSocketController {
 
         String sessionId = headers.getSessionId();
         String codigoSala = msg.getCodigoSala();
-        int jugadorId = msg.getJugadorId();
+        
+        // Obtener jugadorId de la sesión HTTP
+        Integer jugadorIdObj = obtenerJugadorIdDeSesion(headers);
+        if (jugadorIdObj == null) {
+            log.warn("[WS] unirseSala -> No se encontró jugadorId en la sesión para sessionId={}", sessionId);
+            return;
+        }
+        int jugadorId = jugadorIdObj;
 
         log.info("[WS] unirseSala -> sessionId={}, sala={}, jugador={}",
                 sessionId, codigoSala, jugadorId);
@@ -349,7 +359,17 @@ public class JuegoWebSocketController {
 
         String sessionId = headers.getSessionId();
         String codigoSala = msg.getCodigoSala();
-        int jugadorId = msg.getJugadorId();
+        
+        // Obtener jugadorId de la sesión HTTP
+        Integer jugadorIdObj = obtenerJugadorIdDeSesion(headers);
+        if (jugadorIdObj == null) {
+            log.warn("[WS] iniciarSala -> No se encontró jugadorId en la sesión para sessionId={}", sessionId);
+            String destino = "/topic/sala." + codigoSala;
+            SalaEvent error = SalaEvent.errorInicio("No se encontró el jugador en la sesión.");
+            messagingTemplate.convertAndSend(destino, error);
+            return;
+        }
+        int jugadorId = jugadorIdObj;
 
         log.info("[WS] iniciarSala -> sessionId={}, sala={}, jugador={}",
                 sessionId, codigoSala, jugadorId);
@@ -392,10 +412,18 @@ public class JuegoWebSocketController {
     }
 
     @MessageMapping("/sala.listo")
-    public void jugadorListo(JugadorListoMessage msg) {
+    public void jugadorListo(JugadorListoMessage msg,
+                             SimpMessageHeaderAccessor headers) {
 
         String codigoSala = msg.getCodigoSala();
-        int jugadorId = msg.getJugadorId();
+        
+        // Obtener jugadorId de la sesión HTTP
+        Integer jugadorIdObj = obtenerJugadorIdDeSesion(headers);
+        if (jugadorIdObj == null) {
+            log.warn("[WS] jugadorListo -> No se encontró jugadorId en la sesión");
+            return;
+        }
+        int jugadorId = jugadorIdObj;
 
         log.info("[WS] jugadorListo -> sala={}, jugador={}", codigoSala, jugadorId);
 

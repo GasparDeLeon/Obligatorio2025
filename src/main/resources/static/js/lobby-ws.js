@@ -80,11 +80,10 @@ function manejarEventoSala(evento) {
             const payload = evento.payload || {};
             const mensaje = payload.mensaje || 'No se pudo iniciar la partida.';
 
-            // id del jugador actual (el que está viendo esta pestaña)
-            const jugadorActualId = parseInt(
-                document.getElementById('jugadorId').value,
-                10
-            );
+            // El jugadorId se obtiene del servidor, pero para verificar si es host
+            // podemos leerlo del input oculto que el servidor pone en la página
+            const jugadorIdInput = document.getElementById('jugadorId');
+            const jugadorActualId = jugadorIdInput ? parseInt(jugadorIdInput.value, 10) : null;
 
             // Solo el host (jugador 1) ve el alert y el log explícito
             if (jugadorActualId === 1) {
@@ -107,14 +106,9 @@ function manejarEventoSala(evento) {
 
                    // Redirigimos a la pantalla de juego multijugador
                    const codigoSala = document.getElementById('codigoSala').value;
-                   const jugadorId = parseInt(
-                       document.getElementById('jugadorId').value,
-                       10
-                   );
 
                    const url = '/multi/ronda'
                        + '?codigoSala=' + encodeURIComponent(codigoSala)
-                       + '&jugadorId=' + encodeURIComponent(jugadorId)
                        + '&ronda=' + encodeURIComponent(numero);
 
                    window.location.href = url;
@@ -130,7 +124,6 @@ function manejarEventoSala(evento) {
 
 function conectarLobby() {
     const codigoSala = document.getElementById('codigoSala').value;
-    const jugadorId = parseInt(document.getElementById('jugadorId').value, 10);
 
     const socket = new SockJS('/ws-tutti');
     stompClient = Stomp.over(socket);
@@ -140,8 +133,7 @@ function conectarLobby() {
 
     stompClient.connect({}, function (frame) {
         console.log('Conectado al WS: ' + frame);
-        appendLog('Conectado al WebSocket como jugador ' + jugadorId +
-            ' en sala ' + codigoSala);
+        appendLog('Conectado al WebSocket en sala ' + codigoSala);
 
         const destinoSala = '/topic/sala.' + codigoSala;
         stompClient.subscribe(destinoSala, function (message) {
@@ -162,9 +154,9 @@ function conectarLobby() {
             }
         });
 
+        // Solo enviamos el código de sala, el jugadorId se obtiene de la sesión HTTP
         const joinPayload = {
-            codigoSala: codigoSala,
-            jugadorId: jugadorId
+            codigoSala: codigoSala
         };
 
         stompClient.send('/app/sala.unirse', {}, JSON.stringify(joinPayload));
@@ -203,7 +195,6 @@ function configurarBotonIniciar() {
     if (!btn) return; // si no es host, no hay botón
 
     const codigoSala = document.getElementById('codigoSala').value;
-    const jugadorId = parseInt(document.getElementById('jugadorId').value, 10);
 
     btn.addEventListener('click', function () {
         if (!stompClient || !stompClient.connected) {
@@ -211,9 +202,9 @@ function configurarBotonIniciar() {
             return;
         }
 
+        // Solo enviamos el código de sala, el jugadorId se obtiene de la sesión HTTP
         const payload = {
-            codigoSala: codigoSala,
-            jugadorId: jugadorId
+            codigoSala: codigoSala
         };
 
         stompClient.send('/app/sala.iniciar', {}, JSON.stringify(payload));
@@ -226,7 +217,6 @@ function configurarBotonListo() {
     if (!btn) return;
 
     const codigoSala = document.getElementById('codigoSala').value;
-    const jugadorId = parseInt(document.getElementById('jugadorId').value, 10);
 
     btn.addEventListener('click', function () {
         if (!stompClient || !stompClient.connected) {
@@ -234,9 +224,9 @@ function configurarBotonListo() {
             return;
         }
 
+        // Solo enviamos el código de sala, el jugadorId se obtiene de la sesión HTTP
         const payload = {
-            codigoSala: codigoSala,
-            jugadorId: jugadorId
+            codigoSala: codigoSala
         };
 
         stompClient.send('/app/sala.listo', {}, JSON.stringify(payload));
