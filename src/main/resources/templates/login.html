@@ -85,6 +85,26 @@
         animation-delay: 6s;
     }
 
+<!--    .app-logo {-->
+<!--        display: block;-->
+<!--        margin: 0 auto 10px auto;-->
+<!--        width: 140px;-->
+<!--        max-width: 100%;-->
+<!--        height: auto;-->
+<!--      }-->
+
+  .app-logo-main {
+      display: block;
+      /* Más espacio arriba y abajo para que respire */
+      margin: 20px auto 25px auto;
+      /* Un tamaño más generoso */
+      width: 180px;
+      max-width: 90%;
+      height: auto;
+      /* Sutil sombra para que "flote" sobre el fondo */
+      filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+    }
+
     @keyframes float {
         0%, 100% { transform: translate(0, 0) scale(1); }
         33% { transform: translate(30px, -30px) scale(1.1); }
@@ -240,64 +260,87 @@
         margin-bottom: 20px;
     }
 
-    .btn {
-        padding: 16px 40px; /* Botones grandes */
-        font-size: 20px;
-        font-weight: 600;
-        font-family: 'Fredoka', sans-serif;
-        border: none;
-        border-radius: 50px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        position: relative;
-        overflow: hidden;
-    }
+    /* 1. CLASE BASE (Estructura y Animación Ripple) */
+  /* Consérvala, le da la forma y el efecto de brillo al hacer click */
+  .btn {
+      /* Estructura general */
+      padding: 14px 20px;
+      font-size: 18px; /* Un poco más equilibrado para móvil/desktop */
+      font-weight: 700;
+      font-family: 'Fredoka', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
 
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
+      border: none;
+      border-radius: 50px; /* Bordes redondeados estilo pastilla */
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
 
-    .btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
+      /* Asegura que ocupe el ancho disponible si está en un form */
+      width: 100%;
+      display: block;
+  }
 
-    .btn:hover:not(:disabled)::before {
-        width: 300px;
-        height: 300px;
-    }
+  /* Estado deshabilitado (si usas validación JS) */
+  .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+  }
 
-    .btn span {
-        position: relative;
-        z-index: 1;
-    }
+  /* Animación del brillo (Ripple) - ¡LA DEJAMOS! */
+  .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3); /* Brillo blanco */
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+  }
 
-    .btn-primary {
-        background: #FFD43B;
-        color: #2d2d2d;
-        box-shadow: 0 5px 0 #d4a800, 0 7px 18px rgba(0, 0, 0, 0.3);
-    }
+  .btn:hover:not(:disabled)::before {
+      width: 400px; /* Aumentado para cubrir botones anchos */
+      height: 400px;
+  }
 
-    .btn-primary:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 7px 0 #d4a800, 0 10px 22px rgba(0, 0, 0, 0.4);
-    }
+  .btn span {
+      position: relative;
+      z-index: 1;
+  }
 
-    .btn-primary:active:not(:disabled) {
-        transform: translateY(2px);
-        box-shadow: 0 2px 0 #d4a800, 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
+  /* 2. ESTILO "MIEL/MANGO" (El color y el efecto 3D) */
+  /* Aquí aplicamos el diseño que te gustó */
+  .btn-primary {
+      background-color: #FFCA28; /* Amarillo Miel */
+      color: #3E2723; /* Marrón Café (Crucial para contraste) */
+
+      /* Borde inferior sólido para el efecto 3D */
+      border-bottom: 5px solid #F57C00;
+
+      /* Sombra suave difusa debajo */
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Interacción Hover (Pasar el mouse) */
+  .btn-primary:hover:not(:disabled) {
+      background-color: #FFD54F; /* Un poco más claro */
+      transform: translateY(2px); /* El botón baja físicamente */
+      border-bottom-width: 3px; /* El borde 3D se hace más fino */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Interacción Active (Click presionado) */
+  .btn-primary:active:not(:disabled) {
+      transform: translateY(5px); /* Baja totalmente */
+      border-bottom-width: 0px; /* Desaparece el borde 3D */
+      box-shadow: none;
+  }
 
     .divider {
         display: flex;
@@ -358,17 +401,35 @@
         font-size: 14px;
     }
 
-    .links a {
-        color: #FFD43B;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
+<!--    .links a {-->
+<!--        color: #FFD43B;-->
+<!--        text-decoration: none;-->
+<!--        font-weight: 600;-->
+<!--        transition: all 0.3s ease;-->
+<!--    }-->
 
-    .links a:hover {
-        text-decoration: underline;
-        color: #fff;
-    }
+<!--    .links a:hover {-->
+<!--        text-decoration: underline;-->
+<!--        color: #fff;-->
+<!--    }-->
+
+    .links a {
+    color: #F4C724 !important; /* Color de las frutas amarillas */
+    font-weight: bold;
+    text-decoration: none;
+  }
+  .links a:hover {
+    color: #ffe066 !important;
+    text-decoration: underline;
+  }
+
+.social-icon svg {
+    fill: rgba(255,255,255,0.9);
+    transition: fill 0.2s ease;
+  }
+  .social-icon:hover svg {
+    fill: #F4C724; /* Color de acento amarillo */
+  }
 
     .logged-in-message {
         color: white;
@@ -478,8 +539,9 @@
   </div>
 
   <div th:if="${session.sesionId == null}">
-    <h1 class="logo">🍓 Tutti Frutti</h1>
-    <p class="subtitle">Bienvenido de vuelta</p>
+    <img th:src="@{/img/logoCaricatura.png}" alt="Logo Tutti Frutti" class="app-logo-main">
+<!--    <h1 class="logo">🍓 Tutti Frutti</h1>-->
+<!--    <p class="subtitle">Hora de pensar rápido</p>-->
 
     <form id="loginForm" action="/login" method="post" novalidate>
       <div th:if="${error}" class="message-error" th:text="${error}"></div>

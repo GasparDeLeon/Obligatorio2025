@@ -84,6 +84,15 @@ body::after {
         animation-delay: 6s;
     }
 
+        .app-logo-main {
+            display: block;
+            margin: 20px auto 30px auto;
+            width: 160px;
+            max-width: 90%;
+            height: auto;
+            filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+        }
+
     @keyframes float {
         0%, 100% { transform: translate(0, 0) scale(1); }
         33% { transform: translate(30px, -30px) scale(1.1); }
@@ -500,7 +509,7 @@ body::after {
 <div class="bg-shape bg-shape-3"></div>
 
 <div class="container">
-  <h1 class="logo">🍓 Tutti Frutti</h1>
+  <img th:src="@{/img/logoCaricatura.png}" alt="Logo Tutti Frutti" class="app-logo-main">
   <p class="subtitle">Crea tu cuenta</p>
 
   <div th:if="${mensaje}" class="message message-success" th:text="${mensaje}"></div>

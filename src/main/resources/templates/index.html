@@ -23,6 +23,7 @@
             position: relative;
         }
 
+        /* --- Animaciones del Fondo --- */
         body::before {
             content: '';
             position: absolute;
@@ -81,6 +82,17 @@
             animation-delay: 6s;
         }
 
+        /* --- Logo --- */
+        .app-logo-main {
+            display: block;
+            margin: 20px auto 30px auto;
+            width: 180px;
+            max-width: 90%;
+            height: auto;
+            filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+        }
+
+        /* --- Keyframes --- */
         @keyframes float {
             0%, 100% { transform: translate(0, 0) scale(1); }
             33% { transform: translate(30px, -30px) scale(1.1); }
@@ -106,24 +118,23 @@
             }
         }
 
-        /* Botón de cerrar sesión fijo */
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Botón Cerrar Sesión (Fijo) --- */
         .logout-fixed {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1000;
             animation: fadeInSlide 0.6s ease-out 0.3s both;
-        }
-
-        @keyframes fadeInSlide {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
         }
 
         .btn-logout {
@@ -151,17 +162,13 @@
             box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
         }
 
-        .btn-logout:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
         .logout-icon {
             width: 18px;
             height: 18px;
             fill: white;
         }
 
+        /* --- Contenedor Principal --- */
         .container {
             position: relative;
             background: rgba(90, 95, 255, 0.9);
@@ -175,24 +182,6 @@
             animation: slideIn 0.6s ease-out;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .logo {
-            width: 280px;
-            max-width: 100%;
-            margin-bottom: 40px;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-        }
-
         .buttons {
             display: flex;
             flex-direction: column;
@@ -200,21 +189,26 @@
             margin-bottom: 40px;
         }
 
+        /* --- Estilos Base de Botones --- */
         .btn {
             padding: 18px 40px;
             font-size: 22px;
-            font-weight: 600;
+            font-weight: 800; /* Texto bien grueso */
             font-family: 'Fredoka', sans-serif;
-            border: none;
             border-radius: 50px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.1s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
+        /* Efecto de brillo al pasar el mouse */
         .btn::before {
             content: '';
             position: absolute;
@@ -229,55 +223,81 @@
         }
 
         .btn:hover::before {
-            width: 300px;
-            height: 300px;
+            width: 400px;
+            height: 400px;
         }
 
         .btn span {
             position: relative;
             z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
+        /* --- BOTÓN PRINCIPAL (Jugar y Crear) - Estilo Mango --- */
         .btn-primary {
-            background: #FFD43B;
-            color: #2d2d2d;
-            box-shadow: 0 6px 0 #d4a800, 0 8px 20px rgba(0, 0, 0, 0.3);
+            background-color: #FFCA28; /* Amarillo Cálido */
+            color: #3E2723; /* Marrón Café */
+            border: none;
+            border-bottom: 6px solid #F57C00; /* Borde 3D Naranja */
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 0 #d4a800, 0 12px 25px rgba(0, 0, 0, 0.4);
+            background-color: #FFD54F; /* Amarillo un poco más claro */
+            transform: translateY(3px); /* Baja visualmente */
+            border-bottom-width: 3px; /* Se reduce la "sombra" sólida */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .btn-primary:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #d4a800, 0 4px 15px rgba(0, 0, 0, 0.3);
+            transform: translateY(6px);
+            border-bottom-width: 0px;
         }
 
+        /* --- BOTÓN SECUNDARIO (Unirse) - Estilo Contorno --- */
         .btn-secondary {
             background: transparent;
-            color: white;
-            border: 4px solid white;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            color: #FFCA28; /* Amarillo */
+            border: 4px solid #FFCA28;
+            border-bottom: 4px solid #FFCA28; /* Sin efecto 3D grueso por defecto */
+            box-shadow: none;
         }
 
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            background: rgba(255, 202, 40, 0.1);
+            color: #FFF; /* Texto blanco al hover */
+            border-color: #FFF;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 202, 40, 0.4);
         }
 
+        /* --- Iconos dentro de los botones --- */
         .btn-icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             vertical-align: middle;
-            margin-right: 8px;
-            filter: brightness(0);
+            transition: all 0.3s ease;
         }
 
+        /* Filtro para convertir la imagen del icono a Marrón (para btn-primary) */
+        .btn-primary .btn-icon {
+            filter: brightness(0) saturate(100%) invert(13%) sepia(35%) saturate(884%) hue-rotate(338deg) brightness(95%) contrast(92%);
+        }
+
+        /* Filtro para convertir la imagen del icono a Amarillo (para btn-secondary) */
         .btn-secondary .btn-icon {
+            filter: brightness(0) saturate(100%) invert(84%) sepia(33%) saturate(1039%) hue-rotate(328deg) brightness(102%) contrast(101%);
+        }
+
+        /* Al hacer hover en secundario, el icono se vuelve blanco */
+        .btn-secondary:hover .btn-icon {
             filter: brightness(0) invert(1);
         }
+
+
+        /* --- Redes Sociales --- */
 
         .social-icons {
             display: flex;
@@ -311,6 +331,7 @@
             fill: white;
         }
 
+        /* --- Media Queries (Móvil) --- */
         @media (max-width: 600px) {
             .logout-fixed {
                 top: 15px;
@@ -320,11 +341,6 @@
             .btn-logout {
                 padding: 10px 18px;
                 font-size: 14px;
-            }
-
-            .logout-icon {
-                width: 16px;
-                height: 16px;
             }
 
             .container {
@@ -355,7 +371,7 @@
 </div>
 
 <div class="container">
-    <img th:src="@{/img/logoMinimalista.png}" alt="Tutti Frutti" class="logo">
+    <img th:src="@{/img/logoCaricatura.png}" alt="Logo Tutti Frutti" class="app-logo-main">
 
     <div class="buttons">
         <!-- Jugar solo -->
