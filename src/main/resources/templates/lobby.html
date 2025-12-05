@@ -63,6 +63,18 @@
             z-index: 0;
         }
 
+          .app-logo-main {
+              display: block;
+              /* Más espacio arriba y abajo para que respire */
+              margin: 20px auto 25px auto;
+              /* Un tamaño más generoso */
+              width: 180px;
+              max-width: 90%;
+              height: auto;
+              /* Sutil sombra para que "flote" sobre el fondo */
+              filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+            }
+
         @keyframes float {
             0%, 100% { transform: translate(0, 0) scale(1); }
             33% { transform: translate(30px, -30px) scale(1.1); }
@@ -465,7 +477,7 @@
 <div class="page-container">
     <header class="header">
         <div class="logo">
-            <img th:src="@{/img/logoMinimalista.png}" alt="Logo Tutti Frutti">
+            <img th:src="@{/img/logoCaricatura.png}" alt="Logo Tutti Frutti">
             <h1 th:text="'Lobby sala ' + ${codigoSala}">Lobby sala XXXX</h1>
         </div>
         <div class="header-info">
