@@ -39,7 +39,8 @@ public class ServicioAutenticacion {
     public void registrarUsuario(String nombreUsuario, String password) {
         // Verificamos si el usuario ya existe
         if (usuarioRepositorio.findByNombreUsuario(nombreUsuario).isPresent()) {
-            throw new RuntimeException("El usuario ya existe");
+            // Esta excepción la captura el LoginController y muestra el mensaje en pantalla
+            throw new IllegalArgumentException("El nombre de usuario ya está en uso. Elegí otro.");
         }
 
         // Hasheamos la contraseña antes de guardar

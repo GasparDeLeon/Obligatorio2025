@@ -107,12 +107,17 @@ public class LoginController {
         try {
             servicioAutenticacion.registrarUsuario(usuario, password);
             model.addAttribute("mensaje", "Usuario registrado con éxito. Ya podés iniciar sesión.");
-            return "redirect:/login";
+            return "login"; // NO redirigir, mostrar la vista con mensaje
+        } catch (IllegalArgumentException e) {
+            // Este tipo de excepción la tirás cuando el usuario ya existe
+            model.addAttribute("error", e.getMessage());
+            return "register"; // Volver a la vista de registro mostrando el mensaje
         } catch (Exception e) {
-            model.addAttribute("error", "Error al registrar el usuario.");
-            return "redirect:/register";
+            model.addAttribute("error", "Error inesperado al registrar el usuario.");
+            return "register";
         }
     }
+
 
 
 }
