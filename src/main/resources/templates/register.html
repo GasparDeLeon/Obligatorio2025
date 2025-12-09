@@ -7,48 +7,49 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
   <style>
     * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-body {
-    font-family: 'Fredoka', sans-serif;
-    background: linear-gradient(135deg, #4b53ffab 0%, #6b73ffdd 50%, #5a5fff 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
-    position: relative;
-    padding: 15px 20px;
-}
+    body {
+        font-family: 'Fredoka', sans-serif;
+        background: linear-gradient(135deg, #4b53ffab 0%, #6b73ffdd 50%, #5a5fff 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        overflow: hidden; /* El fondo no se mueve */
+        position: relative;
+        padding: 10px;
+    }
 
-body::before {
-    content: '';
-    position: absolute;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(255, 212, 59, 0.15) 0%, transparent 70%);
-    border-radius: 50%;
-    top: -100px;
-    left: -60px;
-    animation: float 8s ease-in-out infinite;
-    pointer-events: none;
-}
+    /* --- Animaciones de Fondo (Intactas) --- */
+    body::before {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 212, 59, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        top: -100px;
+        left: -60px;
+        animation: float 8s ease-in-out infinite;
+        pointer-events: none;
+    }
 
-body::after {
-    content: '';
-    position: absolute;
-    width: 250px;
-    height: 250px;
-    background: radial-gradient(circle, rgba(255, 107, 53, 0.12) 0%, transparent 70%);
-    border-radius: 50%;
-    bottom: -70px;
-    right: -40px;
-    animation: float 10s ease-in-out infinite reverse;
-    pointer-events: none;
-}
+    body::after {
+        content: '';
+        position: absolute;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(255, 107, 53, 0.12) 0%, transparent 70%);
+        border-radius: 50%;
+        bottom: -70px;
+        right: -40px;
+        animation: float 10s ease-in-out infinite reverse;
+        pointer-events: none;
+    }
 
     .bg-shape {
         position: absolute;
@@ -58,7 +59,7 @@ body::after {
     }
 
     .bg-shape-1 {
-        width: 300px; /* Agrandado un poco */
+        width: 300px;
         height: 300px;
         background: linear-gradient(45deg, #FFD43B, #ff6b35);
         top: 10%;
@@ -67,7 +68,7 @@ body::after {
     }
 
     .bg-shape-2 {
-        width: 250px; /* Agrandado un poco */
+        width: 250px;
         height: 250px;
         background: linear-gradient(135deg, #fff, #FFD43B);
         top: 50%;
@@ -84,14 +85,14 @@ body::after {
         animation-delay: 6s;
     }
 
-        .app-logo-main {
-            display: block;
-            margin: 20px auto 30px auto;
-            width: 160px;
-            max-width: 90%;
-            height: auto;
-            filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
-        }
+    .app-logo-main {
+        display: block;
+        margin: 10px auto 20px auto; /* Reducido */
+        width: 120px; /* Reducido (antes 160px) */
+        max-width: 90%;
+        height: auto;
+        filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+    }
 
     @keyframes float {
         0%, 100% { transform: translate(0, 0) scale(1); }
@@ -118,58 +119,83 @@ body::after {
         }
     }
 
-    /* --- CAMBIOS PRINCIPALES AQUÍ --- */
+    /* --- CAMBIOS PRINCIPALES (SCROLL Y TAMAÑO) --- */
     .container {
         background: rgba(90, 95, 255, 0.9);
         backdrop-filter: blur(10px);
-        border-radius: 24px; /* Bordes un poco más redondeados */
+        border-radius: 24px;
         width: 90%;
         max-width: 480px;
-        padding: 35px 40px;
+        padding: 25px 30px; /* Reducido (antes 35 40) */
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
         text-align: center;
         margin: auto;
         position: relative;
         z-index: 10;
+
+        /* --- AQUÍ ESTÁ LA MAGIA DEL SCROLL --- */
+        max-height: 90vh; /* Nunca ocupará más del 90% de la altura de la pantalla */
+        overflow-y: auto; /* Habilita scroll vertical si se pasa del alto */
+
+        /* Estilos de la barra de scroll (Amarillo Miel) */
+        scrollbar-width: thin;
+        scrollbar-color: #FFD43B rgba(255, 255, 255, 0.1);
+    }
+
+    /* Estilos Scrollbar para Chrome/Safari/Edge */
+    .container::-webkit-scrollbar {
+        width: 8px;
+    }
+    .container::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+    .container::-webkit-scrollbar-thumb {
+        background: #FFD43B;
+        border-radius: 4px;
+    }
+    .container::-webkit-scrollbar-thumb:hover {
+        background: #ffc107;
     }
 
     .logo {
-        font-size: 54px; /* AUMENTADO de 42px */
+        font-size: 36px; /* Reducido (antes 54px) */
         font-weight: 600;
         color: #FFD43B;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
     .subtitle {
         color: rgba(255, 255, 255, 0.9);
-        font-size: 18px; /* AUMENTADO levemente */
-        margin-bottom: 25px;
+        font-size: 15px; /* Reducido */
+        margin-bottom: 15px;
         font-weight: 400;
     }
 
     .form-group {
-        margin-bottom: 20px; /* Más espacio entre inputs */
+        margin-bottom: 12px; /* Reducido (antes 20px) */
         text-align: left;
     }
 
     .form-group label {
         display: block;
         color: white;
-        font-size: 16px; /* AUMENTADO */
+        font-size: 14px; /* Reducido */
         font-weight: 600;
-        margin-bottom: 8px;
+        margin-bottom: 5px;
         padding-left: 10px;
     }
 
     .form-group input,
     .form-group select {
         width: 100%;
-        padding: 16px 20px; /* AUMENTADO: inputs más altos y cómodos */
-        font-size: 16px; /* Letra más grande dentro del input */
+        padding: 12px 16px; /* Reducido (antes 16 20) */
+        font-size: 15px;
         font-family: 'Fredoka', sans-serif;
         border: 3px solid rgba(255, 255, 255, 0.3);
-        border-radius: 25px;
+        border-radius: 20px;
         background: rgba(255, 255, 255, 0.15);
         color: white;
         transition: all 0.3s ease;
@@ -200,8 +226,8 @@ body::after {
     .error-message {
         display: none;
         color: #ff6b6b;
-        font-size: 14px;
-        margin-top: 6px;
+        font-size: 13px;
+        margin-top: 4px;
         padding-left: 10px;
         font-weight: 500;
         animation: shake 0.3s ease;
@@ -220,14 +246,14 @@ body::after {
     .buttons {
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        margin-top: 25px;
-        margin-bottom: 20px;
+        gap: 12px;
+        margin-top: 20px;
+        margin-bottom: 15px;
     }
 
     .btn {
-        padding: 16px 40px; /* Botón más grande */
-        font-size: 20px; /* Texto del botón más grande */
+        padding: 14px 30px; /* Reducido */
+        font-size: 18px; /* Reducido */
         font-weight: 600;
         font-family: 'Fredoka', sans-serif;
         border: none;
@@ -294,14 +320,8 @@ body::after {
     }
 
     @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .message-success {
@@ -317,9 +337,9 @@ body::after {
     }
 
     .links {
-        margin-top: 15px;
+        margin-top: 10px;
         color: white;
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .links a {
@@ -334,172 +354,61 @@ body::after {
         color: #fff;
     }
 
+    /* Caja de info (requisitos contraseña) */
     .info-box {
         background: rgba(255, 255, 255, 0.1);
         border: 2px solid rgba(255, 255, 255, 0.2);
         border-radius: 18px;
-        padding: 12px 15px;
-        margin-bottom: 16px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
         text-align: left;
     }
 
     .info-box h3 {
         color: #FFD43B;
-        font-size: 14px;
-        margin-bottom: 8px;
+        font-size: 13px;
+        margin-bottom: 6px;
     }
 
     .info-box ul {
         color: rgba(255, 255, 255, 0.9);
-        font-size: 13px;
+        font-size: 12px;
         padding-left: 20px;
-        line-height: 1.5;
+        line-height: 1.4;
     }
 
     .info-box ul li {
-        margin-bottom: 3px;
+        margin-bottom: 2px;
         position: relative;
         transition: all 0.3s ease;
     }
 
-    .info-box ul li.valid {
-        color: #51cf66;
-    }
-
-    .info-box ul li.invalid {
-        color: #ff6b6b;
-    }
-
+    .info-box ul li.valid { color: #51cf66; }
+    .info-box ul li.invalid { color: #ff6b6b; }
     .info-box ul li::before {
-        content: '✓';
-        position: absolute;
-        left: -18px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        content: '✓'; position: absolute; left: -18px; opacity: 0; transition: opacity 0.3s ease;
     }
-
-    .info-box ul li.valid::before {
-        opacity: 1;
-    }
+    .info-box ul li.valid::before { opacity: 1; }
 
     .password-strength {
-        margin-top: 8px;
-        padding: 8px 12px;
-        border-radius: 12px;
-        font-size: 12px;
+        margin-top: 6px;
+        padding: 6px 10px;
+        border-radius: 10px;
+        font-size: 11px;
         font-weight: 600;
         text-align: center;
         transition: all 0.3s ease;
     }
 
-    .password-strength.weak {
-        background: rgba(255, 107, 107, 0.2);
-        border: 2px solid #ff6b6b;
-        color: #ff6b6b;
-    }
+    .password-strength.weak { background: rgba(255, 107, 107, 0.2); border: 2px solid #ff6b6b; color: #ff6b6b; }
+    .password-strength.medium { background: rgba(255, 212, 59, 0.2); border: 2px solid #FFD43B; color: #FFD43B; }
+    .password-strength.strong { background: rgba(81, 207, 102, 0.2); border: 2px solid #51cf66; color: #51cf66; }
 
-    .password-strength.medium {
-        background: rgba(255, 212, 59, 0.2);
-        border: 2px solid #FFD43B;
-        color: #FFD43B;
-    }
-
-    .password-strength.strong {
-        background: rgba(81, 207, 102, 0.2);
-        border: 2px solid #51cf66;
-        color: #51cf66;
-    }
-
-    /* RESPONSIVE: Si la pantalla es chica, volvemos al tamaño compacto */
+    /* Media Queries Adicionales (Seguridad extra) */
     @media (max-width: 600px) {
-        .container {
-            padding: 20px 24px;
-            max-width: 360px; /* Un poco menos ancho en móviles */
-        }
-
-        .logo {
-            font-size: 38px;
-        }
-
-        .subtitle {
-            font-size: 15px;
-        }
-
-        .btn {
-            padding: 14px 30px;
-            font-size: 18px;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 12px 16px;
-            font-size: 14px;
-        }
-
-        .info-box {
-            padding: 10px;
-        }
-    }
-
-    /* RESPONSIVE ALTURA: Si la pantalla es baja, compactamos verticalmente */
-    @media (max-height: 800px) {
-        .container {
-            padding: 20px 30px; /* Reducir padding vertical */
-        }
-
-        .logo {
-            font-size: 36px;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-group label {
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-
-        .form-group input {
-            padding: 10px 16px;
-            font-size: 14px;
-        }
-
-        .info-box {
-            padding: 8px;
-            margin-bottom: 12px;
-        }
-
-        .info-box h3 {
-            font-size: 12px;
-            margin-bottom: 4px;
-        }
-
-        .info-box ul {
-            font-size: 12px;
-        }
-
-        .buttons {
-            gap: 12px;
-            margin-top: 15px;
-            margin-bottom: 15px;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            font-size: 16px;
-        }
-
-        .links {
-            margin-top: 10px;
-            font-size: 13px;
-        }
+        .container { padding: 20px 20px; max-width: 350px; }
+        .logo { font-size: 30px; }
+        .btn { font-size: 16px; padding: 12px 20px; }
     }
   </style>
 </head>
