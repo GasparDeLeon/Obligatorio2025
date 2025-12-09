@@ -108,6 +108,61 @@ public class ServicioResultados {
         return salida;
     }
 
+    // NEW: ranking with position including player names
+    public List<EntradaRankingConPosicion> armarRankingConPosicionesYNombres(
+            List<Resultado> resultados,
+            Map<Integer, String> nombresPorJugador) {
+
+        Map<Integer, Integer> puntos = new HashMap<>();
+
+        // 1) sumar puntos de resultados
+        if (resultados != null) {
+            for (Resultado r : resultados) {
+                puntos.merge(r.getJugadorId(), r.getPuntos(), Integer::sum);
+            }
+        }
+
+        // 2) asegurar que todos los jugadores del mapa aparezcan aunque tengan 0
+        if (nombresPorJugador != null) {
+            for (Integer id : nombresPorJugador.keySet()) {
+                puntos.putIfAbsent(id, 0);
+            }
+        }
+
+        // 3) ordenar de mayor a menor puntaje
+        List<Map.Entry<Integer, Integer>> lista = new ArrayList<>(puntos.entrySet());
+        lista.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+
+        // 4) asignar posiciones con empates
+        List<EntradaRankingConPosicion> salida = new ArrayList<>();
+        int posicionActual = 0;
+        int ultimoPuntaje = Integer.MIN_VALUE;
+        int indice = 0;
+
+        for (Map.Entry<Integer, Integer> e : lista) {
+            indice++;
+            int puntaje = e.getValue();
+
+            if (puntaje != ultimoPuntaje) {
+                posicionActual = indice;
+                ultimoPuntaje = puntaje;
+            }
+
+            String nombre = (nombresPorJugador != null)
+                    ? nombresPorJugador.get(e.getKey())
+                    : null;
+
+            salida.add(new EntradaRankingConPosicion(
+                    posicionActual,
+                    e.getKey(),
+                    nombre,
+                    puntaje
+            ));
+        }
+
+        return salida;
+    }
+
 
     // clase de siempre
     public static class EntradaRanking {
@@ -137,11 +192,22 @@ public class ServicioResultados {
     public static class EntradaRankingConPosicion {
         private final int posicion;
         private final int jugadorId;
+        private final String nombreJugador;
         private final int puntos;
 
         public EntradaRankingConPosicion(int posicion, int jugadorId, int puntos) {
             this.posicion = posicion;
             this.jugadorId = jugadorId;
+            this.nombreJugador = "Jugador " + jugadorId;
+            this.puntos = puntos;
+        }
+
+        public EntradaRankingConPosicion(int posicion, int jugadorId, String nombreJugador, int puntos) {
+            this.posicion = posicion;
+            this.jugadorId = jugadorId;
+            this.nombreJugador = (nombreJugador != null && !nombreJugador.isBlank())
+                    ? nombreJugador
+                    : "Jugador " + jugadorId;
             this.puntos = puntos;
         }
 
@@ -153,13 +219,17 @@ public class ServicioResultados {
             return jugadorId;
         }
 
+        public String getNombreJugador() {
+            return nombreJugador;
+        }
+
         public int getPuntos() {
             return puntos;
         }
 
         @Override
         public String toString() {
-            return posicion + "° - Jugador " + jugadorId + " -> " + puntos + " pts";
+            return posicion + "° - " + nombreJugador + " -> " + puntos + " pts";
         }
     }
 }

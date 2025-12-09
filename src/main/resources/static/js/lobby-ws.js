@@ -1,5 +1,6 @@
 let stompClient = null;
-const jugadoresEnSala = new Set();
+// Map of jugadorId -> nombre
+const jugadoresEnSala = new Map();
 const jugadoresListos = new Set(); // quiénes están listos
 
 function appendLog(texto) {
@@ -8,6 +9,18 @@ function appendLog(texto) {
     linea.textContent = texto;
     logDiv.appendChild(linea);
     logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+/**
+ * Helper function to get display name for a player
+ * Falls back to "Jugador X" if no name is stored
+ */
+function getNombreJugador(id) {
+    const nombre = jugadoresEnSala.get(id);
+    if (nombre && nombre.trim() !== '') {
+        return nombre;
+    }
+    return 'Jugador ' + id;
 }
 
 function renderJugadores() {
@@ -22,23 +35,27 @@ function renderJugadores() {
         return;
     }
 
-    Array.from(jugadoresEnSala)
-        .sort((a, b) => a - b)
-        .forEach(id => {
-            const div = document.createElement('div');
-            div.className = 'jugador-item';
-            const estaListo = jugadoresListos.has(id);
+    // Sort by player ID
+    const jugadoresOrdenados = Array.from(jugadoresEnSala.entries())
+        .sort((a, b) => a[0] - b[0]);
 
-            if (id === 1) {
-                div.classList.add('host');
-            }
-            if (estaListo) {
-                div.classList.add('listo');
-            }
+    jugadoresOrdenados.forEach(([id, nombre]) => {
+        const div = document.createElement('div');
+        div.className = 'jugador-item';
+        const estaListo = jugadoresListos.has(id);
 
-            div.textContent = 'Jugador ' + id + (estaListo ? ' ✓' : '');
-            contenedor.appendChild(div);
-        });
+        if (id === 1) {
+            div.classList.add('host');
+        }
+        if (estaListo) {
+            div.classList.add('listo');
+        }
+
+        // Display the actual name, or fallback to "Jugador X"
+        const nombreVisible = (nombre && nombre.trim() !== '') ? nombre : ('Jugador ' + id);
+        div.textContent = nombreVisible + (estaListo ? ' ✓' : '');
+        contenedor.appendChild(div);
+    });
 }
 
 function manejarEventoSala(evento) {
@@ -51,9 +68,16 @@ function manejarEventoSala(evento) {
         case 'JUGADOR_ENTRA': {
             const payload = evento.payload || {};
             const jugadorId = payload.jugadorId;
+            const nombreUsuario = payload.nombreUsuario || null;
             if (typeof jugadorId === 'number') {
-                jugadoresEnSala.add(jugadorId);
-                appendLog('Jugador ' + jugadorId + ' se ha unido a la sala.');
+                // Store name if provided, otherwise keep existing or use fallback
+                if (nombreUsuario && nombreUsuario.trim() !== '') {
+                    jugadoresEnSala.set(jugadorId, nombreUsuario);
+                } else if (!jugadoresEnSala.has(jugadorId)) {
+                    jugadoresEnSala.set(jugadorId, null);
+                }
+                const nombreVisible = getNombreJugador(jugadorId);
+                appendLog(nombreVisible + ' se ha unido a la sala.');
                 renderJugadores();
             }
             break;
@@ -61,10 +85,17 @@ function manejarEventoSala(evento) {
         case 'JUGADOR_LISTO': {
             const payload = evento.payload || {};
             const jugadorId = payload.jugadorId;
+            const nombreUsuario = payload.nombreUsuario || null;
             if (typeof jugadorId === 'number') {
-                jugadoresEnSala.add(jugadorId); // por si acaso aún no estaba
+                // Update name if provided
+                if (nombreUsuario && nombreUsuario.trim() !== '') {
+                    jugadoresEnSala.set(jugadorId, nombreUsuario);
+                } else if (!jugadoresEnSala.has(jugadorId)) {
+                    jugadoresEnSala.set(jugadorId, null);
+                }
                 jugadoresListos.add(jugadorId);
-                appendLog('Jugador ' + jugadorId + ' está listo.');
+                const nombreVisible = getNombreJugador(jugadorId);
+                appendLog(nombreVisible + ' está listo.');
                 renderJugadores();
             }
             break;
@@ -131,6 +162,8 @@ function manejarEventoSala(evento) {
 function conectarLobby() {
     const codigoSala = document.getElementById('codigoSala').value;
     const jugadorId = parseInt(document.getElementById('jugadorId').value, 10);
+    // Get the current user's name from the global variable set by the server
+    const nombreUsuario = window.miNombreUsuario || null;
 
     const socket = new SockJS('/ws-tutti');
     stompClient = Stomp.over(socket);
@@ -140,7 +173,8 @@ function conectarLobby() {
 
     stompClient.connect({}, function (frame) {
         console.log('Conectado al WS: ' + frame);
-        appendLog('Conectado al WebSocket como jugador ' + jugadorId +
+        const nombreMostrar = nombreUsuario || ('Jugador ' + jugadorId);
+        appendLog('Conectado al WebSocket como ' + nombreMostrar +
             ' en sala ' + codigoSala);
 
         const destinoSala = '/topic/sala.' + codigoSala;
@@ -164,7 +198,8 @@ function conectarLobby() {
 
         const joinPayload = {
             codigoSala: codigoSala,
-            jugadorId: jugadorId
+            jugadorId: jugadorId,
+            nombreUsuario: nombreUsuario
         };
 
         stompClient.send('/app/sala.unirse', {}, JSON.stringify(joinPayload));
@@ -179,10 +214,12 @@ function configurarBotonEnviar() {
     const btn = document.getElementById('btn-enviar');
     const input = document.getElementById('input-mensaje');
     const codigoSala = document.getElementById('codigoSala').value;
+    const jugadorId = parseInt(document.getElementById('jugadorId').value, 10);
+    const nombreUsuario = window.miNombreUsuario || null;
 
     if (!btn) return;
 
-    btn.addEventListener('click', function () {
+    const enviarMensaje = function () {
         if (!stompClient || !stompClient.connected) {
             appendLog('No estás conectado al WebSocket.');
             return;
@@ -192,9 +229,24 @@ function configurarBotonEnviar() {
         if (texto.length === 0) return;
 
         const destinoApp = '/app/sala.' + codigoSala + '.mensaje';
-        stompClient.send(destinoApp, {}, texto);
+        const payload = {
+            codigoSala: codigoSala,
+            jugadorId: jugadorId,
+            nombreUsuario: nombreUsuario,
+            mensaje: texto
+        };
 
+        stompClient.send(destinoApp, {}, JSON.stringify(payload));
         input.value = '';
+    };
+
+    btn.addEventListener('click', enviarMensaje);
+
+    // También permitir enviar con Enter
+    input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            enviarMensaje();
+        }
     });
 }
 
@@ -227,6 +279,7 @@ function configurarBotonListo() {
 
     const codigoSala = document.getElementById('codigoSala').value;
     const jugadorId = parseInt(document.getElementById('jugadorId').value, 10);
+    const nombreUsuario = window.miNombreUsuario || null;
 
     btn.addEventListener('click', function () {
         if (!stompClient || !stompClient.connected) {
@@ -236,7 +289,8 @@ function configurarBotonListo() {
 
         const payload = {
             codigoSala: codigoSala,
-            jugadorId: jugadorId
+            jugadorId: jugadorId,
+            nombreUsuario: nombreUsuario
         };
 
         stompClient.send('/app/sala.listo', {}, JSON.stringify(payload));
@@ -246,10 +300,15 @@ function configurarBotonListo() {
 
 document.addEventListener('DOMContentLoaded', function () {
     // 1) Inicializar los jugadores que ya estaban en la sala (datos del servidor)
+    // The server now sends an array of {id, nombre} objects
     if (Array.isArray(window.jugadoresIniciales)) {
-        window.jugadoresIniciales.forEach(id => {
-            if (typeof id === 'number') {
-                jugadoresEnSala.add(id);
+        window.jugadoresIniciales.forEach(jugador => {
+            if (typeof jugador === 'object' && jugador !== null && typeof jugador.id === 'number') {
+                // New format: {id, nombre}
+                jugadoresEnSala.set(jugador.id, jugador.nombre || null);
+            } else if (typeof jugador === 'number') {
+                // Backwards compatibility: just an ID
+                jugadoresEnSala.set(jugador, null);
             }
         });
     }

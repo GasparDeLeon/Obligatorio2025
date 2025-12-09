@@ -429,7 +429,7 @@
             </span>
             <span class="badge-jugador">
                 Jugador:
-                <strong th:text="${jugadorId}">1</strong>
+                <strong th:text="${nombreJugador != null ? nombreJugador : 'Jugador ' + jugadorId}">Jugador 1</strong>
             </span>
             <span class="badge-ronda">
                 Ronda:

@@ -1,6 +1,7 @@
 package com.obligatorio2025.Controllers;
 
 import com.obligatorio2025.aplicacion.GestorSesionesWS;
+import com.obligatorio2025.aplicacion.ServicioAutenticacion;
 import com.obligatorio2025.aplicacion.ServicioLobby;
 import com.obligatorio2025.dominio.JugadorEnPartida;
 import com.obligatorio2025.dominio.Ronda;
@@ -20,13 +21,16 @@ public class JuegoWebSocketController {
     private final SimpMessageSendingOperations messagingTemplate;
     private final GestorSesionesWS gestorSesionesWS;
     private final ServicioLobby servicioLobby;
+    private final ServicioAutenticacion servicioAutenticacion;
 
     public JuegoWebSocketController(SimpMessageSendingOperations messagingTemplate,
                                     GestorSesionesWS gestorSesionesWS,
-                                    ServicioLobby servicioLobby) {
+                                    ServicioLobby servicioLobby,
+                                    ServicioAutenticacion servicioAutenticacion) {
         this.messagingTemplate = messagingTemplate;
         this.gestorSesionesWS = gestorSesionesWS;
         this.servicioLobby = servicioLobby;
+        this.servicioAutenticacion = servicioAutenticacion;
     }
 
     // =====================================================
@@ -44,15 +48,45 @@ public class JuegoWebSocketController {
     //  MENSAJE DE CHAT A UNA SALA
     // =====================================================
 
+    public static class ChatMessage {
+        private String codigoSala;
+        private int jugadorId;
+        private String nombreUsuario;
+        private String mensaje;
+
+        public ChatMessage() {}
+
+        public String getCodigoSala() { return codigoSala; }
+        public void setCodigoSala(String codigoSala) { this.codigoSala = codigoSala; }
+
+        public int getJugadorId() { return jugadorId; }
+        public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
+
+        public String getNombreUsuario() { return nombreUsuario; }
+        public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
+
+        public String getMensaje() { return mensaje; }
+        public void setMensaje(String mensaje) { this.mensaje = mensaje; }
+    }
+
     @MessageMapping("/sala.{codigoSala}.mensaje")
     public void mensajeSala(@DestinationVariable String codigoSala,
-                            String payload) {
+                            ChatMessage chatMsg) {
+
+        // Get username: first try from message, then lookup by jugadorId
+        String nombreUsuario = chatMsg.getNombreUsuario();
+        if (nombreUsuario == null || nombreUsuario.isBlank()) {
+            nombreUsuario = servicioAutenticacion.obtenerNombreUsuarioPorId((long) chatMsg.getJugadorId());
+        }
+        if (nombreUsuario == null || nombreUsuario.isBlank()) {
+            nombreUsuario = "Jugador " + chatMsg.getJugadorId();
+        }
 
         String destino = "/topic/sala." + codigoSala;
-        String texto = "[sala " + codigoSala + "] " + payload;
-        log.info("[WS] mensajeSala -> {}: {}", destino, texto);
+        String textoFormateado = nombreUsuario + ": " + chatMsg.getMensaje();
+        log.info("[WS] mensajeSala -> {}: {}", destino, textoFormateado);
 
-        messagingTemplate.convertAndSend(destino, texto);
+        messagingTemplate.convertAndSend(destino, textoFormateado);
     }
 
     // =====================================================
@@ -62,6 +96,7 @@ public class JuegoWebSocketController {
     public static class JoinSalaMessage {
         private String codigoSala;
         private int jugadorId;
+        private String nombreUsuario;
 
         public JoinSalaMessage() {}
 
@@ -70,6 +105,9 @@ public class JuegoWebSocketController {
 
         public int getJugadorId() { return jugadorId; }
         public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
+
+        public String getNombreUsuario() { return nombreUsuario; }
+        public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
     }
 
     public static class IniciarSalaMessage {
@@ -89,6 +127,7 @@ public class JuegoWebSocketController {
     public static class JugadorListoMessage {
         private String codigoSala;
         private int jugadorId;
+        private String nombreUsuario;
 
         public JugadorListoMessage() {}
 
@@ -97,6 +136,9 @@ public class JuegoWebSocketController {
 
         public int getJugadorId() { return jugadorId; }
         public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
+
+        public String getNombreUsuario() { return nombreUsuario; }
+        public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
     }
 
     // =====================================================
@@ -121,13 +163,13 @@ public class JuegoWebSocketController {
         public void setPayload(Object payload) { this.payload = payload; }
 
         // jugador entra al lobby
-        public static SalaEvent jugadorEntra(int jugadorId) {
-            return new SalaEvent("JUGADOR_ENTRA", new JugadorPayload(jugadorId));
+        public static SalaEvent jugadorEntra(int jugadorId, String nombreUsuario) {
+            return new SalaEvent("JUGADOR_ENTRA", new JugadorPayload(jugadorId, nombreUsuario));
         }
 
         // jugador marca "listo" (en lobby)
-        public static SalaEvent jugadorListo(int jugadorId) {
-            return new SalaEvent("JUGADOR_LISTO", new JugadorPayload(jugadorId));
+        public static SalaEvent jugadorListo(int jugadorId, String nombreUsuario) {
+            return new SalaEvent("JUGADOR_LISTO", new JugadorPayload(jugadorId, nombreUsuario));
         }
 
         // partida inicia
@@ -174,15 +216,25 @@ public class JuegoWebSocketController {
 
     public static class JugadorPayload {
         private int jugadorId;
+        private String nombreUsuario;
 
         public JugadorPayload() {}
 
         public JugadorPayload(int jugadorId) {
             this.jugadorId = jugadorId;
+            this.nombreUsuario = null;
+        }
+
+        public JugadorPayload(int jugadorId, String nombreUsuario) {
+            this.jugadorId = jugadorId;
+            this.nombreUsuario = nombreUsuario;
         }
 
         public int getJugadorId() { return jugadorId; }
         public void setJugadorId(int jugadorId) { this.jugadorId = jugadorId; }
+
+        public String getNombreUsuario() { return nombreUsuario; }
+        public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
     }
 
     public static class PartidaPayload {
@@ -320,15 +372,21 @@ public class JuegoWebSocketController {
         String codigoSala = msg.getCodigoSala();
         int jugadorId = msg.getJugadorId();
 
-        log.info("[WS] unirseSala -> sessionId={}, sala={}, jugador={}",
-                sessionId, codigoSala, jugadorId);
+        // Get username: first try from message, then lookup by jugadorId
+        String nombreUsuario = msg.getNombreUsuario();
+        if (nombreUsuario == null || nombreUsuario.isBlank()) {
+            nombreUsuario = servicioAutenticacion.obtenerNombreUsuarioPorId((long) jugadorId);
+        }
+
+        log.info("[WS] unirseSala -> sessionId={}, sala={}, jugador={}, nombre={}",
+                sessionId, codigoSala, jugadorId, nombreUsuario);
 
         // 1) registrar la sesión
         gestorSesionesWS.registrar(sessionId, codigoSala, jugadorId);
 
         // 2) actualizar dominio
         try {
-            JugadorEnPartida jugador = new JugadorEnPartida(jugadorId);
+            JugadorEnPartida jugador = new JugadorEnPartida(jugadorId, nombreUsuario);
             servicioLobby.unirseSala(codigoSala, jugador);
         } catch (IllegalArgumentException ex) {
             log.warn("[WS] unirseSala fallo: {}", ex.getMessage());
@@ -337,7 +395,7 @@ public class JuegoWebSocketController {
 
         // 3) notificar a la sala
         String destino = "/topic/sala." + codigoSala;
-        SalaEvent evento = SalaEvent.jugadorEntra(jugadorId);
+        SalaEvent evento = SalaEvent.jugadorEntra(jugadorId, nombreUsuario);
 
         log.info("[WS] broadcast evento {} a {}", evento.getTipo(), destino);
         messagingTemplate.convertAndSend(destino, evento);
@@ -397,7 +455,13 @@ public class JuegoWebSocketController {
         String codigoSala = msg.getCodigoSala();
         int jugadorId = msg.getJugadorId();
 
-        log.info("[WS] jugadorListo -> sala={}, jugador={}", codigoSala, jugadorId);
+        // Get username: first try from message, then lookup by jugadorId
+        String nombreUsuario = msg.getNombreUsuario();
+        if (nombreUsuario == null || nombreUsuario.isBlank()) {
+            nombreUsuario = servicioAutenticacion.obtenerNombreUsuarioPorId((long) jugadorId);
+        }
+
+        log.info("[WS] jugadorListo -> sala={}, jugador={}, nombre={}", codigoSala, jugadorId, nombreUsuario);
 
         try {
             servicioLobby.marcarListo(codigoSala, jugadorId);
@@ -407,7 +471,7 @@ public class JuegoWebSocketController {
         }
 
         String destino = "/topic/sala." + codigoSala;
-        SalaEvent evento = SalaEvent.jugadorListo(jugadorId);
+        SalaEvent evento = SalaEvent.jugadorListo(jugadorId, nombreUsuario);
 
         log.info("[WS] broadcast evento {} a {}", evento.getTipo(), destino);
         messagingTemplate.convertAndSend(destino, evento);

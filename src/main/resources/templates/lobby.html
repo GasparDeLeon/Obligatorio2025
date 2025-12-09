@@ -11,10 +11,14 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Exponer jugadores actuales como array JS -->
+    <!-- Exponer jugadores actuales como array JS with names -->
     <script th:inline="javascript">
         /*<![CDATA[*/
-        var jugadoresIniciales = /*[[${jugadoresActuales}]]*/ [];
+        // Array of {id, nombre} objects for players already in the room
+        var jugadoresIniciales = /*[[${jugadoresInfo}]]*/ [];
+        // Current player's info
+        var miJugadorId = /*[[${jugadorId}]]*/ 1;
+        var miNombreUsuario = /*[[${nombreUsuario}]]*/ "Jugador";
         /*]]>*/
     </script>
 

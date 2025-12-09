@@ -1,5 +1,6 @@
 package com.obligatorio2025.Controllers;
 
+import com.obligatorio2025.aplicacion.ServicioAutenticacion;
 import com.obligatorio2025.aplicacion.ServicioFlujoPartida;
 import com.obligatorio2025.aplicacion.ServicioRespuestas;
 import com.obligatorio2025.aplicacion.ServicioResultados;
@@ -30,6 +31,7 @@ public class MultiController {
     private final ServicioRespuestas servicioRespuestas;
     private final ServicioFlujoPartida servicioFlujoPartida;
     private final ServicioResultados servicioResultados;
+    private final ServicioAutenticacion servicioAutenticacion;
 
     // Cache en memoria: clave = "partidaId#ronda"
     private final Map<String, List<Resultado>> cacheResultadosPorPartidaYRonda = new ConcurrentHashMap<>();
@@ -41,12 +43,14 @@ public class MultiController {
                            SimpMessageSendingOperations messagingTemplate,
                            ServicioRespuestas servicioRespuestas,
                            ServicioFlujoPartida servicioFlujoPartida,
-                           ServicioResultados servicioResultados) {
+                           ServicioResultados servicioResultados,
+                           ServicioAutenticacion servicioAutenticacion) {
         this.salaRepositorio = salaRepositorio;
         this.messagingTemplate = messagingTemplate;
         this.servicioRespuestas = servicioRespuestas;
         this.servicioFlujoPartida = servicioFlujoPartida;
         this.servicioResultados = servicioResultados;
+        this.servicioAutenticacion = servicioAutenticacion;
     }
 
     // =========================================================
@@ -124,8 +128,16 @@ public class MultiController {
                 .map(cat -> String.valueOf(cat.getId()))
                 .collect(Collectors.joining("-"));
 
+        // Get the player's visible name from the sala
+        String nombreJugador = sala.getJugadores().stream()
+                .filter(j -> j.getJugadorId() == jugadorId)
+                .map(JugadorEnPartida::getNombreVisible)
+                .findFirst()
+                .orElse("Jugador " + jugadorId);
+
         model.addAttribute("codigoSala", codigoSala);
         model.addAttribute("jugadorId", jugadorId);
+        model.addAttribute("nombreJugador", nombreJugador);
         model.addAttribute("numeroRonda", rondaActual.getNumero());
         model.addAttribute("letra", rondaActual.getLetra());
 
@@ -379,24 +391,35 @@ public class MultiController {
 
         System.out.println("Resultados acumulados: " + acumulados.size());
 
-        List<Integer> idsJugadores = sala.getJugadores()
+        // Build map of jugadorId -> nombre (using actual usernames)
+        Map<Integer, String> nombresPorJugador = sala.getJugadores()
                 .stream()
-                .map(JugadorEnPartida::getJugadorId)
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(
+                        JugadorEnPartida::getJugadorId,
+                        JugadorEnPartida::getNombreVisible
+                ));
 
         List<ServicioResultados.EntradaRankingConPosicion> rankingFinal =
-                servicioResultados.armarRankingConPosicionesIncluyendoJugadores(acumulados, idsJugadores);
+                servicioResultados.armarRankingConPosicionesYNombres(acumulados, nombresPorJugador);
 
         System.out.println("Ranking final, filas: " + rankingFinal.size());
         for (ServicioResultados.EntradaRankingConPosicion fila : rankingFinal) {
-            System.out.println("  " + fila.getPosicion() + "° Jugador " +
-                    fila.getJugadorId() + " -> " + fila.getPuntos() + " pts");
+            System.out.println("  " + fila.getPosicion() + "° " +
+                    fila.getNombreJugador() + " -> " + fila.getPuntos() + " pts");
         }
 
         int totalRondasJugadas = (partida.getRondas() != null) ? partida.getRondas().size() : 0;
 
+        // Get the current player's visible name from the sala
+        String nombreJugador = sala.getJugadores().stream()
+                .filter(j -> j.getJugadorId() == jugadorId)
+                .map(JugadorEnPartida::getNombreVisible)
+                .findFirst()
+                .orElse("Jugador " + jugadorId);
+
         model.addAttribute("codigoSala", codigoSala);
         model.addAttribute("jugadorId", jugadorId);
+        model.addAttribute("nombreJugador", nombreJugador);
         model.addAttribute("ranking", rankingFinal);
         model.addAttribute("totalRondas", totalRondasJugadas);
 
@@ -489,17 +512,24 @@ public class MultiController {
 
         List<Resultado> resultados = cacheResultadosPorPartidaYRonda.getOrDefault(keyCache, Collections.emptyList());
 
-        List<Integer> idsJugadores = sala.getJugadores()
+        // Build map of jugadorId -> nombre (using actual usernames)
+        Map<Integer, String> nombresPorJugador = sala.getJugadores()
                 .stream()
-                .map(JugadorEnPartida::getJugadorId)
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(
+                        JugadorEnPartida::getJugadorId,
+                        JugadorEnPartida::getNombreVisible
+                ));
 
         List<ServicioResultados.EntradaRankingConPosicion> ranking =
-                servicioResultados.armarRankingConPosicionesIncluyendoJugadores(resultados, idsJugadores);
+                servicioResultados.armarRankingConPosicionesYNombres(resultados, nombresPorJugador);
+
+        // Get the current player's visible name from the sala
+        String nombreJugador = nombresPorJugador.getOrDefault(jugadorId, "Jugador " + jugadorId);
 
         model.addAttribute("codigoSala", codigoSala);
         model.addAttribute("numeroRonda", rondaActual);
         model.addAttribute("jugadorId", jugadorId);
+        model.addAttribute("nombreJugador", nombreJugador);
         model.addAttribute("ranking", ranking);
 
         model.addAttribute("hayResultados", true);
@@ -718,20 +748,23 @@ public class MultiController {
 
         System.out.println("Resultados obtenidos: " + (resultados != null ? resultados.size() : 0));
 
-        List<Integer> idsJugadores = sala.getJugadores()
-                .stream()
-                .map(JugadorEnPartida::getJugadorId)
-                .collect(Collectors.toList());
+        // Build map of jugadorId -> nombre (using actual usernames)
+        Map<Integer, String> nombresPorJugador = sala.getJugadores().stream()
+                .collect(Collectors.toMap(
+                        JugadorEnPartida::getJugadorId,
+                        JugadorEnPartida::getNombreVisible
+                ));
 
-        System.out.println("Ids de jugadores en sala: " + idsJugadores);
+        System.out.println("Ids de jugadores en sala: " + nombresPorJugador.keySet());
 
+        // Use the new method that includes player names
         List<ServicioResultados.EntradaRankingConPosicion> ranking =
-                servicioResultados.armarRankingConPosicionesIncluyendoJugadores(resultados, idsJugadores);
+                servicioResultados.armarRankingConPosicionesYNombres(resultados, nombresPorJugador);
 
         System.out.println("Ranking armado, filas: " + ranking.size());
         for (ServicioResultados.EntradaRankingConPosicion fila : ranking) {
-            System.out.println("  " + fila.getPosicion() + "° Jugador " +
-                    fila.getJugadorId() + " -> " + fila.getPuntos() + " pts");
+            System.out.println("  " + fila.getPosicion() + "° " +
+                    fila.getNombreJugador() + " -> " + fila.getPuntos() + " pts");
         }
 
         int totalJugadores = sala.getJugadores().size();
@@ -739,13 +772,6 @@ public class MultiController {
         // =============================
         // NUEVO: mapear resultados a DTOs por jugador
         // =============================
-
-        // Mapa idJugador -> nombre
-        Map<Integer, String> nombresPorJugador = sala.getJugadores().stream()
-                .collect(Collectors.toMap(
-                        JugadorEnPartida::getJugadorId,
-                        j -> j.getNombreVisible()   // <-- ajusta al nombre real del método
-                ));
 
         Function<Integer, String> nombreCat = this::buscarNombreCategoriaPorId;
 
@@ -784,9 +810,17 @@ public class MultiController {
         // FIN NUEVO
         // =============================
 
+        // Get the current player's visible name from the sala
+        String nombreJugador = sala.getJugadores().stream()
+                .filter(j -> j.getJugadorId() == jugadorId)
+                .map(JugadorEnPartida::getNombreVisible)
+                .findFirst()
+                .orElse("Jugador " + jugadorId);
+
         model.addAttribute("codigoSala", codigoSala);
         model.addAttribute("numeroRonda", numeroRonda);
         model.addAttribute("jugadorId", jugadorId);
+        model.addAttribute("nombreJugador", nombreJugador);
         model.addAttribute("ranking", ranking);
         model.addAttribute("ultimaRonda", ultimaRonda);
 
