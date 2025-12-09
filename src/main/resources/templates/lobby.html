@@ -68,17 +68,14 @@
             z-index: 0;
         }
 
-          .app-logo-main {
-              display: block;
-              /* Más espacio arriba y abajo para que respire */
-              margin: 20px auto 25px auto;
-              /* Un tamaño más generoso */
-              width: 180px;
-              max-width: 90%;
-              height: auto;
-              /* Sutil sombra para que "flote" sobre el fondo */
-              filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
-            }
+        .app-logo-main {
+            display: block;
+            margin: 20px auto 25px auto;
+            width: 180px;
+            max-width: 90%;
+            height: auto;
+            filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+        }
 
         @keyframes float {
             0%, 100% { transform: translate(0, 0) scale(1); }
@@ -237,8 +234,6 @@
             border-radius: 10px;
         }
 
-
-
         .jugador-item {
             background: rgba(255, 255, 255, 0.15);
             border: 2px solid rgba(255, 255, 255, 0.3);
@@ -256,11 +251,6 @@
 
         .jugador-item:last-child {
             margin-bottom: 0;
-        }
-
-        .jugador-item:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
         }
 
         .jugador-item:hover {
@@ -518,6 +508,10 @@
                     <button class="btn btn-primary" id="btn-listo">
                         <span>Estoy listo</span>
                     </button>
+                    <!-- Botón para salir del lobby -->
+                    <button class="btn btn-secondary" onclick="salirLobby()">
+                        <span>Salir al inicio</span>
+                    </button>
                 </div>
             </section>
 
@@ -541,6 +535,24 @@
 <!-- Datos que el JS necesita -->
 <input type="hidden" id="codigoSala" th:value="${codigoSala}">
 <input type="hidden" id="jugadorId" th:value="${jugadorId}">
+
+<script>
+    function salirLobby() {
+        try {
+            if (typeof stompClient !== "undefined" && stompClient && stompClient.connected) {
+                stompClient.disconnect(function () {
+                    console.log("WebSocket desconectado antes de salir del lobby.");
+                    window.location.href = "/";
+                });
+            } else {
+                window.location.href = "/";
+            }
+        } catch (e) {
+            console.warn("Error al intentar desconectar STOMP:", e);
+            window.location.href = "/";
+        }
+    }
+</script>
 
 </body>
 </html>
