@@ -139,7 +139,12 @@
     <h1 th:text="${titulo}">Configurar Partida</h1>
     <p class="modo" th:text="'Modo: ' + ${modo}">Modo: ???</p>
 
-    <p class="error" th:if="${error}" th:text="${error}"></p>
+    <!-- bloque para mostrar errores generales (flash attribute "error") -->
+    <div class="error-list" th:if="${error}">
+        <ul>
+            <li th:text="${error}"></li>
+        </ul>
+    </div>
 
     <form method="post" th:action="@{/configurar}">
         <!-- modo siempre viaja en el POST -->
@@ -176,7 +181,6 @@
                       th:if="${#fields.hasErrors('modoJuez')}"
                       th:errors="*{modoJuez}"></span>
             </div>
-
 
             <div class="field-group">
                 <label>Categorías a utilizar</label>

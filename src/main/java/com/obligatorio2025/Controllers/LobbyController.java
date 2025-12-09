@@ -3,15 +3,15 @@ package com.obligatorio2025.Controllers;
 import com.obligatorio2025.dominio.Sala;
 import com.obligatorio2025.dominio.JugadorEnPartida;
 import com.obligatorio2025.infraestructura.SalaRepositorio;
+import com.obligatorio2025.aplicacion.ServicioLobby;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.obligatorio2025.aplicacion.ServicioLobby;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/lobby")
@@ -30,12 +30,15 @@ public class LobbyController {
     public String verLobby(@PathVariable String codigoSala,
                            @RequestParam(name = "jugadorId", required = false) Integer jugadorIdParam,
                            Model model,
-                           HttpSession session) {
+                           HttpSession session,
+                           RedirectAttributes redirectAttrs) {
 
         Sala sala = salaRepositorio.buscarPorCodigo(codigoSala);
         if (sala == null) {
-            model.addAttribute("error", "No existe la sala con código " + codigoSala);
-            return "error";
+            redirectAttrs.addFlashAttribute("error",
+                    "No existe la sala con código " + codigoSala);
+            // Volvemos a la pantalla de unirse a sala
+            return "redirect:/configurar?modo=unirse-sala";
         }
 
         Integer jugadorId = jugadorIdParam;
@@ -59,14 +62,12 @@ public class LobbyController {
         }
 
         // 3) Regla de sala llena:
-        //    - si la sala está llena y este jugador NO pertenece, lo bloqueamos
         if (jugadorId != null) {
             final Integer jugadorIdFinal = jugadorId;
 
             boolean pertenece = sala.getJugadores().stream()
                     .anyMatch(j -> j.getJugadorId() == jugadorIdFinal);
 
-            // máximo configurado (por defecto 6)
             int max = 6;
             if (sala.getPartidaActual() != null &&
                     sala.getPartidaActual().getConfiguracion() != null) {
@@ -76,24 +77,24 @@ public class LobbyController {
             int cantidad = (sala.getJugadores() != null) ? sala.getJugadores().size() : 0;
             boolean salaLlena = cantidad >= max;
 
-            // Solo bloqueamos si está LLENA y el jugador no es de la sala
             if (salaLlena && !pertenece) {
                 String sessionKey = "jugadorId_" + codigoSala;
                 session.removeAttribute(sessionKey);
 
-                model.addAttribute("error", "La sala " + codigoSala + " ya está completa.");
-                return "error";
+                redirectAttrs.addFlashAttribute("error",
+                        "La sala " + codigoSala + " ya está completa.");
+                // También volvemos a unirse-sala
+                return "redirect:/configurar?modo=unirse-sala";
             }
         }
 
-        // 4) Jugadores actuales según la Sala (poblada vía WebSocket/unirseSala)
+        // 4) Jugadores actuales según la Sala
         List<Integer> jugadoresActuales = sala.getJugadores()
                 .stream()
                 .map(JugadorEnPartida::getJugadorId)
                 .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
 
-        // 5) Por si todavía no se conectó el WS de este jugador,
-        // lo agregamos al array para que el front lo vea
+        // 5) Aseguramos que este jugador esté en la lista enviada al front
         if (!jugadoresActuales.contains(jugadorId)) {
             jugadoresActuales.add(jugadorId);
         }
@@ -107,5 +108,6 @@ public class LobbyController {
 
         return "lobby";
     }
+
 
 }
