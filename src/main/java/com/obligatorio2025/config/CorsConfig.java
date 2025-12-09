@@ -1,29 +1,19 @@
 package com.obligatorio2025.config;
 
-
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class CorsConfig {
+public class CorsConfig implements WebMvcConfigurer {
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**") // habilita CORS para todas las rutas
-                        .allowedOrigins(
-                                "http://localhost:5500",
-                                "http://127.0.0.1:5500",
-                                "http://localhost:5173",
-                                "http://127.0.0.1:5173"
-                        )
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
-            }
-        };
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                // Acepta cualquier origen (Railway, localhost, etc.)
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*");
+        // No ponemos allowCredentials() para no chocar con "*"
     }
 }
