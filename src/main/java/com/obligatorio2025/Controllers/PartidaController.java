@@ -70,13 +70,19 @@ public class PartidaController {
                 );
             }
         } else if ("crear-sala".equals(modo)) {
-            // al menos una categoría
+            // al menos 4 categorías
             if (config.getCategoriasSeleccionadas() == null ||
                     config.getCategoriasSeleccionadas().isEmpty()) {
                 bindingResult.rejectValue(
                         "categoriasSeleccionadas",
                         "categorias.vacias",
-                        "Debe seleccionar al menos una categoría."
+                        "Debe seleccionar al menos 4 categorías."
+                );
+            } else if (config.getCategoriasSeleccionadas().size() < 4) {
+                bindingResult.rejectValue(
+                        "categoriasSeleccionadas",
+                        "categorias.insuficientes",
+                        "Debe seleccionar al menos 4 categorías."
                 );
             }
             // número de jugadores: 2 a 6

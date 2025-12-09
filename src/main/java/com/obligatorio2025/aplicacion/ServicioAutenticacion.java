@@ -58,4 +58,29 @@ public class ServicioAutenticacion {
     public boolean estaAutorizado(String sesionId) {
         return sesionId != null;
     }
+
+    /**
+     * Returns the username for a given userId.
+     * Returns null if user not found.
+     */
+    public String obtenerNombreUsuarioPorId(Long userId) {
+        if (userId == null) return null;
+        return usuarioRepositorio.findById(userId)
+                .map(Usuario::getNombreUsuario)
+                .orElse(null);
+    }
+
+    /**
+     * Returns the username for a given sesionId (which is the userId as string).
+     * Returns null if user not found.
+     */
+    public String obtenerNombreUsuarioPorSesionId(String sesionId) {
+        if (sesionId == null || sesionId.isBlank()) return null;
+        try {
+            Long userId = Long.parseLong(sesionId);
+            return obtenerNombreUsuarioPorId(userId);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 }

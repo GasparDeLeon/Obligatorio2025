@@ -7,12 +7,22 @@ import java.util.List;
 public class JugadorEnPartida {
 
     private int usuarioId;
+    private String nombreUsuario;
     private List<Respuesta> respuestas;
     private EstadoJugador estado;
     private boolean listo;
 
     public JugadorEnPartida(int usuarioId) {
         this.usuarioId = usuarioId;
+        this.nombreUsuario = null;
+        this.respuestas = new ArrayList<>();
+        this.estado = EstadoJugador.INACTIVO;
+        this.listo = false;
+    }
+
+    public JugadorEnPartida(int usuarioId, String nombreUsuario) {
+        this.usuarioId = usuarioId;
+        this.nombreUsuario = nombreUsuario;
         this.respuestas = new ArrayList<>();
         this.estado = EstadoJugador.INACTIVO;
         this.listo = false;
@@ -25,6 +35,14 @@ public class JugadorEnPartida {
 
     public int getUsuarioId() {
         return usuarioId;
+    }
+
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
     }
 
     public List<Respuesta> getRespuestas() {
@@ -60,7 +78,14 @@ public class JugadorEnPartida {
         this.listo = listo;
     }
 
+    /**
+     * Returns the visible name for this player.
+     * Prioritizes nombreUsuario if available, otherwise falls back to "Jugador X".
+     */
     public String getNombreVisible() {
+        if (nombreUsuario != null && !nombreUsuario.isBlank()) {
+            return nombreUsuario;
+        }
         return "Jugador " + getJugadorId();
     }
 }
